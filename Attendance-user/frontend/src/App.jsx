@@ -23,7 +23,7 @@ function App() {
         </div>
       ) : (
         <div className="h-screen w-screen lg:block">
-          <Loginpage />
+          <Outlet />
         </div>
       )}
     </>

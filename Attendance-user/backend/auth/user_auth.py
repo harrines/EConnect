@@ -16,4 +16,3 @@ async def user_only_route(token: str = Depends(user_jwt_bearer)):
 @app.get("/Remote-History/{userid}")
 async def user_only_route(token: str = Depends(user_jwt_bearer)):
     return {"message": "This is a user-only route"}
-

@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Baseaxios, LS } from "../Utils/Resuse";
-// import moment from 'moment-timezone';
+import moment from 'moment';
 
 // const indianTimezone = 'Asia/Kolkata';
 
@@ -105,10 +105,10 @@ const LeaveRequest = () => {
     if (newLeave.leaveType === "Other Leave") {
       endpoint = "/Other-leave-request";
     }
-    if (newLeave.leaveType === "Permission") {
+    if (newLeave.leaveType === "Permission") {                                                                                                                                                                              
       endpoint = "/Permission-request";
     }
-    if (newLeave.leaveType === "Bonus Leave") {
+    if (newLeave.leaveType === "Bonus Leave") {                                                                                                   
       endpoint = "/Bonus-leave-request";  
       
     }
@@ -171,13 +171,13 @@ const handleApplyButtonClick = () => {
       const year = formattedSelectedDate.getFullYear();
       const month = String(formattedSelectedDate.getMonth() + 1).padStart(2, "0");
       const day = String(formattedSelectedDate.getDate()).padStart(2, "0");
-      formattedSelectedDate = `${year}-${month}-${day}T00:00:00.000Z`;
+      formattedSelectedDate = `${year}-${month}-${day}`;
 
       newLeave = {
         leaveType,
         selectedDate: formattedSelectedDate,
         reason,
-        requestDate: new Date().toISOString(),
+        requestDate: new Date().toISOString().split('T')[0],
       };
     } else if (leaveType === "Other Leave") {
       let formattedFromDate = otherFromDate;
@@ -185,12 +185,12 @@ const handleApplyButtonClick = () => {
 
       // Convert otherFromDate to a Date object if it's not already
       if (!(otherFromDate instanceof Date)) {
-        formattedFromDate = new Date(otherFromDate);
+        formattedFromDate = moment(formattedFromDate).format("YYYY-MM-DD");
       }
 
       // Convert otherToDate to a Date object if it's not already
       if (!(otherToDate instanceof Date)) {
-        formattedToDate = new Date(otherToDate);
+        formattedToDate = moment(formattedToDate).format("YYYY-MM-DD");
       }
 
       newLeave = {
@@ -198,7 +198,7 @@ const handleApplyButtonClick = () => {
         selectedDate: formattedFromDate,
         ToDate: formattedToDate,
         reason: otherReason,
-        requestDate: new Date().toISOString(),
+        requestDate: new Date().toISOString().split('T')[0],
       };
     } else if (leaveType === "Permission") {
       let formattedSelectedDate = selectedDate;
@@ -210,14 +210,14 @@ const handleApplyButtonClick = () => {
       const year = formattedSelectedDate.getFullYear();
       const month = String(formattedSelectedDate.getMonth() + 1).padStart(2, "0");
       const day = String(formattedSelectedDate.getDate()).padStart(2, "0");
-      formattedSelectedDate = `${year}-${month}-${day}T00:00:00.000Z`;
+      formattedSelectedDate = `${year}-${month}-${day}`;
 
       newLeave = {
         leaveType,
         selectedDate: formattedSelectedDate,
         timeSlot,
         reason,
-        requestDate: new Date().toISOString(),
+        requestDate: new Date().toISOString().split('T')[0],
       };
     }
 

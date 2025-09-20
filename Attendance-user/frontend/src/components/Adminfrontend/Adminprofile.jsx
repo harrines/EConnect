@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LS } from "../../Utils/Resuse";
+import { ipadr } from "../../Utils/Resuse";
 
-const API_BASE_URL = "http://127.0.0.1:8000"; // Backend URL
+const API_BASE_URL =  `${ipadr}`; // Backend URL
 
 const AdminProfile = () => {
     const navigate = useNavigate();
-    const userid = LS.get("id"); // Get the user ID from local storage
-
+    const userid = LS.get("userid"); // Get the user ID from local storage
+    const email = LS.get("email"); // Get the user email from local storage
+    console.log(userid)
+    console.log(email)
     const [adminInfo, setAdminInfo] = useState({
         name: "",
         email: "",

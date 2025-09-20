@@ -1,17 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Datetime from "react-datetime";
 import "react-datetime/css/react-datetime.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Baseaxios, LS } from "../Utils/Resuse";
+import { Baseaxios, LS ,ipadr} from "../Utils/Resuse";
 import moment from "moment";
 
 const WorkFromHome = () => {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [reason, setReason] = useState("");
+  const [ip, setip] = useState("");
   const [isApplying, setIsApplying] = useState(false);
+  const [ipAddresses, setIpAddresses] = useState(null);
+  const [selectedIp, setSelectedIp] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchIpAddresses();
+  }, []);
+
+  const fetchIpAddresses = async () => {
+    try {
+      const response = await fetch(`${ipadr}/ip-info`);
+      const data = await response.json();
+      setIpAddresses({
+        public: data.public_ip,
+        local: data.local_ip
+      });
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching IP addresses:", error);
+      toast.error("Failed to fetch IP addresses");
+      setIsLoading(false);
+    }
+  };
 
   const handleFromDateChange = (date) => {
     setFromDate(date);
@@ -21,59 +45,64 @@ const WorkFromHome = () => {
     setToDate(date);
   };
 
-  const remoteworkrequestapi = (newRequest) => {
-    setIsApplying(true);
-    const userid = LS.get("userid");
-    const employeeName = LS.get("name");
-  
-    console.log("Sending Request Data:", { userid, employeeName, ...newRequest });
-  
-    Baseaxios.post("/remote-work-request", {
-      userid,
-      employeeName,
-      ...newRequest,
-    })
-      .then((response) => {
-        console.log("Response:", response);
-        setIsApplying(false);
-        if (response.data.result === "Remote request successful") {
-          toast.success(response.data.result);
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-        } else {
-          toast.warning(response.data.result);
-        }
-      })
-      .catch((err) => {
-        setIsApplying(false);
-        toast.error("Failed to submit remote work request");
-        console.error("Error submitting remote work request:", err.response || err);
-      });
+  const handleIpChange = (e) => {
+    setSelectedIp(e.target.value);
   };
-  
 
+const remoteworkrequestapi = (newRequest) => {
+  setIsApplying(true);
+  const userid = LS.get("userid");
+  const employeeName = LS.get("name");
 
-  const handleApplyButtonClick = () => {
-    if (fromDate && toDate && reason) {
-      const newRequest = {
-        fromDate: moment(fromDate).format("YYYY-MM-DD"),
-        toDate: moment(toDate).format("YYYY-MM-DD"),
-        requestDate: moment().toISOString(),
-        reason: reason,
-      };
-      remoteworkrequestapi(newRequest);
+  const payload = {
+    userid,
+    employeeName,
+    ...newRequest,
+  };
+
+  console.log("✅ Final Payload to API:", payload);
+
+  Baseaxios.post("/remote-work-request", payload)
+  .then((response) => {
+    const { status, message } = response.data;
+    console.log("API Response:", response.data);
+    if (status === "success") {
+      toast.success(message || "Request submitted successfully!");
     } else {
-      toast.error("Please fill in all fields.", {
-        position: "top-right",
-      });
+      toast.warning(message || "Something went wrong!");
     }
-  };
+  })
+  .catch((err) => {
+    console.error("API Error:", err);
+    toast.error("Failed to submit request. Try again.");
+  });
+
+
+};
+
+const handleApplyButtonClick = () => {
+  if (fromDate && toDate && reason && ip) {
+    const newRequest = {
+      fromDate: moment(fromDate).format("YYYY-MM-DD"),
+      toDate: moment(toDate).format("YYYY-MM-DD"),
+      requestDate: moment().format("YYYY-MM-DD"),  // ✅ normalized to YYYY-MM-DD
+      reason: reason.trim(),                       // ✅ ensured always included
+      ip: ip.trim(),                               // ✅ ensured always included
+    };                                        
+    remoteworkrequestapi(newRequest);
+  } else {
+    toast.error("Please fill in all fields including IP selection.", {
+      position: "top-right",
+    });
+  }
+};
+
 
   const handleCancel = () => {
     setFromDate(null);
     setToDate(null);
     setReason("");
+    setSelectedIp("");
   };
 
   const isWeekday = (date) => {
@@ -104,8 +133,8 @@ const WorkFromHome = () => {
         </Link>
       </div>
       <div className="mt-10">
-        <div className=" mt-4 bg-gradient-to-tr from-white to-blue-100 border-x p-4 rounded-lg shadow-xl">
-          <div className="container mx-auto ">
+        <div className="mt-4 bg-gradient-to-tr from-white to-blue-100 border-x p-4 rounded-lg shadow-xl">
+          <div className="container mx-auto">
             <form>
               <div className="">
                 <label
@@ -160,6 +189,41 @@ const WorkFromHome = () => {
               </div>
               <div className="mt-4">
                 <label
+                  htmlFor="ipSelect"
+                  className="block text-base font-medium text-gray-700 mb-2"
+                >
+                  Select IP Address
+                </label>
+                {/* <select
+                  id="ipSelect"
+                  value={selectedIp}
+                  onChange={handleIpChange}
+                  className="p-2 text-sm border border-gray-300 rounded-md block w-full"
+                  disabled={isLoading}
+                >
+                  <option value="">Select an IP address</option>
+                  {ipAddresses && (
+                    <>
+                      <option value={ipAddresses.public}>
+                        Public IP: {ipAddresses.public}
+                      </option>
+                      <option value={ipAddresses.local}>
+                        Local IP: {ipAddresses.local}
+                      </option>
+                    </>
+                  )}
+                </select> */}
+                <textarea
+                  id="ip"
+                  value={ip}
+                  onChange={(e) => setip(e.target.value)}
+                  rows={1}
+                  className="mt-2 border border-gray-300 p-2 w-full font-poppins rounded-md text-sm"
+                  placeholder="Enter IP address"
+                />
+              </div>
+              <div className="mt-4">
+                <label
                   htmlFor="reason"
                   className="block text-base font-medium text-gray-700"
                 >
@@ -177,7 +241,7 @@ const WorkFromHome = () => {
               <button
                 type="button"
                 onClick={handleApplyButtonClick}
-                className={`mt-4 px-4 py-2 text-base bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black  active:bg-white active:text-white ${
+                className={`mt-4 px-4 py-2 text-base bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black active:bg-white active:text-white ${
                   isApplying ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 disabled={isApplying}

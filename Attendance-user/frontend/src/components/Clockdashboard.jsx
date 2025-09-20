@@ -1,234 +1,11 @@
-// import { Link } from "react-router-dom";
-// import React, { useState, useEffect } from "react";
-// import axios from "axios";
-// import { Baseaxios, LS } from "../Utils/Resuse";
-
-// export default function Clockdashboard() {
-//   const [attendanceData, setAttendanceData] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState(null);
-//   const [selectedMonth, setSelectedMonth] = useState(""); // Set default month
-//   const [selectedYear, setSelectedYear] = useState("");
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [itemsPerPage, setItemsPerPage] = useState(5);
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         const userid = LS.get("userid");
-//         console.log(userid)
-//         const attendanceResponse = await axios.get(
-//           `http://127.0.0.1:8000/clock-records/${userid}`
-//         );
-//         console.log("API Response:", attendanceResponse.data);
-//         setAttendanceData(
-//           attendanceResponse.data &&
-//             Array.isArray(attendanceResponse.data.clock_records)
-//             ? attendanceResponse.data.clock_records
-//             : []
-//         );
-//         setLoading(false);
-//         setError(null);
-//       } catch (error) {
-//         console.error("Error fetching data:", error);
-//         setLoading(false);
-//         setAttendanceData([]);
-//       }
-//     };
-
-//     fetchData();
-//   }, []);
-
-//   useEffect(() => {
-//     const currentDate = new Date();
-//     const currentMonth = currentDate.toLocaleString("default", {
-//       month: "long",
-//     });
-//     setSelectedMonth(currentMonth);
-//   }, []); // Set default month to the current month when the component mounts
-
-//   const months = [
-//     "January",
-//     "February",
-//     "March",
-//     "April",
-//     "May",
-//     "June",
-//     "July",
-//     "August",
-//     "September",
-//     "October",
-//     "November",
-//     "December",
-//   ];
-
-//   const years = ["2024"];
-
-//   const handleMonthChange = (month) => {
-//     setSelectedMonth(month);
-//   };
-
-//   const handleYearChange = (year) => {
-//     setSelectedYear(year);
-//   };
-
-//   const filteredAttendanceData = attendanceData.filter((row) => {
-//     const rowDate = new Date(row.date);
-//     const monthMatch =
-//       !selectedMonth || rowDate.getMonth() === months.indexOf(selectedMonth);
-//     const yearMatch =
-//       !selectedYear || rowDate.getFullYear() === parseInt(selectedYear);
-//     return monthMatch && yearMatch;
-//   });
-
-//   // Pagination logic
-//   const indexOfLastItem = currentPage * itemsPerPage;
-//   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-//   const currentItems = filteredAttendanceData.slice(
-//     indexOfFirstItem,
-//     indexOfLastItem
-//   );
-
-//   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-//   console.log('Filtered Data:', filteredAttendanceData);
-//   return (
-//     <div className="rounded-md w-full px-[7rem] my-4">
-//       <div className="w-full h-full bg-whte shadow-lg rounded-md border border-gray-200">
-//         <header className="px-5 py-4 border-b border-gray-200 flex justify-between items-center">
-//           <h2 className="font-semibold text-gray-800">Timing</h2>
-//           <div>
-//             <select
-//               className="border rounded-md p-1 mr-2 text-sm font-semibold text-gray-800"
-//               onChange={(e) => handleMonthChange(e.target.value)}
-//             >
-//               <option className="font-semibold text-gray-800" value="">
-//                 Months
-//               </option>
-//               {months.map((month, index) => (
-//                 <option
-//                   className="text-sm font-semibold text-gray-600"
-//                   key={index}
-//                   value={month}
-//                 >
-//                   {month}
-//                 </option>
-//               ))}
-//             </select>
-//             <select
-//               className="border rounded-md p-1 text-sm font-semibold text-gray-800"
-//               onChange={(e) => handleYearChange(e.target.value)}
-//             >
-//               <option className="font-semibold text-gray-800" value="">
-//                 Years
-//               </option>
-//               {years.map((year, index) => (
-//                 <option
-//                   className="text-sm font-semibold text-gray-600"
-//                   key={index}
-//                   value={year}
-//                 >
-//                   {year}
-//                 </option>
-//               ))}
-//             </select>
-//           </div>
-//         </header>
-//         <div className="p-3">
-//           <div>
-//             <table className="table-auto w-full overflow-y-auto">
-//               <thead className="text-xs font-semibold uppercase text-black bg-[#6d9eeb7a]">
-//                 <tr>
-//                   <th className="p-2 whitespace-nowrap">
-//                     <div className="font-semibold text-center">Date</div>
-//                   </th>
-//                   {/* <th className="p-2 whitespace-nowrap">
-//                     <div className="font-semibold text-center">employee ID</div>
-//                   </th> */}
-//                   <th className="p-2 whitespace-nowrap">
-//                     <div className="font-semibold text-center">Login Time</div>
-//                   </th>
-//                   <th className="p-2 whitespace-nowrap">
-//                     <div className="font-semibold text-center">Logout Time</div>
-//                   </th>
-//                   <th className="p-2 whitespace-nowrap">
-//                     <div className="font-semibold text-center">
-//                       Total hours of working
-//                     </div>
-//                   </th>
-//                   <th className="p-2 whitespace-nowrap">
-//                     <div className="font-semibold text-center">Status</div>
-//                   </th>
-//                   <th className="p-2 whitespace-nowrap">
-//                     <div className="font-semibold text-center">Remark</div>
-//                   </th>
-//                 </tr>
-//               </thead>
-//               <tbody className="text-sm divide-y divide-gray-100">
-//                 {currentItems.map((row, index) => (
-//                   <tr key={index}>
-//                     <td className="p-2 whitespace-nowrap">
-//                       <div className="text-center">{row.date}</div>
-//                     </td>
-//                     {/* <td className="p-2 whitespace-nowrap">
-//                       <div className="text-center">{row.Employee_ID}</div>
-//                     </td> */}
-//                     <td className="p-2 whitespace-nowrap">
-//                       <div className="text-center">{row.clockin}</div>
-//                     </td>
-//                     <td className="p-2 whitespace-nowrap">
-//                       <div className="text-center">{row.clockout}</div>
-//                     </td>
-//                     <td className="p-2 whitespace-nowrap">
-//                       <div className="text-center">
-//                         {row.total_hours_worked}
-//                       </div>
-//                     </td>
-//                     <td className="p-2 whitespace-nowrap">
-//                       <div className="text-center">{row.status}</div>
-//                     </td>
-//                     <td className="p-2 whitespace-nowrap">
-//                       <div className="text-center">{row.remark}</div>
-//                     </td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         </div>
-//       </div>
-//       <div className="mt-2 flex justify-between items-center">
-//         <div>
-//           <button
-//             className="py-1 px-3 bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black  active:bg-white active:text-white mr-2"
-//             onClick={() => paginate(currentPage - 1)}
-//             disabled={currentPage === 1}
-//           >
-//             Previous
-//           </button>
-//           <button
-//             className="py-1 px-3 bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black  active:bg-white active:text-white"
-//             onClick={() => paginate(currentPage + 1)}
-//             disabled={indexOfLastItem >= filteredAttendanceData.length}
-//           >
-//             Next
-//           </button>
-//         </div>
-//         <div className="text-sm font-semibold text-gray-800">
-//           Page {filteredAttendanceData.length > 0 ? currentPage : 0} of{" "}
-//           {filteredAttendanceData.length > 0
-//             ? Math.ceil(filteredAttendanceData.length / itemsPerPage)
-//             : 0}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
 import { Link } from "react-router-dom";
 import React, { useState, useEffect } from "react";
-import { Baseaxios, LS } from "../Utils/Resuse";
+import { Baseaxios, LS, ipadr } from "../Utils/Resuse";
+import { DateRangePicker } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import { format ,isEqual, startOfDay} from "date-fns";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 
 export default function Clockdashboard() {
   const [attendanceData, setAttendanceData] = useState([]);
@@ -238,211 +15,265 @@ export default function Clockdashboard() {
   const [selectedYear, setSelectedYear] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [sortDirection, setSortDirection] = useState("desc");
+  const [sortConfig, setSortConfig] = useState({
+    column: null,
+    direction: 'asc'
+  });
+  const [dateRange, setDateRange] = useState([
+    {
+      startDate: null,
+      endDate: null,
+      key: "selection",
+    },
+  ]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const requestOptions = {
-        method: "GET",
-        redirect: "follow"
-      };
-
-      try {
-       const userId = LS.get("userid");
-        console.log(userId)
-        const response = await fetch(`http://127.0.0.1:8000/clock-records/${userId}`, requestOptions);
-        const data = await response.json();
-        
-        console.log("API Response:", data);
-        setAttendanceData(
-          data && Array.isArray(data.clock_records)
-            ? data.clock_records
-            : []
-        );
-        setLoading(false);
-        setError(null);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setLoading(false);
-        setError(error);
-        setAttendanceData([]);
-      }
-    };
-
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const currentDate = new Date();
-    const currentMonth = currentDate.toLocaleString("default", {
-      month: "long",
+  const fetchData = async () => {
+    setLoading(true);
+    const requestOptions = {
+      method: "GET",
+      redirect: "follow"
+    };
+
+    try {
+      const userId = LS.get("userid");
+      const response = await fetch(`${ipadr}/clock-records/${userId}`, requestOptions);
+      const data = await response.json();
+      
+      setAttendanceData(
+        data && Array.isArray(data.clock_records)
+          ? data.clock_records
+          : []
+      );
+      setLoading(false);
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setLoading(false);
+      setError(error);
+      setAttendanceData([]);
+    }
+  };
+
+  const handleDateRangeChange = (ranges) => {
+    const selection = ranges.selection;
+    
+    // If end date is not selected, make it same as start date for single date selection
+    if (selection.startDate && !selection.endDate) {
+      selection.endDate = selection.startDate;
+    }
+    
+    setDateRange([{
+      startDate: selection.startDate,
+      endDate: selection.endDate,
+      key: "selection"
+    }]);
+    
+    setSelectedMonth("");
+    setSelectedYear("");
+    setCurrentPage(1);
+  };
+
+  // const toggleSortDirection = () => {
+  //   setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+  // };
+
+  const handleSort = (column) => {
+    setSortConfig((prev) => ({
+      column,
+      direction: prev.column === column && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+  
+  const sortData = (data) => {
+    if (!sortConfig.column) return data;
+  
+    return [...data].sort((a, b) => {
+      let valA = a[sortConfig.column];
+      let valB = b[sortConfig.column];
+  
+      if (sortConfig.column === "date") {
+        valA = new Date(valA);
+        valB = new Date(valB);
+      }
+  
+      return sortConfig.direction === "asc" ? valA - valB : valB - valA;
     });
-    setSelectedMonth(currentMonth);
-  }, []);
+  };
+  
+  const renderSortIcon = (column) => {
+    if (sortConfig.column === column) {
+      return sortConfig.direction === "asc" ? (
+        <ArrowUp className="inline ml-1 w-4 h-4" />
+      ) : (
+        <ArrowDown className="inline ml-1 w-4 h-4" />
+      );
+    }
+    return <ArrowUpDown className="inline ml-1 w-4 h-4" />;
+  };
+  
 
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  const years = ["2024"];
-
-  const handleMonthChange = (month) => {
-    setSelectedMonth(month);
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return format(date, 'dd/MM/yyyy');
   };
 
-  const handleYearChange = (year) => {
-    setSelectedYear(year);
-  };
-
+  
   const filteredAttendanceData = attendanceData.filter((row) => {
-    const rowDate = new Date(row.date);
-    const monthMatch =
-      !selectedMonth || rowDate.getMonth() === months.indexOf(selectedMonth);
-    const yearMatch =
-      !selectedYear || rowDate.getFullYear() === parseInt(selectedYear);
+    const rowDate = startOfDay(new Date(row.date));
+
+    if (dateRange[0].startDate) {
+      const start = startOfDay(dateRange[0].startDate);
+      const end = dateRange[0].endDate ? startOfDay(dateRange[0].endDate) : start;
+
+      // If it's a single date selection (start date equals end date or end date is null)
+      if (isEqual(start, end) || !dateRange[0].endDate) {
+        return isEqual(rowDate, start);
+      }
+      
+      // For date range selection
+      return rowDate >= start && rowDate <= end;
+    }
+
+    if (!selectedMonth && !selectedYear) {
+      return true; // Show all records if no filter is applied
+    }
+
+    const monthMatch = !selectedMonth || rowDate.getMonth() === months.indexOf(selectedMonth);
+    const yearMatch = !selectedYear || rowDate.getFullYear() === parseInt(selectedYear);
     return monthMatch && yearMatch;
   });
 
+
+  const sortedData = sortData(filteredAttendanceData);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredAttendanceData.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-  );
+  const currentItems = sortedData.slice(indexOfFirstItem, indexOfLastItem);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  
+
   return (
-    <div className="rounded-md w-full px-[7rem] my-4">
-      <div className="w-full h-full bg-whte shadow-lg rounded-md border border-gray-200">
-        <header className="px-5 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="font-semibold text-gray-800">Timing</h2>
-          <div>
-            <select
-              className="border rounded-md p-1 mr-2 text-sm font-semibold text-gray-800"
-              onChange={(e) => handleMonthChange(e.target.value)}
-            >
-              <option className="font-semibold text-gray-800" value="">
-                Months
-              </option>
-              {months.map((month, index) => (
-                <option
-                  className="text-sm font-semibold text-gray-600"
-                  key={index}
-                  value={month}
-                >
-                  {month}
-                </option>
-              ))}
-            </select>
-            <select
-              className="border rounded-md p-1 text-sm font-semibold text-gray-800"
-              onChange={(e) => handleYearChange(e.target.value)}
-            >
-              <option className="font-semibold text-gray-800" value="">
-                Years
-              </option>
-              {years.map((year, index) => (
-                <option
-                  className="text-sm font-semibold text-gray-600"
-                  key={index}
-                  value={year}
-                >
-                  {year}
-                </option>
-              ))}
-            </select>
+
+
+<div className="rounded-md w-full px-[7rem] my-4">
+<div className="w-full h-full bg-whte shadow-lg rounded-md border border-gray-200">
+  <header className="px-5 py-4 border-b border-gray-200 flex justify-between items-center">
+    <h2 className="font-semibold text-gray-800">Timing</h2>
+    <div className="flex items-center gap-4">
+      <div className="relative">
+        <button
+          onClick={() => setShowDatePicker(!showDatePicker)}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          {showDatePicker ? 'Hide Date Range' : 'Show Date Range'}
+        </button>
+        {showDatePicker && (
+          <div className="absolute right-0 top-12 z-50 bg-white shadow-lg rounded-md border">
+            <DateRangePicker
+              ranges={dateRange}
+              onChange={handleDateRangeChange}
+              moveRangeOnFirstSelection={false}
+            />
           </div>
-        </header>
+        )}
+      </div>
+     
+    </div>
+  </header>
+
         <div className="p-3">
-          <div>
-            <table className="table-auto w-full overflow-y-auto">
-              <thead className="text-xs font-semibold uppercase text-black bg-[#6d9eeb7a]">
-                <tr>
+          {loading ? (
+            <div className="text-center py-4">Loading...</div>
+          ) : error ? (
+            <div className="text-center text-red-500 py-4">Error loading data</div>
+          ) : (
+            <div>
+              <table className="table-auto w-full overflow-y-auto">
+                <thead className="text-xs font-semibold uppercase text-black bg-[#6d9eeb7a]">
+                  <tr>
                   <th className="p-2 whitespace-nowrap">
-                    <div className="font-semibold text-center">Date</div>
-                  </th>
-                  <th className="p-2 whitespace-nowrap">
-                    <div className="font-semibold text-center">Login Time</div>
-                  </th>
-                  <th className="p-2 whitespace-nowrap">
-                    <div className="font-semibold text-center">Logout Time</div>
-                  </th>
-                  <th className="p-2 whitespace-nowrap">
-                    <div className="font-semibold text-center">
-                      Total hours of working
-                    </div>
-                  </th>
-                  <th className="p-2 whitespace-nowrap">
-                    <div className="font-semibold text-center">Status</div>
-                  </th>
-                  <th className="p-2 whitespace-nowrap">
-                    <div className="font-semibold text-center">Remark</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-sm divide-y divide-gray-100">
-                {currentItems.map((row, index) => (
-                  <tr key={index}>
-                    <td className="p-2 whitespace-nowrap">
-                      <div className="text-center">{row.date}</div>
-                    </td>
-                    <td className="p-2 whitespace-nowrap">
-                      <div className="text-center">{row.clockin}</div>
-                    </td>
-                    <td className="p-2 whitespace-nowrap">
-                      <div className="text-center">{row.clockout}</div>
-                    </td>
-                    <td className="p-2 whitespace-nowrap">
-                      <div className="text-center">
-                        {row.total_hours_worked}
-                      </div>
-                    </td>
-                    <td className="p-2 whitespace-nowrap">
-                      <div className="text-center">{row.status}</div>
-                    </td>
-                    <td className="p-2 whitespace-nowrap">
-                      <div className="text-center">{row.remark}</div>
-                    </td>
+  <div
+    className="font-semibold text-center flex items-center justify-center cursor-pointer"
+    onClick={() => handleSort("date")}
+  >
+    Date {renderSortIcon("date")}
+  </div>
+</th>
+
+                    <th className="p-2 whitespace-nowrap">
+                      <div className="font-semibold text-center">Login Time</div>
+                    </th>
+                    <th className="p-2 whitespace-nowrap">
+                      <div className="font-semibold text-center">Logout Time</div>
+                    </th>
+                    <th className="p-2 whitespace-nowrap">
+                      <div className="font-semibold text-center">Total hours of working</div>
+                    </th>
+                    <th className="p-2 whitespace-nowrap">
+                      <div className="font-semibold text-center">Status</div>
+                    </th>
+                    <th className="p-2 whitespace-nowrap">
+                      <div className="font-semibold text-center">Remark</div>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="text-sm divide-y divide-gray-100">
+                  {currentItems.map((row, index) => (
+                    <tr key={index}>
+                      <td className="p-2 whitespace-nowrap">
+                        <div className="text-center">{formatDate(row.date)}</div>
+                      </td>
+                      <td className="p-2 whitespace-nowrap">
+                        <div className="text-center">{row.clockin}</div>
+                      </td>
+                      <td className="p-2 whitespace-nowrap">
+                        <div className="text-center">{row.clockout}</div>
+                      </td>
+                      <td className="p-2 whitespace-nowrap">
+                        <div className="text-center">{row.total_hours_worked}</div>
+                      </td>
+                      <td className="p-2 whitespace-nowrap">
+                        <div className="text-center">{row.status}</div>
+                      </td>
+                      <td className="p-2 whitespace-nowrap">
+                        <div className="text-center">{row.remark}</div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
       <div className="mt-2 flex justify-between items-center">
         <div>
           <button
-            className="py-1 px-3 bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black  active:bg-white active:text-white mr-2"
+            className="py-1 px-3 bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black active:bg-white active:text-white mr-2"
             onClick={() => paginate(currentPage - 1)}
             disabled={currentPage === 1}
           >
             Previous
           </button>
           <button
-            className="py-1 px-3 bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black  active:bg-white active:text-white"
+            className="py-1 px-3 bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black active:bg-white active:text-white"
             onClick={() => paginate(currentPage + 1)}
-            disabled={indexOfLastItem >= filteredAttendanceData.length}
+            disabled={indexOfLastItem >= sortedData.length}
           >
             Next
           </button>
         </div>
         <div className="text-sm font-semibold text-gray-800">
-          Page {filteredAttendanceData.length > 0 ? currentPage : 0} of{" "}
-          {filteredAttendanceData.length > 0
-            ? Math.ceil(filteredAttendanceData.length / itemsPerPage)
+          Page {sortedData.length > 0 ? currentPage : 0} of{" "}
+          {sortedData.length > 0
+            ? Math.ceil(sortedData.length / itemsPerPage)
             : 0}
         </div>
       </div>

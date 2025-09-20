@@ -26,11 +26,11 @@ update_fields = {
 }
 
 # Check if the record exists for the given user and date
-existing_record = Attendance.find_one({"userid": user_id, "date": new_date.strftime("%Y-%m-%d")})
+existing_record = Attendance.find_one({"userid": user_id, "": new_date.strftime("%Y-%m-%d")})
 
 if existing_record:
     # Update the existing record
-    Attendance.update_one(
+    Attendance.update_one(date
         {"_id": existing_record["_id"]},
         {"$set": update_fields}
     )
