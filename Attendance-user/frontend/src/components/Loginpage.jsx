@@ -17,67 +17,128 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { SetStatedata } = Authdata();
 
-  const handleGoogleLogin = async (credentialResponse) => {
+ const getIpInfo = async () => {
+    
+    
     try {
-      console.log("Starting Google login process...");
-
-      // Decode Google JWT
-      let userDecode = jwtDecode(credentialResponse.credential);
-      console.log("Google credentials decoded:", {
-        name: userDecode.name,
-        email: userDecode.email
-      });
-
-      // Call backend
-      const res = await Apisignin({
-        client_name: userDecode.name,
-        email: userDecode.email,
-      });
-      console.log("API signin response:", res);
-
-      // Store user data in localStorage
-      localStorage.setItem("userid", res._id || res.id);
-      localStorage.setItem("name", res.name);
-      localStorage.setItem("email", res.email);
-      localStorage.setItem("isloggedin", res.isloggedin.toString());
-      localStorage.setItem("isadmin", res.isadmin.toString());
-      localStorage.setItem("access_token", res.access_token);
-
-      // Also save using LS utility
-      LS.save("userid", res._id || res.id);
-      LS.save("name", res.name);
-      LS.save("email", res.email);
-      LS.save("access_token", res.access_token);
-      LS.save("Auth", true);
-
-      // Navigation based on user role
-      const loggedIn = res.isloggedin;
-      const isAdmin = res.isadmin;
-
-      console.log("Navigation check:", { loggedIn, isAdmin });
-
-      if (loggedIn && isAdmin) {
-        console.log("Navigating to admin dashboard");
-        navigate("admin/time", {
-          state: { userid: res._id || res.id, token: res.access_token },
-        });
-      } else if (loggedIn && !isAdmin) {
-        console.log("Navigating to user dashboard");
-        navigate("User/Clockin_int", {
-          state: { userid: res._id || res.id, token: res.access_token },
-        });
-      } else {
-        toast.error("Login failed. Please contact administrator.");
-      }
-
-      // Show success message
-      toast.success("Login successful!");
+      console.log("Attempting to reach:", `${ipadr}/ip-info`);
       
-    } catch (err) {
-      console.error("Login error:", err);
-      toast.error("An error occurred during login. Please try again.");
+      const response = await fetch(`${ipadr}/ip-info`, {
+        method: "GET",
+        redirect: "follow",
+        // Adding these options might help with certificate issues
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log("Current IP Information:", {
+        publicIp: result.public_ip,
+        localIp: result.local_ip
+      });
+      
+      return {
+        publicIp: result.public_ip,
+        localIp: result.local_ip
+      };
+    } catch (error) {
+      console.error("Error fetching IP info:", error);
+      return null;
     }
   };
+  const validateIp = (userIp, currentIps) => {
+    if (!userIp) {
+      console.log("No IP validation needed - IP not present in response");
+      return true;
+    }
+    
+    console.log("Performing IP validation:");
+    console.log("User IP from response:", userIp);
+    console.log("Current Public IP:", currentIps.publicIp);
+    console.log("Current Local IP:", currentIps.localIp);
+    
+    const matchesPublic = currentIps.publicIp === userIp;
+    const matchesLocal = currentIps.localIp === userIp;
+    
+    console.log("Matches public IP:", matchesPublic);
+    console.log("Matches local IP:", matchesLocal);
+    
+    return matchesPublic || matchesLocal;
+  };
+
+const handleGoogleLogin = async (credentialResponse) => {
+  try {
+    console.log("Starting Google login process...");
+
+    // First get the current IP information
+    const currentIps = await getIpInfo();
+    console.log("Retrieved current IPs:", currentIps);
+
+    // Decode Google JWT
+    let userDecode = jwtDecode(credentialResponse.credential);
+    console.log("Google credentials decoded:", {
+      name: userDecode.name,
+      email: userDecode.email
+    });
+
+    // Call backend
+    const res = await Apisignin({
+      client_name: userDecode.name,
+      email: userDecode.email,
+    });
+    console.log("API signin response:", res);
+
+    // ✅ Store userid correctly
+    localStorage.setItem("userid", res._id || res.id);
+    LS.save("userid", res._id || res.id);
+
+    localStorage.setItem("name", res.name);
+    localStorage.setItem("email", res.email);
+    localStorage.setItem("isloggedin", res.isloggedin.toString());
+    localStorage.setItem("isadmin", res.isadmin.toString());
+    localStorage.setItem("access_token", res.access_token);
+
+    // IP validation
+    if (res.ip) {
+      console.log("IP validation required. Response IP:", res.ip);
+      if (!validateIp(res.ip, currentIps)) {
+        console.log("IP validation failed!");
+        toast.error("Remote work IP is mismatched. Please connect from an authorized network.");
+        return;
+      }
+      console.log("IP validation successful!");
+    } else {
+      console.log("No IP validation required");
+    }
+
+    // Navigation
+    const loggedIn = res.isloggedin;
+    const isAdmin = res.isadmin;
+
+    console.log("Navigation check:", { loggedIn, isAdmin });
+
+    if (loggedIn && isAdmin) {
+      navigate("admin/time", {
+        state: { userid: res._id || res.id, token: res.access_token },
+      });
+    } else if (loggedIn && !isAdmin) {
+      navigate("User/Clockin_int", {
+        state: { userid: res._id || res.id, token: res.access_token },
+      });
+    } else {
+      toast.error("Login failed. Please contact administrator.");
+    }
+  } catch (err) {
+    console.error("Login error:", err);
+    toast.error("An error occurred during login. Please try again.");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
