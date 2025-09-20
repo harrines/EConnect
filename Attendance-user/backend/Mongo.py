@@ -10,20 +10,28 @@ from pymongo import MongoClient
 from dateutil import parser
 from bson import json_util
 from bson import ObjectId
+import os
+from datetime import datetime, date
 import bcrypt, requests, socket
 import pytz 
 import json
+import traceback
 
-client= MongoClient("mongodb://localhost:27017")
-client=client.RBG_AI
-Users=client.Users
-Add=client.Dataset
-Leave=client.Leave_Details
-Clock=client.Attendance
-RemoteWork = client.RemoteWork
-admin = client.admin
-Tasks = client.tasks
-Managers = client.managers
+
+from pymongo import MongoClient
+
+client = MongoClient("mongodb://localhost:27017")
+db = client["RBG_AI"]
+
+Users = db["Users"]
+Add = db.Dataset
+Leave = db.Leave_Details
+Clock = db.Attendance
+RemoteWork = db.RemoteWork
+admin = db.admin
+Tasks = db.tasks
+Managers = db.managers
+
 
 # Others
 def Adddata(data,id,filename):
@@ -126,30 +134,45 @@ def admin_signin(checkuser, password, email):
             checkuser=cleanid(checkuser)
             checkuser.update(a)
             return {"jwt":a, "Details":b, "isadmin":True}
-     
+
 # Google Signin      
-def Gsignin(client_name,email):
-    checkuser=Users.find_one({'email': email})
-    checkadmin=admin.find_one({'email': email})
-    checkmanager=Managers.find_one({'email': email})
+def Gsignin(client_name, email):
+    checkuser = Users.find_one({'email': email})
+    checkadmin = admin.find_one({'email': email})
+    checkmanager = Managers.find_one({'email': email})
     selected_date = date.today().strftime("%d-%m-%Y")
-    if (checkuser):
-            a=signJWT(client_name)
-            b=checkuser
-            checkuser=cleanid(checkuser)
-            checkuser.update(a)
-            print(checkuser)
-            checkuser.update({"isloggedin":True, "isadmin":False})
-            return checkuser
-    elif (checkadmin):
+
+    if checkuser:
+        a = signJWT(client_name)
+        b = checkuser
+        checkuser = cleanid(checkuser)
+        checkuser.update(a)
+        is_admin_from_db = checkuser.get("isadmin", False)
+        checkuser.update({"isloggedin": True, "isadmin": is_admin_from_db})
+        # checkuser.update({"isloggedin": True, "isadmin": False})
+        return checkuser
+    elif checkadmin:
         result = admin_Gsignin(checkadmin, client_name)
         return result
-    elif (checkmanager):
+    elif checkmanager:
         result = manager_Gsignin(checkmanager, client_name)
-        print(result)
         return result
     else:
-        raise HTTPException(status_code=300, detail="Given Email does not exists")
+        # Auto-create a new user if email doesn't exist
+        new_user = {
+            "name": client_name,
+            "email": email,
+            "isadmin": False,
+            "isloggedin": True,
+            "created_at": selected_date,
+        }
+        inserted_id = Users.insert_one(new_user).inserted_id
+        user_doc = Users.find_one({"_id": inserted_id})
+        user_doc = cleanid(user_doc)
+        jwt_token = signJWT(client_name)
+        user_doc.update(jwt_token)
+        return user_doc
+
 
 # UserID
 def Userbyid(id):
@@ -403,9 +426,9 @@ def get_attendance_by_date():
 # Employee ID
 def get_employee_id_from_db(name: str):
     try:
-        user = Users.find_one({'name': name}, {'userid': 1})
+        user = Users.find_one({'name': name}, {'_id': 1})
         if user:
-            return user["userid"]
+            return str(user["_id"])
         else:
             return None
     except Exception as e:
@@ -706,35 +729,70 @@ def get_user_leave_requests(selected_option):
     return leave_request
 
 # Admin Page Leave Requests
-def get_manager_leave_requests(selected_option):
-    managers = list(Users.find({"position": "Manager"}))
+# def get_manager_leave_requests(selected_option):
+#     managers = list(Users.find({"position": "Manager"}))
+#     print(f"Found {len(managers)} managers")
     
-    # Prepare a list of manager IDs
-    manager_ids = [str(manager["userid"]) for manager in managers]
+#     # Prepare a list of manager IDs
+#     manager_ids = [str(manager["_id"]) for manager in managers]
+#     print(f"Manager IDs: {manager_ids}")
+
+#     # Debug: Check what leave requests exist for managers
+#     all_manager_leaves = list(Leave.find({"userid": {"$in": manager_ids}}))
+#     print(f"Total manager leaves in DB: {len(all_manager_leaves)}")
+    
+#     # Check status values
+#     status_values = [leave.get("status") for leave in all_manager_leaves]
+#     print(f"Status values found: {set(status_values)}")
+
+#     if selected_option == "Leave":
+#         leave_request = list(Leave.find({
+#             "leaveType": {"$in": ["Sick Leave", "Casual Leave", "Bonus Leave"]},
+#             "status": {"$exists": False},
+#             "userid": {"$in": manager_ids}
+#         }))
+#         print(f"Found {len(leave_request)} leave requests with no status")
+        
+#         # Also check what would be found with different status conditions
+#         with_status = list(Leave.find({
+#             "leaveType": {"$in": ["Sick Leave", "Casual Leave", "Bonus Leave"]},
+#             "userid": {"$in": manager_ids}
+#         }))
+#         print(f"Total leave requests (any status): {len(with_status)}")
+        
+#     # ... rest of your conditions
+    
+#     return leave_request
+
+# Admin Page Leave Requests
+def get_manager_leave_requests(selected_option):
+    # Get Manager + HR IDs
+    managers_and_hr = list(Users.find({"position": {"$in": ["Manager", "HR"]}}))
+    user_ids = [str(user["_id"]) for user in managers_and_hr]
+
 
     if selected_option == "Leave":
         leave_request = list(Leave.find({
             "leaveType": {"$in": ["Sick Leave", "Casual Leave", "Bonus Leave"]},
-            "status": {"$exists":False},
-            "userid": {"$in": manager_ids}
+            "status": {"$exists": False},
+            "userid": {"$in": user_ids}
         }))
-        print(leave_request)
     elif selected_option == "LOP":
         leave_request = list(Leave.find({
             "leaveType": "Other Leave",
-            "status": {"$exists":False},
-            "userid": {"$in": manager_ids}
+            "status": {"$exists": False},
+            "userid": {"$in": user_ids}
         }))
     elif selected_option == "Permission":
         leave_request = list(Leave.find({
             "leaveType": "Permission",
-            "status": {"$exists":False},
-            "userid": {"$in": manager_ids}
+            "status": {"$exists": False},
+            "userid": {"$in": user_ids}
         }))
     else:
         leave_request = []
     
-    # Clean the IDs for each leave request
+    # Process the results
     for index, leave in enumerate(leave_request):
         leave_request[index] = cleanid(leave)
 
@@ -754,7 +812,7 @@ def get_only_user_leave_requests(selected_option,TL_name):
     users = list(Users.find({"position": {"$ne":"Manager"}, "name":{"$ne":TL_name}, "TL":TL_name}))
      
     # Prepare a list of user IDs
-    user_ids = [str(user["userid"]) for user in users]
+    user_ids = [str(user["_id"]) for user in users]
 
     if selected_option == "Leave":
         leave_request = list(Leave.find({
@@ -839,7 +897,7 @@ def recommend_manager_leave_requests_status_in_mongo(leave_id, status):
 def get_approved_leave_history(TL_name):
     users = list(Users.find({"position": {"$ne":"Manager"},"TL":TL_name}))
     # Prepare a list of user IDs
-    user_ids = [str(user["userid"]) for user in users]
+    user_ids = [str(user["_id"]) for user in users]
     
     if users:
         leave_requests = list(Leave.find({"userid": {"$in": user_ids}, "status": "Approved"},{"_id":0}))
@@ -898,7 +956,7 @@ def managers_leave_recommend_notification():
     managers = list(Users.find({"position": "Manager"}))
     
     # Prepare a list of manager IDs
-    manager_ids = [str(manager["userid"]) for manager in managers]
+    manager_ids = [str(manager["_id"]) for manager in managers]
 
     sick_leave = Leave.count_documents({"userid": {"$in":manager_ids}, "leaveType": "Sick Leave", "Recommendation": {"$exists": False}, "status": {"$exists": False}})
     casual_leave = Leave.count_documents({"userid": {"$in":manager_ids}, "leaveType": "Casual Leave", "Recommedation":  {"$exists": False} , "status": {"$exists": False}})
@@ -949,6 +1007,10 @@ def users_leave_recommend_notification(TL):
     print(message)
     return message
 
+
+import traceback
+from bson import ObjectId
+from fastapi import HTTPException
 
 def store_remote_work_request(userid, employeeName, time, from_date, to_date, request_date, reason, ip):
     try:
@@ -1011,6 +1073,7 @@ def store_remote_work_request(userid, employeeName, time, from_date, to_date, re
         return "An error occurred while processing the request."
 
 
+
 # User Remote Work History
 def Remote_History_Details(userid:str):
     Remote_History = list(RemoteWork.find({'userid' : userid},{'_id':0}))
@@ -1039,7 +1102,7 @@ def get_admin_page_remote_work_requests():
     managers = list(Users.find({"$or":[{"position": "Manager"}, {"department": "HR"}]}))
     
     # Prepare a list of manager IDs
-    manager_ids = [str(manager["userid"]) for manager in managers]
+    manager_ids = [str(manager["_id"]) for manager in managers]
     list1 = list()
     res = RemoteWork.find({"userid": {"$in":manager_ids}, "Recommendation": {"$exists":False}, "status": {"$exists":False}})
     print(res)
@@ -1056,7 +1119,7 @@ def get_TL_page_remote_work_requests(TL):
     users = list(Users.find({"TL":TL}))
     
     # Prepare a list of manager IDs
-    users_ids = [str(user["userid"]) for user in users]
+    users_ids = [str(user["_id"]) for user in users]
     list1 = list()
     res = RemoteWork.find({"userid": {"$in":users_ids}, "status": {"$exists": False}, "Recommendation":{"$exists":False}})
     print(res)
@@ -1238,7 +1301,7 @@ def get_all_users():
         user_list = []
         for user in users:
             user_data = {
-                "id": str(user["userid"]),  # Convert ObjectId to string
+                "id": str(user["_id"]),  # Convert ObjectId to string
                 "email": user.get("email"),
                 "name": user.get("name"),
                 "department": user.get("department"),
@@ -1252,17 +1315,39 @@ def get_admin_info(email):
     admin_info = admin.find_one({'email':email}, {"password":0})
     return admin_info
 
-def add_task_list(tasks, userid: str, today, due_date):
-    for task in tasks:
-        t = {
-            "task": task,
-            "status": "Not completed",
-            "date": today,
-            "due_date": due_date,
-            "userid": userid,
-        }
-        result = Tasks.insert_one(t)
-    return "Task added Successfully"
+# def add_task_list(tasks, userid: str, today, due_date):
+#     for task in tasks:
+#         t = {
+#             "task": task,
+#             "status": "Not completed",
+#             "date": today,
+#             "due_date": due_date,
+#             "userid": userid,
+#         }
+#         result = Tasks.insert_one(t)
+#     return "Task added Successfully"
+
+def iso_today():
+    return datetime.now().strftime("%Y-%m-%d")
+
+def add_task_list(task, userid, date, due_date, assigned_by="self",priority="Medium", subtasks=None, comments=None,files=None):
+    task_entry = {
+        "task": task,
+        "status": "Not completed",
+        # ✅ format here
+        "date": datetime.strptime(date, "%Y-%m-%d").strftime("%d-%m-%Y"),
+        "due_date": datetime.strptime(due_date, "%Y-%m-%d").strftime("%y-%m-%d"),
+        "userid": userid,
+        # "assigned_by": assigned_by,
+        "assigned_by": assigned_by if assigned_by else "HR",
+        "priority":priority,
+        "subtasks": subtasks or [],
+        "comments": comments or [],           # NEW
+        "files": files or [],              # NEW
+}
+    result = Tasks.insert_one(task_entry)
+    return str(result.inserted_id)
+
 
 def manager_task_assignment(task:str, userid: str, TL, today, due_date):
     task = {
@@ -1276,8 +1361,20 @@ def manager_task_assignment(task:str, userid: str, TL, today, due_date):
     result = Tasks.insert_one(task)
     return str(result.inserted_id)
 
-def edit_the_task(taskid, userid, cdate, due_date, updated_task=None, status=None):
+def edit_the_task(
+    taskid,
+    userid,
+    cdate,
+    due_date,
+    updated_task=None,
+    status=None,
+    priority=None,
+    subtasks=None,
+    comments=None,
+    files=None
+):
     update_fields = {}
+
     if updated_task and updated_task != "string":
         update_fields["task"] = updated_task
     if status and status != "string":
@@ -1285,15 +1382,103 @@ def edit_the_task(taskid, userid, cdate, due_date, updated_task=None, status=Non
         update_fields["completed_date"] = cdate
     if due_date and due_date != "string":
         update_fields["due_date"] = due_date
+    if priority and priority != "string":
+        update_fields["priority"] = priority
 
+    # Handle subtasks
+    if subtasks is not None:
+        update_fields["subtasks"] = [
+            {
+                "id": s.get("id", int(datetime.now().timestamp())),
+                "text": s.get("text") or s.get("title", ""),
+                "completed": s.get("completed", s.get("done", False)),
+            }
+            for s in subtasks
+        ]
+
+    # Handle comments
+    if comments is not None:
+        update_fields["comments"] = comments
+
+    # Handle files safely (MERGE with existing DB)
+    if files is not None:
+        # Fetch existing task files
+        existing_task = Tasks.find_one({"_id": ObjectId(taskid)}, {"files": 1})
+        existing_files = {f["id"]: f for f in existing_task.get("files", [])}
+
+        normalized_files = []
+        for f in files:
+            if not isinstance(f, dict):
+                continue
+
+            fid = f.get("id") or f.get("_id")
+            if not fid:
+                continue
+            fid = str(fid)
+
+            base = existing_files.get(fid, {})
+
+            file_entry = {
+                "id": fid,
+                "name": f.get("name", base.get("name", "")),
+                "stored_name": f.get("stored_name") or base.get("stored_name", ""),  # ✅ preserve
+                "path": f.get("path") or base.get("path", ""),                       # ✅ preserve
+                "size": int(f.get("size") or base.get("size", 0)),
+                "type": f.get("type") or base.get("type", ""),
+                "uploadedAt": f.get("uploadedAt") or base.get("uploadedAt") or datetime.utcnow().isoformat(),
+                "uploadedBy": f.get("uploadedBy") or base.get("uploadedBy", "Unknown"),
+            }
+            normalized_files.append(file_entry)
+
+        if normalized_files:
+            update_fields["files"] = normalized_files
+
+    # Update DB
     if update_fields:
-        result = Tasks.update_one({"_id": ObjectId(taskid), "userid": userid}, {"$set": update_fields})
-        if result.matched_count > 0:
-            return "Task updated successfully"
-        else:
-            return "Task not found"
+        result = Tasks.update_one(
+            {"_id": ObjectId(taskid), "userid": userid},
+            {"$set": update_fields}
+        )
+        return "Task updated successfully" if result.matched_count > 0 else "Task not found"
     else:
         return "No fields to update"
+
+
+
+    
+def add_file_to_task(taskid: str, file_data: dict):
+    """
+    Append file metadata to a task's 'files' array.
+    Assumes task._id is an ObjectId in DB.
+    Returns True on success, False otherwise.
+    """
+    try:
+        result = Tasks.update_one(
+            {"_id": ObjectId(taskid)},
+            {"$push": {"files": file_data}}
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        print("Mongo.add_file_to_task error:", e)
+        return False
+
+
+def get_task_file_metadata(taskid: str, fileid: str):
+    """
+    Return the metadata dict for a single file inside task.files[].
+    Returns None if not found.
+    """
+    try:
+        task = Tasks.find_one(
+            {"_id": ObjectId(taskid), "files.id": fileid},
+            {"files.$": 1}  # project only the matching file element
+        )
+        if not task or "files" not in task:
+            return None
+        return task["files"][0]
+    except Exception as e:
+        print("Mongo.get_task_file_metadata error:", e)
+        return None
 
 
 def delete_a_task(taskid):
@@ -1305,10 +1490,48 @@ def delete_a_task(taskid):
     except Exception as e:
         return f"Error: {str(e)}"
 
+def get_the_tasks(userid: str, date: str = None):
+    query = {"userid": userid}
 
+    if date:
+        query["date"] = date  
 
-def get_the_tasks(userid:str):
-    tasks = list(Tasks.find({"userid":userid}))
+    tasks = list(Tasks.find(query))
+    task_list = []
+    for task in tasks:
+
+        files = []
+        for file in task.get("files", []):
+            if isinstance(file, dict) and '_id' in file:
+                file_copy = file.copy()
+                file_copy['id'] = str(file_copy['_id'])
+                del file_copy['_id']
+                files.append(file_copy)
+            else:
+                files.append(file)
+        task_data = {
+            "task": task.get("task"),
+            "status": task.get("status"),
+            "date": task.get("date"),
+            "due_date": task.get("due_date"),
+            "userid": task.get("userid"),
+            "assigned_by": task.get("assigned_by", "self"),
+            "priority": task.get("priority", "Medium"),
+            "subtasks": task.get("subtasks", []),   # ✅ ensure always list
+            "comments": task.get("comments", []),   # ✅ new
+            "files": files,        # ✅ new
+            "taskid": str(task.get("_id"))
+        }
+        task_list.append(task_data)
+
+    return task_list
+
+def get_assigned_tasks(manager_name: str, userid: str = None):
+    query = {"assigned_by": manager_name}
+    if userid:
+        query["userid"] = userid
+
+    tasks = list(Tasks.find(query))
     task_list = []
     for task in tasks:
         task_data = {
@@ -1317,19 +1540,127 @@ def get_the_tasks(userid:str):
             "date": task.get("date"),
             "due_date": task.get("due_date"),
             "userid": task.get("userid"),
+            "assigned_by": task.get("assigned_by", "self"),
+            "priority": task.get("priority", "Medium"),
+            "subtasks": task.get("subtasks", []),  
+            "comments": task.get("comments", []),  
+            "files": task.get("files", []),      
             "taskid": str(task.get("_id"))
         }
-        task_list.append(task_data)  
+        task_list.append(task_data)
+
     return task_list
 
-def get_user_info(userid):
-    result = Users.find_one({"userid":userid},{"_id":0,"password":0})
-    return result
+def get_manager_only_tasks(userid: str, date: str = None):
+    query = {"userid": userid, "assigned_by": {"$ne": "self"}}
+    if date:
+        query["date"] = date  
 
-def get_admin_information(adminid):
-    print(adminid)
-    result = admin.find_one({"_id":ObjectId(adminid)},{"_id":0,"password":0})
-    return result
+    tasks = list(Tasks.find(query))
+    task_list = []
+    for task in tasks:
+        # Handle files consistently - convert _id to id
+        files = []
+        for file in task.get("files", []):
+            if isinstance(file, dict) and '_id' in file:
+                file_copy = file.copy()
+                file_copy['id'] = str(file_copy['_id'])
+                del file_copy['_id']
+                files.append(file_copy)
+            else:
+                files.append(file)
+                
+        task_data = {
+            "task": task.get("task"),
+            "status": task.get("status"),
+            "date": task.get("date"),
+            "due_date": task.get("due_date"),
+            "userid": task.get("userid"),
+            "assigned_by": task.get("assigned_by", "self"),
+            "priority": task.get("priority", "Medium"),
+            "subtasks": task.get("subtasks", []),
+            "comments": task.get("comments", []),
+            "files": files,  # Use processed files
+            "taskid": str(task.get("_id"))
+        }
+        task_list.append(task_data)
+
+    return task_list
+
+def get_assigned_tasks(manager_name: str, userid: str = None):
+    query = {"assigned_by": manager_name}
+    if userid:
+        query["userid"] = userid
+    tasks = list(Tasks.find(query))
+    task_list = []
+    for task in tasks:
+        # Handle files consistently - convert _id to id
+        files = []
+        for file in task.get("files", []):
+            if isinstance(file, dict) and '_id' in file:
+                file_copy = file.copy()
+                file_copy['id'] = str(file_copy['_id'])
+                del file_copy['_id']
+                files.append(file_copy)
+            else:
+                files.append(file)
+                
+        task_data = {
+            "task": task.get("task"),
+            "status": task.get("status"),
+            "date": task.get("date"),
+            "due_date": task.get("due_date"),
+            "userid": task.get("userid"),
+            "assigned_by": task.get("assigned_by", "self"),
+            "priority": task.get("priority", "Medium"),
+            "subtasks": task.get("subtasks", []),
+            "comments": task.get("comments", []),
+            "files": files,  # Use processed files
+            "taskid": str(task.get("_id"))
+        }
+        task_list.append(task_data)
+    return task_list
+
+# def get_user_info(userid):
+#     result = Users.find_one({"_id": ObjectId(userid)}, {"_id": 0, "password": 0})
+#     return result
+
+def get_user_info(userid):
+    print("Connected DB:", db.name)
+    print("Collection:", Users.name)
+    print("Searching for user ID:", userid)
+    
+    try:
+        obj_id = ObjectId(userid)
+    except Exception as e:
+        return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
+
+    result = Users.find_one({"_id": obj_id}, {"password": 0})
+    if result:
+        result["_id"] = str(result["_id"])  # JSON safe
+        return result
+    else:
+        print("User not found in collection")
+        return {"error": "User not found", "userid": userid}
+
+
+def get_admin_information(userid):
+    # print(userid)
+    # result = admin.find_one({"_id":ObjectId(userid)},{"_id":0,"password":0})
+    # return result
+    try:
+        obj_id = ObjectId(userid)
+    except Exception as e:
+        return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
+
+    result = Users.find_one({"_id": obj_id}, {"password": 0})
+    if result:
+        result["_id"] = str(result["_id"])  # JSON safe
+        return result
+    else:
+        print("User not found in collection")
+        return {"error": "User not found", "userid": userid}
+
 
 def get_last_digits():
     users = Users.find({}, {"userid": 1})  # Querying only 'userid' field
@@ -1356,9 +1687,6 @@ def generate_userid(dept,doj):
 
 
 def add_an_employee(employee_data):
-        # Insert the employee data into the Users collection
-        userid = generate_userid(employee_data["department"],employee_data["date_of_joining"])
-        employee_data["userid"] = userid
         print(employee_data)
         result = Users.insert_one(employee_data)
         return {"message": "Employee details added successfully"}
@@ -1377,12 +1705,58 @@ def get_user_info(userid):
  return result
 
 def edit_an_employee(employee_data):
- try:
- # Insert the employee data into the Users collection
-  result = Users.find_one_and_update({"userid":employee_data["userid"]},{"$set":employee_data})
-  return {"message": "Employee details edited successfully"}
- except Exception as e:
-  raise HTTPException(status_code=500, detail=str(e))
+    """Edit employee data with proper validation"""
+    try:
+        print(f"Editing employee with userid: {employee_data.get('userid')}")
+        print(f"Employee data: {employee_data}")
+        
+        # Validate required fields
+        required_fields = ['userid', 'name', 'email', 'phone', 'position', 'department']
+        for field in required_fields:
+            if not employee_data.get(field):
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+
+        clean_education = [
+            edu for edu in employee_data.get('education', []) 
+            if edu.get('degree') or edu.get('institution') or edu.get('year')
+        ]
+        
+        clean_skills = [
+            skill for skill in employee_data.get('skills', []) 
+            if skill.get('name') and skill.get('level')
+        ]
+        
+        employee_data['education'] = clean_education
+        employee_data['skills'] = clean_skills
+
+        result = Users.find_one_and_update(
+            {"userid": employee_data["userid"]},
+            {"$set": employee_data},
+            return_document=True
+        )
+        
+        if result:
+            return {"message": "Employee details updated successfully"}
+        else:
+            try:
+                obj_id = ObjectId(employee_data["userid"])
+                result = Users.find_one_and_update(
+                    {"_id": obj_id},
+                    {"$set": employee_data},
+                    return_document=True
+                )
+                if result:
+                    return {"message": "Employee details updated successfully"}
+                else:
+                    raise HTTPException(status_code=404, detail="Employee not found")
+            except:
+                raise HTTPException(status_code=404, detail="Employee not found")
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in edit_an_employee: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 def get_managers() :
     users = list(Users.find({"position": "Manager"}, {"_id":0}))
@@ -1394,15 +1768,19 @@ def task_assign_to_multiple_users(task_details):
     inserted_ids = []
     
     for item in task_details:
-        tasks = item.get("Tasks", [])  # Extracting tasks from Task_details
+        tasks = item.get("Tasks", [])
         for task in tasks:
             task_entry = {
-                "task": task,
+                "task": [task],
                 "status": "Not completed",
                 "date": datetime.strptime(item["date"], "%Y-%m-%d").strftime("%d-%m-%Y"),
                 "due_date": datetime.strptime(item["due_date"], "%Y-%m-%d").strftime("%d-%m-%Y"),
                 "userid": item["userid"],
-                "TL": item["TL"],
+                "assigned_by": item.get("assigned_by") or "HR",
+                "priority": item.get("priority", "Medium"),
+                "subtasks": item.get("subtasks", []),
+                "comments": item.get("comments", []), 
+                "files": item.get("files", []),                     
             }
             result = Tasks.insert_one(task_entry)
             inserted_ids.append(str(result.inserted_id))
@@ -1410,17 +1788,55 @@ def task_assign_to_multiple_users(task_details):
     return inserted_ids
 
 
+# def get_single_task(taskid):
+#     tasks = list(Tasks.find({"_id": ObjectId(taskid)}))
+#     for task in tasks:
+#         task["_id"] = str(task.get("_id"))
+#     return tasks
 def get_single_task(taskid):
-    tasks = list(Tasks.find({"_id": ObjectId(taskid)}))
-    for task in tasks:
-        task["_id"] = str(task.get("_id"))
-    return tasks
+    try:
+        task = Tasks.find_one({"_id": ObjectId(taskid)})
+        if task:
+            task["_id"] = str(task.get("_id"))
+            return {"task": task}
+        else:
+            raise HTTPException(status_code=404, detail="Task not found")
+    except Exception as e:
+        print("Error in get_single_task:", e)
+        raise HTTPException(status_code=400, detail="Invalid task ID")
 
-def assigned_task(tl, userid=None):
+def assigned_task(manager_name, userid=None):
     if userid:
-        tasks = list(Tasks.find({"userid": userid, "TL":tl}))
+        tasks = list(Tasks.find({"userid": userid, "assigned_by": manager_name}))
     else:
-        tasks = list(Tasks.find({"TL":tl}))
+        tasks = list(Tasks.find({"assigned_by": manager_name}))
+    
+    task_list = []
+    for task in tasks:
+        task_data = {
+    "task": task.get("task"),
+    "status": task.get("status"),
+    "date": task.get("date"),
+    "due_date": task.get("due_date"),
+    "userid": task.get("userid"),
+    "assigned_by": task.get("assigned_by", "self"),
+    "priority": task.get("priority", "Medium"),
+    "subtasks": task.get("subtasks", []),
+    "comments": task.get("comments", []),
+    "files": task.get("files", []),
+    "taskid": str(task.get("_id"))
+}
+        task_list.append(task_data)  
+    return task_list
+
+def get_hr_assigned_tasks(hr_name: str, userid: str = None, date: str = None):
+    query = {"assigned_by": hr_name}
+    if userid:
+        query["userid"] = userid
+    if date:
+        query["date"] = date  
+
+    tasks = list(Tasks.find(query))
     task_list = []
     for task in tasks:
         task_data = {
@@ -1429,10 +1845,94 @@ def assigned_task(tl, userid=None):
             "date": task.get("date"),
             "due_date": task.get("due_date"),
             "userid": task.get("userid"),
+            "assigned_by": task.get("assigned_by", "self"),
+            "priority": task.get("priority", "Medium"),
             "taskid": str(task.get("_id"))
         }
-        task_list.append(task_data)  
+        task_list.append(task_data)
+
     return task_list
+def get_manager_hr_assigned_tasks(userid: str, date: str = None):
+    # Manager should only see tasks assigned by HR, not self-assigned
+    query = {"userid": userid, "assigned_by": {"$ne": "self"}}
+    if date:
+        query["date"] = date  
+
+    tasks = list(Tasks.find(query))
+    task_list = []
+    for task in tasks:
+        # Handle files consistently - convert _id to id
+        files = []
+        for file in task.get("files", []):
+            if isinstance(file, dict) and '_id' in file:
+                file_copy = file.copy()
+                file_copy['id'] = str(file_copy['_id'])
+                del file_copy['_id']
+                files.append(file_copy)
+            else:
+                files.append(file)
+                
+        task_data = {
+            "task": task.get("task"),
+            "status": task.get("status"),
+            "date": task.get("date"),
+            "due_date": task.get("due_date"),
+            "userid": task.get("userid"),
+            "assigned_by": task.get("assigned_by", "self"),
+            "priority": task.get("priority", "Medium"),
+            "subtasks": task.get("subtasks", []),
+            "comments": task.get("comments", []),
+            "files": files,
+            "taskid": str(task.get("_id"))
+        }
+        task_list.append(task_data)
+
+    return task_list
+
+def get_hr_self_assigned_tasks(userid: str, date: str = None):
+    # HR should see their self-assigned tasks
+    query = {"userid": userid, "assigned_by": "self"}
+    if date:
+        query["date"] = date  
+
+    tasks = list(Tasks.find(query))
+    task_list = []
+    for task in tasks:
+        files = []
+        for file in task.get("files", []):
+            if isinstance(file, dict) and '_id' in file:
+                file_copy = file.copy()
+                file_copy['id'] = str(file_copy['_id'])
+                del file_copy['_id']
+                files.append(file_copy)
+            else:
+                files.append(file)
+                
+        task_data = {
+            "task": task.get("task"),
+            "status": task.get("status"),
+            "date": task.get("date"),
+            "due_date": task.get("due_date"),
+            "userid": task.get("userid"),
+            "assigned_by": task.get("assigned_by", "self"),
+            "priority": task.get("priority", "Medium"),
+            "subtasks": task.get("subtasks", []),
+            "comments": task.get("comments", []),
+            "files": files,
+            "taskid": str(task.get("_id"))
+        }
+        task_list.append(task_data)
+
+    return task_list
+
+def get_user_by_position(position):
+    user = Users.find_one({"position": position}, {"_id": 0, "password": 0})
+    if user:
+        # Add userid field for consistency with your frontend expectations
+        user_info = Users.find_one({"position": position})
+        if user_info:
+            user["userid"] = str(user_info["_id"])
+    return user
 
 def get_team_members(TL):
     team_members = list(Users.find({"TL":TL}, {"_id":0}))
