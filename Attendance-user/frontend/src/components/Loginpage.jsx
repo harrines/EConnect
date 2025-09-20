@@ -152,68 +152,73 @@ export default function LoginPage() {
     return matchesPublic || matchesLocal;
   };
 
-  const handleGoogleLogin = async (credentialResponse) => {
-    try {
-      console.log("Starting Google login process...");
-      
-      // First get the current IP information
-      const currentIps = await getIpInfo();
-      console.log("Retrieved current IPs:", currentIps);
-      
-      // Proceed with Google sign-in
-      let userDecode = jwtDecode(credentialResponse.credential);
-      console.log("Google credentials decoded:", {
-        name: userDecode.name,
-        email: userDecode.email
-      });
-      
-      const res = await Apisignin({
-        client_name: userDecode.name,
-        email: userDecode.email,
-      });
-      console.log("API signin response:", res);
+const handleGoogleLogin = async (credentialResponse) => {
+  try {
+    console.log("Starting Google login process...");
 
-      // Check if IP validation is needed
-      if (res.ip) {
-        console.log("IP validation required. Response IP:", res.ip);
-        
-        if (!validateIp(res.ip, currentIps)) {
-          console.log("IP validation failed!");
-          toast.error("Remote work IP is mismatched. Please connect from an authorized network.");
-          return;
-        }
-        console.log("IP validation successful!");
-      } else {
-        console.log("No IP validation required");
+    // First get the current IP information
+    const currentIps = await getIpInfo();
+    console.log("Retrieved current IPs:", currentIps);
+
+    // Decode Google JWT
+    let userDecode = jwtDecode(credentialResponse.credential);
+    console.log("Google credentials decoded:", {
+      name: userDecode.name,
+      email: userDecode.email
+    });
+
+    // Call backend
+    const res = await Apisignin({
+      client_name: userDecode.name,
+      email: userDecode.email,
+    });
+    console.log("API signin response:", res);
+
+    // ✅ Store userid correctly
+    localStorage.setItem("userid", res._id || res.id);
+    LS.save("userid", res._id || res.id);
+
+    localStorage.setItem("name", res.name);
+    localStorage.setItem("email", res.email);
+    localStorage.setItem("isloggedin", res.isloggedin.toString());
+    localStorage.setItem("isadmin", res.isadmin.toString());
+    localStorage.setItem("access_token", res.access_token);
+
+    // IP validation
+    if (res.ip) {
+      console.log("IP validation required. Response IP:", res.ip);
+      if (!validateIp(res.ip, currentIps)) {
+        console.log("IP validation failed!");
+        toast.error("Remote work IP is mismatched. Please connect from an authorized network.");
+        return;
       }
-
-      // If IP validation passes or is not needed, proceed with navigation
-      const loggedIn = LS.get("isloggedin");
-      const isAdmin = LS.get("isadmin");
-      
-      console.log("Navigation check:", {
-        isLoggedIn: loggedIn,
-        isAdmin: isAdmin
-      });
-
-      if (loggedIn && isAdmin) {
-        console.log("Navigating to admin/time");
-        navigate("admin/time", {
-          state: { id: res.id, token: res.access_token },
-        });
-      } else if (loggedIn || isAdmin) {
-        console.log("Navigating to User/Clockin_int");
-        navigate("User/Clockin_int", {
-          state: { id: res.id, token: res.access_token },
-        });
-      } else {
-        console.log("Invalid request - no valid navigation state");
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      toast.error("An error occurred during login. Please try again.");
+      console.log("IP validation successful!");
+    } else {
+      console.log("No IP validation required");
     }
-  };
+
+    // Navigation
+    const loggedIn = res.isloggedin;
+    const isAdmin = res.isadmin;
+
+    console.log("Navigation check:", { loggedIn, isAdmin });
+
+    if (loggedIn && isAdmin) {
+      navigate("admin/time", {
+        state: { userid: res._id || res.id, token: res.access_token },
+      });
+    } else if (loggedIn && !isAdmin) {
+      navigate("User/Clockin_int", {
+        state: { userid: res._id || res.id, token: res.access_token },
+      });
+    } else {
+      toast.error("Login failed. Please contact administrator.");
+    }
+  } catch (err) {
+    console.error("Login error:", err);
+    toast.error("An error occurred during login. Please try again.");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">

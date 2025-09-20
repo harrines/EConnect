@@ -38,7 +38,7 @@ export const Apisignin = async ({ client_name, email }) => {
   LS.save("email", Comp.email);
   LS.save("userid", Comp.userid);
   LS.save("position",Comp.position);
-  LS.save("department",Comp.department)
+  LS.save("department",Comp.department);
   LS.save("personal_email",Comp.personal_email);
   LS.save("date_of_joining",Comp.date_of_joining);
   LS.save("address",Comp.address);
@@ -58,5 +58,3 @@ export const Apisignin = async ({ client_name, email }) => {
   toast.success("Login Successfully");
   return Comp;
 };
-
-
