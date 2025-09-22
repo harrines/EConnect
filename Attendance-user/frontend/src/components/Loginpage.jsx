@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { Authdata } from "../Utils/Authprovider";
 import { Apisignin } from "../Api/Loginauth";
 import { jwtDecode } from "jwt-decode";
-import { LS } from "../Utils/Resuse";
+import { LS, ipadr } from "../Utils/Resuse";
 import { Link } from "react-router-dom";
 
 export default function LoginPage() {
@@ -140,6 +140,32 @@ const handleGoogleLogin = async (credentialResponse) => {
   }
 };
 
+  // return (
+  //   <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+  //     <div className="bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-lg">
+  //       <div className="flex flex-col items-center justify-center p-8">
+  //         <div className="text-center mb-6">
+  //           <img src={logo} alt="Company Logo" className="h-32 mx-auto" />
+  //           <h1 className="text-2xl font-bold text-gray-700 mt-4">
+  //             Welcome to E-Connect
+  //           </h1>
+  //         </div>
+  //         <div className="w-full">
+  //           <h2 className="text-xl font-semibold text-gray-600 mb-4 text-center">
+  //             Sign in with Google
+  //           </h2>
+  //           <div className="flex justify-center">
+  //             <GoogleOAuthProvider clientId="616660088488-17nrc3n7j9ibd7f29680qorv56442nd8.apps.googleusercontent.com">
+  //               <GoogleLogin
+  //                 onSuccess={handleGoogleLogin}
+  //                 useOneTap
+  //               />
+  //             </GoogleOAuthProvider>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-lg">
@@ -158,21 +184,22 @@ const handleGoogleLogin = async (credentialResponse) => {
               Sign in with Google
             </h2>
             <div className="flex justify-center">
-              <GoogleOAuthProvider clientId="616660088488-17nrc3n7j9ibd7f29680qorv56442nd8.apps.googleusercontent.com">
-                <GoogleLogin onSuccess={handleGoogleLogin} />
+              {/* <GoogleOAuthProvider clientId="616660088488-17nrc3n7j9ibd7f29680qorv56442nd8.apps.googleusercontent.com"> */}
+              <GoogleOAuthProvider clientId="152946581457-15hbl22a667fe0le1mkt5e6d14kisrtd.apps.googleusercontent.com">
+                <GoogleLogin onSuccess={handleGoogleLogin} useOneTap data-testid="google-login-btn"/>
               </GoogleOAuthProvider>
             </div>
           </div>
 
           {/* OR Divider */}
-          <div className="flex items-center my-6 w-full">
+          {/* <div className="flex items-center my-6 w-full">
             <div className="flex-grow border-t border-gray-300"></div>
             <span className="mx-3 text-gray-500 text-sm">OR</span>
             <div className="flex-grow border-t border-gray-300"></div>
-          </div>
+          </div> */}
 
           {/* Links to normal login/signup */}
-          <div className="text-center space-y-2">
+          {/* <div className="text-center space-y-2">
             <p className="text-sm text-gray-600">
               Prefer Email/Password?{" "}
               <Link to="/signin" className="text-blue-500 font-medium hover:underline">
@@ -185,7 +212,7 @@ const handleGoogleLogin = async (credentialResponse) => {
                 Create Account
               </Link>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
 

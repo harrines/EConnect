@@ -79,7 +79,7 @@ function Clockin() {
       headers: myHeaders,np,
       body: JSON.stringify({
         name: LS.get("name"),
-        userid: userid
+        userid: userId
       }),
       redirect: "follow"
     };

@@ -16,8 +16,7 @@ import bcrypt, requests, socket
 import pytz 
 import json
 import traceback
-
-
+from typing import List, Dict
 from pymongo import MongoClient
 
 client = MongoClient("mongodb://localhost:27017")
@@ -31,7 +30,9 @@ RemoteWork = db.RemoteWork
 admin = db.admin
 Tasks = db.tasks
 Managers = db.managers
-
+holidays_collection = db["holidays"]
+AttendanceStats = db["attendance_stats"]  # For caching calculated stats
+WorkingDays = db["working_days"]  # For storing yearly working days
 
 # Others
 def Adddata(data,id,filename):
@@ -618,12 +619,16 @@ def store_leave_request(userid, employee_name, time, leave_type, selected_date, 
     if leave_count and leave_count[0]["count"] >= 1:
         return f"You have already taken a {leave_type} this month."
 
+    user_info = Users.find_one({"_id": ObjectId(userid)}, {"position": 1})
+    user_position = user_info.get("position", "User") if user_info else "User"
+
     employee_id = get_employee_id_from_db(employee_name)
     new_leave = {
         "userid": userid,
         "Employee_ID": employee_id,
         "employeeName": employee_name,
         "time": time,
+        "position": user_position,
         "leaveType": leave_type,
         "selectedDate": selected_date_dt,  # Stored as `datetime` object
         "requestDate": request_date_dt,  # Stored as `datetime` object
@@ -681,6 +686,10 @@ def store_sunday_request(userid, employee_name, time, leave_type, selected_date,
         return f"Leave request conflicts with an existing leave or remote work on {selected_date_dt.strftime('%d-%m-%Y')}."
 
     combo_leave = Clock.find_one({"userid": userid, "bonus_leave": "Not Taken"})
+
+    user_info = Users.find_one({"_id": ObjectId(userid)}, {"position": 1})
+    user_position = user_info.get("position", "User") if user_info else "User"
+
     employee_id = get_employee_id_from_db(employee_name)
 
     if combo_leave:
@@ -689,6 +698,7 @@ def store_sunday_request(userid, employee_name, time, leave_type, selected_date,
             "Employee_ID": employee_id,
             "employeeName": employee_name,
             "time": time,
+            "position": user_position,
             "leaveType": leave_type,
             "selectedDate": selected_date_dt,  # ✅ Stored as `datetime` object
             "requestDate": request_date_dt,  # ✅ Stored as `datetime` object
@@ -727,6 +737,208 @@ def get_user_leave_requests(selected_option):
             leave["requestDate"] = leave["requestDate"].strftime("%d-%m-%Y")
 
     return leave_request
+
+
+
+def get_user_leave_requests_with_history(selected_option, show_processed=False):
+    """
+    Get leave requests with option to include processed ones
+    show_processed: False = only pending, True = only processed, None = all
+    """
+    if selected_option == "Leave":
+        base_filter = {"leaveType": {"$in": ["Sick Leave", "Casual Leave", "Bonus Leave"]}}
+    elif selected_option == "LOP":
+        base_filter = {"leaveType": "Other Leave"}
+    elif selected_option == "Permission":
+        base_filter = {"leaveType": "Permission"}
+    else:
+        return []
+    
+    # Add status filter based on show_processed parameter
+    if show_processed is False:  # Only pending
+        base_filter["status"] = {"$exists": False}
+    elif show_processed is True:  # Only processed
+        base_filter["status"] = {"$exists": True}
+    # If show_processed is None, don't add status filter (show all)
+    
+    leave_request = list(Leave.find(base_filter))
+    
+    # Clean the IDs and format dates
+    for index, leave in enumerate(leave_request):
+        leave_request[index] = cleanid(leave)
+
+    for leave in leave_request:
+        if selected_option == "Leave" or selected_option == "Permission":
+            leave["selectedDate"] = leave["selectedDate"].strftime("%d-%m-%Y")
+            leave["requestDate"] = leave["requestDate"].strftime("%d-%m-%Y")
+        else:
+            leave["selectedDate"] = leave["selectedDate"].strftime("%d-%m-%Y")
+            if "ToDate" in leave:
+                leave["ToDate"] = leave["ToDate"].strftime("%d-%m-%Y")
+            leave["requestDate"] = leave["requestDate"].strftime("%d-%m-%Y")
+
+    return leave_request
+
+def get_manager_leave_requests_with_history(selected_option, show_processed=False):
+    """Get manager/HR leave requests with history option"""
+    managers_and_hr = list(Users.find({"position": {"$in": ["Manager", "HR"]}}))
+    user_ids = [str(user["_id"]) for user in managers_and_hr]
+
+    if selected_option == "Leave":
+        base_filter = {
+            "leaveType": {"$in": ["Sick Leave", "Casual Leave", "Bonus Leave"]},
+            "userid": {"$in": user_ids}
+        }
+    elif selected_option == "LOP":
+        base_filter = {
+            "leaveType": "Other Leave",
+            "userid": {"$in": user_ids}
+        }
+    elif selected_option == "Permission":
+        base_filter = {
+            "leaveType": "Permission",
+            "userid": {"$in": user_ids}
+        }
+    else:
+        return []
+    
+    # Add status filter
+    if show_processed is False:  # Only pending
+        base_filter["status"] = {"$exists": False}
+    elif show_processed is True:  # Only processed
+        base_filter["status"] = {"$exists": True}
+    
+    leave_request = list(Leave.find(base_filter))
+    
+    # Process the results
+    for index, leave in enumerate(leave_request):
+        leave_request[index] = cleanid(leave)
+
+    for leave in leave_request:
+        if selected_option == "Leave" or selected_option == "Permission":
+            leave["selectedDate"] = leave["selectedDate"].strftime("%d-%m-%Y")
+            leave["requestDate"] = leave["requestDate"].strftime("%d-%m-%Y")
+        else:
+            leave["selectedDate"] = leave["selectedDate"].strftime("%d-%m-%Y")
+            if "ToDate" in leave:
+                leave["ToDate"] = leave["ToDate"].strftime("%d-%m-%Y")
+            leave["requestDate"] = leave["requestDate"].strftime("%d-%m-%Y")
+
+    return leave_request
+
+def get_only_user_leave_requests_with_history(selected_option, TL_name, show_processed=False):
+    """Get user leave requests under TL with history option"""
+    users = list(Users.find({"position": {"$ne":"Manager"}, "name":{"$ne":TL_name}, "TL":TL_name}))
+    user_ids = [str(user["_id"]) for user in users]
+
+    if selected_option == "Leave":
+        base_filter = {
+            "leaveType": {"$in": ["Sick Leave", "Casual Leave", "Bonus Leave"]},
+            "userid": {"$in": user_ids}
+        }
+    elif selected_option == "LOP":
+        base_filter = {
+            "leaveType": "Other Leave",
+            "userid": {"$in": user_ids}
+        }
+    elif selected_option == "Permission":
+        base_filter = {
+            "leaveType": "Permission",
+            "userid": {"$in": user_ids}
+        }
+    else:
+        return []
+    
+    # Add status filter
+    if show_processed is False:  # Only pending
+        base_filter["status"] = {"$exists": False}
+    elif show_processed is True:  # Only processed
+        base_filter["status"] = {"$exists": True}
+    
+    leave_request = list(Leave.find(base_filter))
+    
+    # Clean the IDs for each leave request
+    for index, leave in enumerate(leave_request):
+        leave_request[index] = cleanid(leave)
+
+    for leave in leave_request:
+        if selected_option == "Leave" or selected_option == "Permission":
+            leave["selectedDate"] = leave["selectedDate"].strftime("%d-%m-%Y")
+            leave["requestDate"] = leave["requestDate"].strftime("%d-%m-%Y")
+        else:
+            leave["selectedDate"] = leave["selectedDate"].strftime("%d-%m-%Y")
+            if "ToDate" in leave:
+                leave["ToDate"] = leave["ToDate"].strftime("%d-%m-%Y")
+            leave["requestDate"] = leave["requestDate"].strftime("%d-%m-%Y")
+    
+    return leave_request
+
+# Similar functions for Remote Work requests
+def get_remote_work_requests_with_history(show_processed=False):
+    """Get remote work requests with history option"""
+    base_filter = {}
+    
+    if show_processed is False:  # Only pending
+        base_filter = {"Recommendation":"Recommend", "status": {"$exists": False}}
+    elif show_processed is True:  # Only processed
+        base_filter = {"status": {"$exists": True}}
+    
+    list1 = list()
+    res = RemoteWork.find(base_filter)
+    
+    for user in res:
+        cleanid(user)
+        user["fromDate"] = user["fromDate"].strftime("%d-%m-%Y")
+        user["toDate"] = user["toDate"].strftime("%d-%m-%Y")
+        user["requestDate"] = user["requestDate"].strftime("%d-%m-%Y")
+        list1.append(user)
+    return list1
+
+def get_admin_page_remote_work_requests_with_history(show_processed=False):
+    """Get admin page remote work requests with history"""
+    managers = list(Users.find({"$or":[{"position": "Manager"}, {"department": "HR"}]}))
+    manager_ids = [str(manager["_id"]) for manager in managers]
+    
+    base_filter = {"userid": {"$in":manager_ids}}
+    
+    if show_processed is False:  # Only pending
+        base_filter.update({"Recommendation": {"$exists":False}, "status": {"$exists":False}})
+    elif show_processed is True:  # Only processed
+        base_filter.update({"status": {"$exists":True}})
+    
+    list1 = list()
+    res = RemoteWork.find(base_filter)
+    
+    for user in res:
+        cleanid(user)
+        user["fromDate"] = user["fromDate"].strftime("%d-%m-%Y")
+        user["toDate"] = user["toDate"].strftime("%d-%m-%Y")
+        user["requestDate"] = user["requestDate"].strftime("%d-%m-%Y")
+        list1.append(user)
+    return list1
+
+def get_TL_page_remote_work_requests_with_history(TL, show_processed=False):
+    """Get TL page remote work requests with history"""
+    users = list(Users.find({"TL":TL}))
+    users_ids = [str(user["_id"]) for user in users]
+    
+    base_filter = {"userid": {"$in":users_ids}}
+    
+    if show_processed is False:  # Only pending
+        base_filter.update({"status": {"$exists": False}, "Recommendation":{"$exists":False}})
+    elif show_processed is True:  # Only processed
+        base_filter.update({"status": {"$exists":True}})
+    
+    list1 = list()
+    res = RemoteWork.find(base_filter)
+    
+    for user in res:
+        cleanid(user)
+        user["fromDate"] = user["fromDate"].strftime("%d-%m-%Y")
+        user["toDate"] = user["toDate"].strftime("%d-%m-%Y")
+        user["requestDate"] = user["requestDate"].strftime("%d-%m-%Y")
+        list1.append(user)
+    return list1
 
 # Admin Page Leave Requests
 # def get_manager_leave_requests(selected_option):
@@ -1039,6 +1251,9 @@ def store_remote_work_request(userid, employeeName, time, from_date, to_date, re
         num_weekdays_from_to = count_weekdays(from_date_dt, to_date_dt)
         future_days = (to_date_dt - from_date_dt).days
 
+        user_info = Users.find_one({"_id": ObjectId(userid)}, {"position": 1})
+        user_position = user_info.get("position", "User") if user_info else "User"
+
         print(f"Weekdays from request to start: {num_weekdays_request_to_from}, Future days: {future_days}")
 
         # Fetch Employee ID
@@ -1054,6 +1269,7 @@ def store_remote_work_request(userid, employeeName, time, from_date, to_date, re
                     "employeeID": employee_id,
                     "employeeName": employeeName,
                     "time": time,
+                    "position": user_position,
                     "fromDate": from_date_dt,  # ✅ Stored as `datetime` object
                     "toDate": to_date_dt,  # ✅ Stored as `datetime` object
                     "requestDate": request_date_dt,  # ✅ Stored as `datetime` object
@@ -1192,6 +1408,9 @@ def store_Other_leave_request(userid, employee_name, time, leave_type, selected_
         num_weekdays_from_to = count_weekdays(selected_date, To_date)
         
         future_days = (To_date - selected_date).days
+
+        user_info = Users.find_one({"_id": ObjectId(userid)}, {"position": 1})
+        user_position = user_info.get("position", "User") if user_info else "User"
         
         employee_id = get_employee_id_from_db(employee_name)
          
@@ -1201,6 +1420,7 @@ def store_Other_leave_request(userid, employee_name, time, leave_type, selected_
                 "Employee_ID": employee_id, 
                 "employeeName": employee_name,
                 "time": time,
+                "position": user_position,
                 "leaveType": leave_type,
                 "selectedDate": selected_date,
                 "ToDate" : To_date,
@@ -1235,11 +1455,15 @@ def store_Permission_request(userid, employee_name, time, leave_type, selected_d
 
     employee_id = get_employee_id_from_db(employee_name)
 
+    user_info = Users.find_one({"_id": ObjectId(userid)}, {"position": 1})
+    user_position = user_info.get("position", "User") if user_info else "User"
+
     new_leave = {
         "userid": userid,
         "Employee_ID": employee_id,
         "employeeName": employee_name,
         "time": time,
+        "position": user_position,
         "leaveType": leave_type,
         "selectedDate": selected_date_dt,  # ✅ Stored as `datetime` object
         "requestDate": request_date_dt,  # ✅ Stored as `datetime` object
@@ -1517,13 +1741,10 @@ def get_the_tasks(userid: str, date: str = None):
             "userid": task.get("userid"),
             "assigned_by": task.get("assigned_by", "self"),
             "priority": task.get("priority", "Medium"),
-            "subtasks": task.get("subtasks", []),   # ✅ ensure always list
             "comments": task.get("comments", []),   # ✅ new
             "files": files,        # ✅ new
             "taskid": str(task.get("_id"))
         }
-        task_list.append(task_data)
-
     return task_list
 
 def get_assigned_tasks(manager_name: str, userid: str = None):
@@ -1687,6 +1908,9 @@ def generate_userid(dept,doj):
 
 
 def add_an_employee(employee_data):
+        # Insert the employee data into the Users collection
+        # userid = generate_userid(employee_data["department"],employee_data["date_of_joining"])
+        # employee_data["userid"] = userid
         print(employee_data)
         result = Users.insert_one(employee_data)
         return {"message": "Employee details added successfully"}
@@ -1704,6 +1928,14 @@ def get_user_info(userid):
  result = Users.find_one({"$or":[{"userid":userid}]},{"_id":0,"password":0})
  return result
 
+# def edit_an_employee(employee_data):
+#  try:
+#  # Insert the employee data into the Users collection
+#   result = Users.find_one_and_update({"userid":employee_data["userid"]},{"$set":employee_data})
+#   return {"message": "Employee details edited successfully"}
+#  except Exception as e:
+#   raise HTTPException(status_code=500, detail=str(e))
+
 def edit_an_employee(employee_data):
     """Edit employee data with proper validation"""
     try:
@@ -1715,7 +1947,6 @@ def edit_an_employee(employee_data):
         for field in required_fields:
             if not employee_data.get(field):
                 raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
-
         clean_education = [
             edu for edu in employee_data.get('education', []) 
             if edu.get('degree') or edu.get('institution') or edu.get('year')
@@ -1726,9 +1957,11 @@ def edit_an_employee(employee_data):
             if skill.get('name') and skill.get('level')
         ]
         
+        # Update the employee_data with cleaned arrays
         employee_data['education'] = clean_education
         employee_data['skills'] = clean_skills
-
+        
+        # Find and update the employee
         result = Users.find_one_and_update(
             {"userid": employee_data["userid"]},
             {"$set": employee_data},
@@ -1738,6 +1971,7 @@ def edit_an_employee(employee_data):
         if result:
             return {"message": "Employee details updated successfully"}
         else:
+            # Try updating by ObjectId if userid doesn't work
             try:
                 obj_id = ObjectId(employee_data["userid"])
                 result = Users.find_one_and_update(
@@ -1954,3 +2188,338 @@ def get_local_ip():
         return ip
     except Exception:
         return "Unable to fetch local IP"
+
+
+
+
+# Holiday and Working Days Management (already in your code)
+def insert_holidays(year: int, holidays: list):
+    """Insert or update holidays for a given year"""
+    holidays_collection.update_one(
+        {"year": year},
+        {"$set": {"year": year, "holidays": holidays}},
+        upsert=True
+    )
+    return {"message": f"Holidays updated for {year}"}
+
+def get_holidays(year: int):
+    """Fetch holidays for a given year"""
+    return holidays_collection.find_one({"year": year})
+
+def calculate_working_days(year: int, holidays: list):
+    """Calculate working days for a year excluding Sundays and holidays"""
+    start = datetime(year, 1, 1)
+    end = datetime(year, 12, 31)
+    delta = timedelta(days=1)
+    
+    working_days = []
+    current = start
+    
+    holiday_dates = {h["date"] for h in holidays}
+    
+    while current <= end:
+        is_sunday = current.weekday() == 6  # 6 = Sunday
+        is_holiday = current.strftime("%Y-%m-%d") in holiday_dates
+        if not is_sunday and not is_holiday:
+            working_days.append(current.strftime("%Y-%m-%d"))
+        current += delta
+    
+    return working_days
+
+def get_working_days_count_till_date(year: int, till_date: date = None):
+    """Get working days count from start of year till specified date (or today)"""
+    if till_date is None:
+        till_date = date.today()
+    
+    holiday_doc = get_holidays(year)
+    if not holiday_doc:
+        return 0
+    
+    holidays = holiday_doc["holidays"]
+    holiday_dates = {h["date"] for h in holidays}
+    
+    start = datetime(year, 1, 1).date()
+    end = min(till_date, datetime(year, 12, 31).date())
+    
+    working_days_count = 0
+    current = start
+    
+    while current <= end:
+        is_sunday = current.weekday() == 6
+        is_holiday = current.strftime("%Y-%m-%d") in holiday_dates
+        if not is_sunday and not is_holiday:
+            working_days_count += 1
+        current += timedelta(days=1)
+    
+    return working_days_count
+
+# New Attendance Calculation Functions
+
+def calculate_user_attendance_stats(userid: str, year: int = None):
+    """Calculate attendance statistics for a specific user"""
+    if year is None:
+        year = date.today().year
+    
+    # Get user info to get username
+    try:
+        user = Users.find_one({"_id": ObjectId(userid)}, {"name": 1})
+        username = user.get("name", "Unknown") if user else "Unknown"
+    except Exception as e:
+        print(f"Error fetching user info for {userid}: {e}")
+        username = "Unknown"
+    
+    # Get total working days till today
+    total_working_days = get_working_days_count_till_date(year)
+    
+    if total_working_days == 0:
+        return {
+            "userid": userid,
+            "username": username,
+            "year": year,
+            "total_working_days": 0,
+            "present_days": 0,
+            "attendance_percentage": 0,
+            "leave_days_taken": 0,
+            "leave_percentage": 0,
+            "last_updated": datetime.now()
+        }
+    
+    # Count present days (where status is "Present" or "Late")
+    start_date = f"{year}-01-01"
+    end_date = f"{year}-12-31"
+    
+    present_days = Clock.count_documents({
+        "userid": userid,
+        "date": {
+            "$gte": start_date,
+            "$lte": end_date
+        },
+        "status": {"$in": ["Present", "Late"]}
+    })
+    
+    # Count leave days taken (approved leaves)
+    leave_days = Leave.count_documents({
+        "userid": userid,
+        "status": "Approved",
+        "selectedDate": {
+            "$gte": datetime(year, 1, 1),
+            "$lte": datetime(year, 12, 31)
+        }
+    })
+    
+    # Calculate multi-day leaves (LOP/Other Leave)
+    multi_day_leaves = Leave.find({
+        "userid": userid,
+        "status": "Approved",
+        "leaveType": "Other Leave",
+        "selectedDate": {
+            "$gte": datetime(year, 1, 1),
+            "$lte": datetime(year, 12, 31)
+        }
+    })
+    
+    additional_leave_days = 0
+    for leave in multi_day_leaves:
+        if "ToDate" in leave:
+            from_date = leave["selectedDate"]
+            to_date = leave["ToDate"]
+            # Count weekdays between from_date and to_date
+            current = from_date
+            while current <= to_date:
+                if current.weekday() != 6:  # Not Sunday
+                    additional_leave_days += 1
+                current += timedelta(days=1)
+    
+    total_leave_days = leave_days + additional_leave_days
+    
+    # Calculate percentages
+    attendance_percentage = round((present_days / total_working_days) * 100, 2) if total_working_days > 0 else 0
+    leave_percentage = round((total_leave_days / total_working_days) * 100, 2) if total_working_days > 0 else 0
+    
+    stats = {
+        "userid": userid,
+        "username": username,
+        "year": year,
+        "total_working_days": total_working_days,
+        "present_days": present_days,
+        "attendance_percentage": attendance_percentage,
+        "leave_days_taken": total_leave_days,
+        "leave_percentage": leave_percentage,
+        "last_updated": datetime.now()
+    }
+    
+    # Cache the stats
+    AttendanceStats.update_one(
+        {"userid": userid, "year": year},
+        {"$set": stats},
+        upsert=True
+    )
+    
+    return stats
+
+def get_user_attendance_dashboard(userid: str):
+    """Get attendance dashboard for individual user"""
+    current_year = date.today().year
+    stats = calculate_user_attendance_stats(userid, current_year)
+    
+    # Get user info for display
+    user = Users.find_one({"_id": ObjectId(userid)}, {"name": 1, "email": 1, "department": 1, "position": 1})
+    
+    return {
+        "user_info": {
+            "userid": userid,
+            "name": user.get("name", "Unknown") if user else "Unknown",
+            "email": user.get("email", "") if user else "",
+            "department": user.get("department", "") if user else "",
+            "position": user.get("position", "") if user else ""
+        },
+        "attendance_stats": stats,
+        "year": current_year
+    }
+
+def get_team_attendance_stats(team_leader: str, year: int = None):
+    """Get attendance statistics for all team members under a team leader"""
+    if year is None:
+        year = date.today().year
+    
+    # Get team members
+    team_members = list(Users.find(
+        {"TL": team_leader, "position": {"$ne": "Manager"}},
+        {"_id": 1, "name": 1, "email": 1, "department": 1, "position": 1}
+    ))
+    
+    team_stats = []
+    total_attendance = 0
+    
+    for member in team_members:
+        userid = str(member["_id"])
+        stats = calculate_user_attendance_stats(userid, year)
+        stats["user_info"] = {
+            "name": member.get("name"),
+            "email": member.get("email"),
+            "department": member.get("department"),
+            "position": member.get("position")
+        }
+        team_stats.append(stats)
+        total_attendance += stats["attendance_percentage"]
+    
+    average_attendance = round(total_attendance / len(team_members), 2) if team_members else 0
+    
+    return {
+        "team_leader": team_leader,
+        "year": year,
+        "team_size": len(team_members),
+        "average_attendance": average_attendance,
+        "team_stats": team_stats
+    }
+
+def get_department_attendance_stats(department: str = None, year: int = None):
+    """Get attendance statistics for a department or all employees (for admin)"""
+    if year is None:
+        year = date.today().year
+    
+    # Build query based on role
+    query = {"position": {"$ne": "Admin"}}
+    if department:
+        query["department"] = department
+    
+    employees = list(Users.find(query, {"_id": 1, "name": 1, "email": 1, "department": 1, "position": 1, "TL": 1}))
+    
+    all_stats = []
+    total_attendance = 0
+    department_stats = {}
+    
+    for employee in employees:
+        userid = str(employee["_id"])
+        stats = calculate_user_attendance_stats(userid, year)
+        stats["user_info"] = {
+            "name": employee.get("name"),
+            "email": employee.get("email"),
+            "department": employee.get("department"),
+            "position": employee.get("position"),
+            "team_leader": employee.get("TL", "")
+        }
+        all_stats.append(stats)
+        total_attendance += stats["attendance_percentage"]
+        
+        # Group by department for admin view
+        dept = employee.get("department", "Unknown")
+        if dept not in department_stats:
+            department_stats[dept] = {"total": 0, "count": 0, "employees": []}
+        department_stats[dept]["total"] += stats["attendance_percentage"]
+        department_stats[dept]["count"] += 1
+        department_stats[dept]["employees"].append(stats)
+    
+    # Calculate department averages
+    for dept in department_stats:
+        department_stats[dept]["average_attendance"] = round(
+            department_stats[dept]["total"] / department_stats[dept]["count"], 2
+        ) if department_stats[dept]["count"] > 0 else 0
+    
+    overall_average = round(total_attendance / len(employees), 2) if employees else 0
+    
+    return {
+        "year": year,
+        "total_employees": len(employees),
+        "overall_average_attendance": overall_average,
+        "department_wise_stats": department_stats,
+        "all_employee_stats": all_stats
+    }
+
+def get_manager_team_attendance(manager_userid: str, year: int = None):
+    """Get attendance stats for all teams under a manager"""
+    if year is None:
+        year = date.today().year
+    
+    # Get all team leaders under this manager
+    team_leaders = list(Users.find(
+        {"position": "TL", "manager": manager_userid},  # Assuming TLs have manager field
+        {"_id": 1, "name": 1}
+    ))
+    
+    if not team_leaders:
+        # If no specific TL structure, get all non-manager employees
+        return get_department_attendance_stats(year=year)
+    
+    manager_stats = {
+        "manager_userid": manager_userid,
+        "year": year,
+        "teams": [],
+        "overall_average": 0
+    }
+    
+    total_attendance = 0
+    total_employees = 0
+    
+    for tl in team_leaders:
+        tl_name = tl["name"]
+        team_stats = get_team_attendance_stats(tl_name, year)
+        manager_stats["teams"].append(team_stats)
+        total_attendance += team_stats["average_attendance"] * team_stats["team_size"]
+        total_employees += team_stats["team_size"]
+    
+    manager_stats["overall_average"] = round(total_attendance / total_employees, 2) if total_employees > 0 else 0
+    manager_stats["total_employees"] = total_employees
+    
+    return manager_stats
+
+# Daily update function to recalculate stats
+def update_daily_attendance_stats():
+    """Run this daily to update attendance statistics for all users"""
+    current_year = date.today().year
+    
+    # Get all active users
+    users = Users.find({"status": {"$ne": "Inactive"}}, {"_id": 1})
+    
+    updated_count = 0
+    for user in users:
+        userid = str(user["_id"])
+        try:
+            calculate_user_attendance_stats(userid, current_year)
+            updated_count += 1
+        except Exception as e:
+            print(f"Error updating stats for user {userid}: {e}")
+    
+    print(f"Updated attendance stats for {updated_count} users")
+    return updated_count
+

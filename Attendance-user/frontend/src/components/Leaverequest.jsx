@@ -105,10 +105,10 @@ const LeaveRequest = () => {
     if (newLeave.leaveType === "Other Leave") {
       endpoint = "/Other-leave-request";
     }
-    if (newLeave.leaveType === "Permission") {
+    if (newLeave.leaveType === "Permission") {                                                                                                                                                                              
       endpoint = "/Permission-request";
     }
-    if (newLeave.leaveType === "Bonus Leave") {
+    if (newLeave.leaveType === "Bonus Leave") {                                                                                                   
       endpoint = "/Bonus-leave-request";  
       
     }

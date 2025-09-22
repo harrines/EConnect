@@ -2,7 +2,7 @@ from datetime import datetime
 import pytz
 import re
 from pydantic import BaseModel, validator, ValidationError
-from typing import Optional, List, Dict, Union, Any
+from typing import Any, Optional, List, Dict, Union
 from datetime import date
 
 class Item(BaseModel):
@@ -22,6 +22,25 @@ class Item(BaseModel):
     phone: str
     position: str
     date_of_joining: str
+
+    # @validator("email")
+    # def validate_email(cls, value):
+    #     if not value:
+    #         raise ValueError("Email must be provided.")
+    #     # if (("@rbg" not in value) and ('.ai' not in value)):
+    #     #     raise ValueError("Invalid email.")
+    
+    #@validator("password")
+    #def validate_password(cls, value):
+     #   if not value:
+      #      raise ValueError("Password must be provided.")
+       # if len(value) < 8:
+        #    raise ValueError("Password must be at least 8 characters long.")
+        #if not re.search(r"[0-9]", value):
+         #   raise ValueError("Password must contain at least one number.")
+        #if not re.search(r"[@#$%&]", value):
+         #   raise ValueError("Password must contain at least one special character (@#$%&).")
+        #return value*/
     
     @validator("name")
     def validate_name(cls, value):
@@ -261,3 +280,11 @@ class Settings(BaseModel):
     authjwt_algorithm: str = "HS256"
 
 
+
+class Holiday(BaseModel):
+    date: str   # YYYY-MM-DD
+    name: str
+
+class HolidayYear(BaseModel):
+    year: int
+    holidays: List[Holiday]

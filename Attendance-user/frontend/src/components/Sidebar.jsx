@@ -61,8 +61,7 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout }) => {
   const isAdmin = LS.get("isadmin");
   const isManager=LS.get("position");
   const isDepart=LS.get("department");
-
-  const userid=LS.get('id');
+  const userid=LS.get('userid');
 
   return (
     <div className="flex flex-col min-h-screen w-64 bg-blue-600 text-white shadow-lg border-r">
@@ -153,6 +152,27 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout }) => {
                 <span className="font-medium">Add Employee</span>
               </div>
             </Link>
+
+            <Link to="addLeave" className="sidebar-item">
+              <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
+                
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke-width="1.5" 
+                  stroke="currentColor" 
+                  class="size-6"
+                  className="size-6 mr-3"
+                  >
+                <path 
+                  stroke-linecap="round" 
+                  stroke-linejoin="round" 
+                  d="M6.75 2.994v2.25m10.5-2.25v2.25m-14.252 13.5V7.491a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v11.251m-18 0a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5m-6.75-6h2.25m-9 2.25h4.5m.002-2.25h.005v.006H12v-.006Zm-.001 4.5h.006v.006h-.006v-.005Zm-2.25.001h.005v.006H9.75v-.006Zm-2.25 0h.005v.005h-.006v-.005Zm6.75-2.247h.005v.005h-.005v-.005Zm0 2.247h.006v.006h-.006v-.006Zm2.25-2.248h.006V15H16.5v-.005Z" />
+              </svg>
+
+              <span className="font-medium">Add Leave</span>
+              </div>
+            </Link>
           </>
         ) : loggedIn && !isAdmin && (
           <>
@@ -192,7 +212,6 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout }) => {
               </div>
             </Link>
 
-           {isDepart !== "HR" && (
             <Link to="todo" className="sidebar-item">
               <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
                 <svg
@@ -207,9 +226,8 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout }) => {
                 <span className="font-medium">Task List</span>
               </div>
             </Link>
-           )}
 
-            {/* <Link to={`${userid}`} className="sidebar-item">
+            <Link to={`${userid}`} className="sidebar-item">
               <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
               <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -222,28 +240,15 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout }) => {
                 </svg>
                 <span className="font-medium">Task Assign</span>
               </div>
-            </Link> */}
+            </Link>
+            
           </>
-        )
+        ) 
         }
         
         {
           loggedIn && isManager=="Manager" ?(
           <>
-
-             {/* 🔹 New Manager–Employee connection tab */}
-      <Link to="manager-employee" className="sidebar-item">
-        <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor" className="w-6 h-6 mr-3 text-white">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                  d="M6 3h12M6 7h12M6 11h12M6 15h12M6 19h12"/>
-          </svg>
-          <span className="font-medium">Employee Task Progress</span>
-        </div>
-      </Link>
-
-
             <Link to="LeaveManage" className="sidebar-item">
               <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
                 <svg
@@ -268,17 +273,6 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout }) => {
           </>
           ): loggedIn && isDepart=="HR" && (
            <>
-             {/* 🔹 New HR–Manager connection tab */}
-      <Link to="hr-manager" className="sidebar-item">
-        <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor" className="w-6 h-6 mr-3 text-white">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                  d="M6 3h12M6 7h12M6 11h12M6 15h12M6 19h12"/>
-          </svg>
-          <span className="font-medium">Manager Task Progress</span>
-        </div>
-      </Link>
            <Link to="LeaveManage" className="sidebar-item">
               <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
                 <svg
