@@ -1,223 +1,70 @@
-
-
 import React from "react";
 import logo from "../assets/logo.png";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./login.css";
 import { useNavigate } from "react-router-dom";
 import { Authdata } from "../Utils/Authprovider";
 import { Apisignin } from "../Api/Loginauth";
 import { jwtDecode } from "jwt-decode";
-import { LS, ipadr } from "../Utils/Resuse";
-import { Link } from "react-router-dom";
+import { LS } from "../Utils/Resuse";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { SetStatedata } = Authdata();
 
- const getIpInfo = async () => {
-    
-    
+  const handleGoogleLogin = async (credentialResponse) => {
     try {
-      console.log("Attempting to reach:", `${ipadr}/ip-info`);
-      
-      const response = await fetch(`${ipadr}/ip-info`, {
-        method: "GET",
-        redirect: "follow",
-        // Adding these options might help with certificate issues
-        mode: "cors",
-        headers: {
-          "Content-Type": "application/json"
-        }
+      let userDecode = jwtDecode(credentialResponse.credential);
+      const res = await Apisignin({
+        client_name: userDecode.name,
+        email: userDecode.email,
       });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+      const loggedIn = LS.get("isloggedin");
+      const isAdmin  = LS.get("isadmin");
+      if(loggedIn && isAdmin){
+        navigate("admin/time", {
+          state: { id: res.id, token: res.access_token },
+        });
+      }else if(loggedIn || isAdmin){
+        navigate("User/Clockin_int", {
+          state: { id: res.id, token: res.access_token },
+        });
+      } else{
+        console.log("Invalid request")
       }
-      
-      const result = await response.json();
-      console.log("Current IP Information:", {
-        publicIp: result.public_ip,
-        localIp: result.local_ip
-      });
-      
-      return {
-        publicIp: result.public_ip,
-        localIp: result.local_ip
-      };
-    } catch (error) {
-      console.error("Error fetching IP info:", error);
-      return null;
+    } catch (err) {
+      console.log(err);
     }
   };
-  const validateIp = (userIp, currentIps) => {
-    if (!userIp) {
-      console.log("No IP validation needed - IP not present in response");
-      return true;
-    }
-    
-    console.log("Performing IP validation:");
-    console.log("User IP from response:", userIp);
-    console.log("Current Public IP:", currentIps.publicIp);
-    console.log("Current Local IP:", currentIps.localIp);
-    
-    const matchesPublic = currentIps.publicIp === userIp;
-    const matchesLocal = currentIps.localIp === userIp;
-    
-    console.log("Matches public IP:", matchesPublic);
-    console.log("Matches local IP:", matchesLocal);
-    
-    return matchesPublic || matchesLocal;
-  };
-
-const handleGoogleLogin = async (credentialResponse) => {
-  try {
-    console.log("Starting Google login process...");
-
-    // First get the current IP information
-    const currentIps = await getIpInfo();
-    console.log("Retrieved current IPs:", currentIps);
-
-    // Decode Google JWT
-    let userDecode = jwtDecode(credentialResponse.credential);
-    console.log("Google credentials decoded:", {
-      name: userDecode.name,
-      email: userDecode.email
-    });
-
-    // Call backend
-    const res = await Apisignin({
-      client_name: userDecode.name,
-      email: userDecode.email,
-    });
-    console.log("API signin response:", res);
-
-    // ✅ Store userid correctly
-    localStorage.setItem("userid", res._id || res.id);
-    LS.save("userid", res._id || res.id);
-
-    localStorage.setItem("name", res.name);
-    localStorage.setItem("email", res.email);
-    localStorage.setItem("isloggedin", res.isloggedin.toString());
-    localStorage.setItem("isadmin", res.isadmin.toString());
-    localStorage.setItem("access_token", res.access_token);
-
-    // IP validation
-    if (res.ip) {
-      console.log("IP validation required. Response IP:", res.ip);
-      if (!validateIp(res.ip, currentIps)) {
-        console.log("IP validation failed!");
-        toast.error("Remote work IP is mismatched. Please connect from an authorized network.");
-        return;
-      }
-      console.log("IP validation successful!");
-    } else {
-      console.log("No IP validation required");
-    }
-
-    // Navigation
-    const loggedIn = res.isloggedin;
-    const isAdmin = res.isadmin;
-
-    console.log("Navigation check:", { loggedIn, isAdmin });
-
-    if (loggedIn && isAdmin) {
-      navigate("admin/time", {
-        state: { userid: res._id || res.id, token: res.access_token },
-      });
-    } else if (loggedIn && !isAdmin) {
-      navigate("User/Clockin_int", {
-        state: { userid: res._id || res.id, token: res.access_token },
-      });
-    } else {
-      toast.error("Login failed. Please contact administrator.");
-    }
-  } catch (err) {
-    console.error("Login error:", err);
-    toast.error("An error occurred during login. Please try again.");
-  }
-};
-
-  // return (
-  //   <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-  //     <div className="bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-lg">
-  //       <div className="flex flex-col items-center justify-center p-8">
-  //         <div className="text-center mb-6">
-  //           <img src={logo} alt="Company Logo" className="h-32 mx-auto" />
-  //           <h1 className="text-2xl font-bold text-gray-700 mt-4">
-  //             Welcome to E-Connect
-  //           </h1>
-  //         </div>
-  //         <div className="w-full">
-  //           <h2 className="text-xl font-semibold text-gray-600 mb-4 text-center">
-  //             Sign in with Google
-  //           </h2>
-  //           <div className="flex justify-center">
-  //             <GoogleOAuthProvider clientId="616660088488-17nrc3n7j9ibd7f29680qorv56442nd8.apps.googleusercontent.com">
-  //               <GoogleLogin
-  //                 onSuccess={handleGoogleLogin}
-  //                 useOneTap
-  //               />
-  //             </GoogleOAuthProvider>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-lg">
         <div className="flex flex-col items-center justify-center p-8">
-          {/* Logo + Title */}
           <div className="text-center mb-6">
-            <img src={logo} alt="Company Logo" className="h-32 mx-auto" />
+          <img src={logo} alt="Company Logo" className="h-32 mx-auto" />
             <h1 className="text-2xl font-bold text-gray-700 mt-4">
-              Welcome to E-Connect
+              Welcome to Econnect
             </h1>
           </div>
-
-          {/* Google Login */}
           <div className="w-full">
             <h2 className="text-xl font-semibold text-gray-600 mb-4 text-center">
               Sign in with Google
             </h2>
             <div className="flex justify-center">
-              {/* <GoogleOAuthProvider clientId="616660088488-17nrc3n7j9ibd7f29680qorv56442nd8.apps.googleusercontent.com"> */}
-              <GoogleOAuthProvider clientId="152946581457-15hbl22a667fe0le1mkt5e6d14kisrtd.apps.googleusercontent.com">
-                <GoogleLogin onSuccess={handleGoogleLogin} useOneTap data-testid="google-login-btn"/>
+              <GoogleOAuthProvider clientId="333036008565-7qkpcqr080na6l9fpcn492kc00ea2bv1.apps.googleusercontent.com">
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  useOneTap
+                />
               </GoogleOAuthProvider>
             </div>
           </div>
-
-          {/* OR Divider */}
-          {/* <div className="flex items-center my-6 w-full">
-            <div className="flex-grow border-t border-gray-300"></div>
-            <span className="mx-3 text-gray-500 text-sm">OR</span>
-            <div className="flex-grow border-t border-gray-300"></div>
-          </div> */}
-
-          {/* Links to normal login/signup */}
-          {/* <div className="text-center space-y-2">
-            <p className="text-sm text-gray-600">
-              Prefer Email/Password?{" "}
-              <Link to="/signin" className="text-blue-500 font-medium hover:underline">
-                Sign In
-              </Link>
-            </p>
-            <p className="text-sm text-gray-600">
-              New here?{" "}
-              <Link to="/signup" className="text-blue-500 font-medium hover:underline">
-                Create Account
-              </Link>
-            </p>
-          </div> */}
         </div>
       </div>
 
-      
-      
       <ToastContainer
         position="bottom-center"
         autoClose={2000}

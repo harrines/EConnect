@@ -31,11 +31,30 @@ import TaskAssign from "./components/TaskAssign";
 import ViewAssignedTask from "./components/ViewAssignedTask";
 import TaskDetails from "./components/TaskDetails";
 import LoginPage from "./components/Loginpage";
+import NotificationDashboard from "./components/NotificationDashboard";
+import EnhancedNotificationDashboard from "./components/EnhancedNotificationDashboard";
+import NotificationSystemTest from "./components/NotificationSystemTest";
+import ApiTest from "./components/ApiTest";
+import AdminAuth from "./Utils/AdminAuth";
+import TaskDetailsPage from "./components/TaskDetailsPage";
+import EmployeeTaskProgress from "./components/EmployeeTaskProgress";
+import ManagerTaskProgress from "./components/ManagerTaskProgress";
+import EmployeeTaskAssign from './components/EmployeeTaskAssign';
+import ManagerTaskAssign from './components/ManagerTaskAssign';
+import EmployeeprogressDetail from './components/EmployeeprogressDetail';
+import ManagerprogressDetail from './components/ManagerprogressDetail';
+
+
 import Attendance from "./components/Adminfrontend/Attendance";
 import AddLeave from "./components/Adminfrontend/AddLeave";
 import AttendanceStats from "./components/AttendanceStats";
 import LeaveDetails from "./components/Adminfrontend/LeaveDetails";
 import RemoteDetails from "./components/Adminfrontend/RemoteDetails";
+import Chat from './components/chat';
+import OnboardingDocs from './components/OnboardingDocs';
+import HRDocsReview from './components/Adminfrontend/AdminDocsReview';
+
+import Fileuploader from './components/Fileuploader';
 
 // Create a simple dashboard home component for admin
 const DashboardHome = () => (
@@ -59,6 +78,21 @@ const DashboardPage = () => (
   </Checkauth>
 );
 
+const AdminDashboardPage = () => (
+  <AdminAuth>
+    <DashboardPage />
+  </AdminAuth>
+);
+
+/*const rou = [];
+const tempdata = [
+  rou.map((item) => {
+    return item;
+  }),
+];*/
+
+
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -72,6 +106,13 @@ const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
+    path: "/websocket-test",
+    element: <NotificationDashboard />,
+  },
+  // {path:"Login",
+  // element:<LoginPage />
+  // },
+  {
     path: "/User",
     element: <DashboardPage />,
     children: [
@@ -84,33 +125,208 @@ const router = createBrowserRouter([
           { path: "Clockdashboard", element: <Clockdashboard /> },
         ],
       },
-      { path: "Setting", element: <Setting /> },
-      { path: "profile", element: <UserProfile /> },
-      { path: "todo", element: <ToDoList /> },
-      { path: "task", element: <TaskPage /> },
-      { path: "Leave", element: <Leave /> },
-      { path: "LeaveHistory", element: <LeaveHistory /> },
-      { path: "Holidaylist", element: <Holidaylist /> },
-      { path: "Workfromhome", element: <Workfromhome /> },
-      { path: "Leaverequest", element: <Leaverequest /> },
-      { path: "Remote_details", element: <Remote_details /> },
-      { path: "LeaveManage", element: <Leavemanagement /> },
-      { path: "newUser", element: <AddUser /> },
-      { path: "leaveapproval", element: <Leaveapproval /> },
-      { path: "leave_details", element: <LeaveDetails /> },
-      { path: "wfh", element: <Wfh /> },
-      { path: "wfh_details", element: <RemoteDetails />},
-      { path: "history", element: <Leavehistory /> },
-      { path: "attendance", element: <Attendance />},
-      { path: "individualStats", element: <AttendanceStats />},
-      { path: ":userid", element: <TaskAssign /> },
-      { path: "viewtask", element: <ViewAssignedTask /> },
+      {
+        path: "Setting",
+        element: <Setting />,
+      },
+      {
+        path: "profile",
+        element: <UserProfile />,
+      },
+      {
+        path: "todo",
+        element: <ToDoList />
+      },
+      {
+        path: "task",
+        element: <TaskPage />,
+      },
+         {
+        path: "task/:taskId",
+        element: <TaskDetailsPage />,
+      },
+      {
+        path: "Leave",
+        element: <Leave />,
+      },
+      {
+        path: "LeaveHistory",
+        element: <LeaveHistory />,
+      },
+      {
+        path: "Holidaylist",
+        element: <Holidaylist />,
+      },
+      {
+        path: "Workfromhome",
+        element: <Workfromhome />,
+      },
+      {
+        path: "Leaverequest",
+        element: <Leaverequest />,
+      },
+      {
+        path: "Remote_details",
+        element: <Remote_details />,
+      },
+      {
+        path: "notifications",
+        element: <NotificationDashboard />,
+      },
+      {
+        path: "enhanced-notifications",
+        element: <EnhancedNotificationDashboard />,
+      },
+      {
+        path: "test",
+        element: <ApiTest />,
+},
+{
+  path: "LeaveManage",
+  element: <Leavemanagement />,
+},
+{
+  path: "newUser",
+  element: <AddUser />,
+},
+{
+  path: "leaveapproval",
+  element: <Leaveapproval />,
+},
+{
+  path: "wfh",
+  element: <Wfh />,
+},
+{
+  path: "history",
+  element: <Leavehistory />,
+},
+{
+  path: 'chat',
+  element: <Chat />, // your Slack-like chat component
+},
+{
+  path:"viewtask",
+  element:<ViewAssignedTask />
+},
+{
+  path: "manager-employee",
+  element: <EmployeeTaskProgress/>,
+},
+{
+  path: "manager-task-detail/:taskId",
+  element:<EmployeeprogressDetail/>,
+},
+{
+  path: "hr-manager",
+  element: <ManagerTaskProgress/>,
+},
+{
+  path: "hr-task-detail/:taskId",
+  element:<ManagerprogressDetail/>,
+},
+{
+  path:"employee-task-assign", 
+  element:<EmployeeTaskAssign />
+},
+ {
+        path:'my-documents',
+        element:<OnboardingDocs/>,
+        
+      },
+      {
+          path: 'fileuploader',
+          element:<Fileuploader/>,
+        },
+{
+  path:"manager-task-assign", 
+  element:<ManagerTaskAssign />
+},
+{ path: "leave_details", element: <LeaveDetails /> },
+{ path: "wfh_details", element: <RemoteDetails />},
+{ path: "attendance", element: <Attendance />},
+{ path: "individualStats", element: <AttendanceStats />},
+{ path: ":userid", element: <TaskAssign /> },
     ],
   },
   {
     path: "/admin",
-    element: <DashboardPage />,
+    element: <AdminDashboardPage />,
     children: [
+      {
+        path: "",
+        element: <></>,
+      },
+      {
+        path: "leave",
+        element: <Leavemanagement />,
+      },
+      {
+        path: "time",
+        element: <Timemanagement />,
+      },
+      {
+        path: "employee",
+        element: <Employeelist />,
+        // children:[{
+        //   path:':id',
+        //   element:<EmployeeDetails/>
+        // },],
+      },
+      {
+        path: "leaveapproval",
+        element: <Leaveapproval />,
+      },
+      {
+        path: "wfh",
+        element: <Wfh />,
+      },
+      {
+        path: "profile",
+        element: <AdminProfile />,
+      },
+      {
+        path: "history",
+        element: <Leavehistory />,
+      },
+      {
+        path: "newUser",
+        element: <AddUser />,
+      },
+      {
+        path: "task",
+        element: <TaskPage />,
+      },
+      {
+        path: "viewtask",
+        element: <ViewAssignedTask />,
+      },
+      {
+        path: ":userid",
+        element: <TaskAssign />,
+      },
+      {
+        path: "notifications",
+        element: <NotificationDashboard />,
+      },
+      {
+        path: "enhanced-notifications",
+        element: <EnhancedNotificationDashboard />,
+      },
+      {
+        path: "notification-test",
+        element: <NotificationSystemTest />,
+      },
+      {
+        path:':id',
+        element:<EmployeeDetails/>
+      },
+      {
+        path: 'review-docs',
+        element: <HRDocsReview />,
+      },
+      
+      
       { index: true, element: <DashboardHome /> }, // default admin page
       { path: "leave", element: <Leavemanagement /> },
       { path: "time", element: <Timemanagement /> },
@@ -147,7 +363,22 @@ const MainApp = () => {
     };
   }, []);
 
-  return <RouterProvider router={router} />;
+  return (
+    <RouterProvider router={router}>
+      <Outlet />
+      <BrowserRouter>
+      <Routes>
+        <Route path="/admin/employee" element={<Employeelist/>}/>
+        <Route path="/admin/employee/:id" element={<EmployeeDetails/>}/>
+      </Routes>
+      
+      </BrowserRouter>
+    </RouterProvider>
+   
+
+    
+  );
+  //return <RouterProvider router={router} />;
 };
 
 createRoot(document.getElementById("root")).render(<MainApp />);

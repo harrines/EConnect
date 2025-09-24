@@ -1,0 +1,138 @@
+[
+  {
+    "timestamp": "2025-09-11T11:44:42.129744",
+    "category": "JWT_SECURITY",
+    "test_name": "JWT Token Structure",
+    "status": "INFO",
+    "details": "Testing token structure...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.140142",
+    "category": "JWT_SECURITY",
+    "test_name": "JWT Tampering Detection",
+    "status": "INFO",
+    "details": "Testing token tampering...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.141151",
+    "category": "JWT_SECURITY",
+    "test_name": "JWT Tampering",
+    "status": "SKIP",
+    "details": "No user token available",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.141151",
+    "category": "RBAC",
+    "test_name": "Role-Based Access Control",
+    "status": "INFO",
+    "details": "Testing RBAC implementation...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.148143",
+    "category": "RBAC",
+    "test_name": "No Auth - /attendance/",
+    "status": "FAIL",
+    "details": "Unauthenticated access allowed (Status: 200)",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.172258",
+    "category": "RBAC",
+    "test_name": "No Auth - /all_users_leave_requests/",
+    "status": "FAIL",
+    "details": "Unauthenticated access allowed (Status: 422)",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.175721",
+    "category": "RBAC",
+    "test_name": "No Auth - /manager_leave_requests/",
+    "status": "FAIL",
+    "details": "Unauthenticated access allowed (Status: 422)",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.302066",
+    "category": "RBAC",
+    "test_name": "No Auth - /admin_page_remote_work_requests",
+    "status": "FAIL",
+    "details": "Unauthenticated access allowed (Status: 200)",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.308454",
+    "category": "RBAC",
+    "test_name": "No Auth - /get_all_users",
+    "status": "FAIL",
+    "details": "Unauthenticated access allowed (Status: 200)",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.436627",
+    "category": "RBAC",
+    "test_name": "No Auth - /admin_leave_notification_reminder",
+    "status": "FAIL",
+    "details": "Unauthenticated access allowed (Status: 200)",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.436627",
+    "category": "SESSION",
+    "test_name": "Session Management",
+    "status": "INFO",
+    "details": "Testing session security...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.436627",
+    "category": "SESSION",
+    "test_name": "Concurrent Sessions",
+    "status": "INFO",
+    "details": "Manual verification needed: Check if multiple logins are handled securely",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.446200",
+    "category": "SESSION",
+    "test_name": "Token Refresh",
+    "status": "WARN",
+    "details": "No token refresh endpoint found - potential security issue",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.446200",
+    "category": "LOGIN",
+    "test_name": "Login Security",
+    "status": "INFO",
+    "details": "Testing login security...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.513123",
+    "category": "LOGIN",
+    "test_name": "Brute Force Protection",
+    "status": "FAIL",
+    "details": "No rate limiting detected after 10 failed attempts",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.546279",
+    "category": "LOGIN",
+    "test_name": "SQL Injection",
+    "status": "PASS",
+    "details": "No SQL injection vulnerabilities detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:44:42.563863",
+    "category": "LOGIN",
+    "test_name": "Google OAuth Security",
+    "status": "PASS",
+    "details": "Google OAuth properly validates requests",
+    "severity": "INFO"
+  }
+]

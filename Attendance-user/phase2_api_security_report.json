@@ -1,0 +1,402 @@
+[
+  {
+    "timestamp": "2025-09-11T11:52:42.005492",
+    "category": "INJECTION",
+    "test_name": "SQL/NoSQL Injection Testing",
+    "status": "INFO",
+    "details": "Testing injection vulnerabilities...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.256303",
+    "category": "XSS",
+    "test_name": "Cross-Site Scripting Testing",
+    "status": "INFO",
+    "details": "Testing XSS vulnerabilities...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.259843",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /signup",
+    "status": "FAIL",
+    "details": "XSS payload reflected: <script>alert('XSS')</script>...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.263061",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /signup",
+    "status": "FAIL",
+    "details": "XSS payload reflected: <img src=x onerror=alert('XSS')>...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.266472",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /signup",
+    "status": "FAIL",
+    "details": "XSS payload reflected: <svg onload=alert('XSS')>...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.269573",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /signup",
+    "status": "FAIL",
+    "details": "XSS payload reflected: javascript:alert('XSS')...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.273976",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /signup",
+    "status": "FAIL",
+    "details": "XSS payload reflected: <iframe src=javascript:alert('XSS')>...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.279661",
+    "category": "XSS",
+    "test_name": "XSS Test - /signin",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.286200",
+    "category": "XSS",
+    "test_name": "XSS Test - /signin",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.291718",
+    "category": "XSS",
+    "test_name": "XSS Test - /signin",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.297023",
+    "category": "XSS",
+    "test_name": "XSS Test - /signin",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.305198",
+    "category": "XSS",
+    "test_name": "XSS Test - /signin",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.309278",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /leave-request",
+    "status": "FAIL",
+    "details": "XSS payload reflected: <script>alert('XSS')</script>...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.312266",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /leave-request",
+    "status": "FAIL",
+    "details": "XSS payload reflected: <img src=x onerror=alert('XSS')>...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.317747",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /leave-request",
+    "status": "FAIL",
+    "details": "XSS payload reflected: <svg onload=alert('XSS')>...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.321055",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /leave-request",
+    "status": "FAIL",
+    "details": "XSS payload reflected: javascript:alert('XSS')...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.325056",
+    "category": "XSS",
+    "test_name": "XSS Vulnerability - /leave-request",
+    "status": "FAIL",
+    "details": "XSS payload reflected: <iframe src=javascript:alert('XSS')>...",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.328702",
+    "category": "XSS",
+    "test_name": "XSS Test - /Addcsvjson",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.333036",
+    "category": "XSS",
+    "test_name": "XSS Test - /Addcsvjson",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.336424",
+    "category": "XSS",
+    "test_name": "XSS Test - /Addcsvjson",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.339428",
+    "category": "XSS",
+    "test_name": "XSS Test - /Addcsvjson",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.343430",
+    "category": "XSS",
+    "test_name": "XSS Test - /Addcsvjson",
+    "status": "PASS",
+    "details": "Payload properly escaped/filtered",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.343430",
+    "category": "INPUT_VALIDATION",
+    "test_name": "Input Validation Testing",
+    "status": "INFO",
+    "details": "Testing input validation...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.366567",
+    "category": "INPUT_VALIDATION",
+    "test_name": "Special Characters",
+    "status": "PASS",
+    "details": "Handled special character: 'null\\x00byte'",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.370654",
+    "category": "INPUT_VALIDATION",
+    "test_name": "Special Characters",
+    "status": "PASS",
+    "details": "Handled special character: 'newline\\ninjection'",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.374156",
+    "category": "INPUT_VALIDATION",
+    "test_name": "Special Characters",
+    "status": "PASS",
+    "details": "Handled special character: 'carriage\\rreturn'",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.377420",
+    "category": "INPUT_VALIDATION",
+    "test_name": "Special Characters",
+    "status": "PASS",
+    "details": "Handled special character: 'tab\\tcharacter'",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.377420",
+    "category": "INPUT_VALIDATION",
+    "test_name": "File Upload Security",
+    "status": "INFO",
+    "details": "File upload endpoints not detected - manual testing required",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.384437",
+    "category": "INPUT_VALIDATION",
+    "test_name": "Parameter Pollution",
+    "status": "PASS",
+    "details": "Server properly handled duplicate parameters",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.384437",
+    "category": "API_SECURITY",
+    "test_name": "API Endpoint Security",
+    "status": "INFO",
+    "details": "Testing API security...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.388429",
+    "category": "API_SECURITY",
+    "test_name": "HTTP Methods - /signin",
+    "status": "PASS",
+    "details": "Method GET properly rejected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.397815",
+    "category": "API_SECURITY",
+    "test_name": "HTTP Methods - /signin",
+    "status": "PASS",
+    "details": "Method PUT properly rejected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.401400",
+    "category": "API_SECURITY",
+    "test_name": "HTTP Methods - /signin",
+    "status": "PASS",
+    "details": "Method DELETE properly rejected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.404407",
+    "category": "API_SECURITY",
+    "test_name": "HTTP Methods - /signup",
+    "status": "PASS",
+    "details": "Method GET properly rejected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.410110",
+    "category": "API_SECURITY",
+    "test_name": "HTTP Methods - /signup",
+    "status": "PASS",
+    "details": "Method PUT properly rejected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.412117",
+    "category": "API_SECURITY",
+    "test_name": "HTTP Methods - /signup",
+    "status": "PASS",
+    "details": "Method DELETE properly rejected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.415383",
+    "category": "API_SECURITY",
+    "test_name": "CORS Configuration",
+    "status": "PASS",
+    "details": "CORS properly configured",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.505107",
+    "category": "API_SECURITY",
+    "test_name": "Rate Limiting",
+    "status": "FAIL",
+    "details": "No rate limiting detected - 225.4 req/sec processed",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.508595",
+    "category": "API_SECURITY",
+    "test_name": "Error Handling - /nonexistent-endpoint",
+    "status": "PASS",
+    "details": "Proper error handling without information disclosure",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.510859",
+    "category": "API_SECURITY",
+    "test_name": "Error Handling - /signin",
+    "status": "PASS",
+    "details": "Proper error handling without information disclosure",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.514312",
+    "category": "API_SECURITY",
+    "test_name": "Error Handling - /signup",
+    "status": "PASS",
+    "details": "Proper error handling without information disclosure",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.514312",
+    "category": "COMMAND_INJECTION",
+    "test_name": "Command Injection Testing",
+    "status": "INFO",
+    "details": "Testing command injection...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.517513",
+    "category": "COMMAND_INJECTION",
+    "test_name": "Command Injection - /Addcsvjson",
+    "status": "PASS",
+    "details": "No command execution detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.520677",
+    "category": "COMMAND_INJECTION",
+    "test_name": "Command Injection - /Addcsvjson",
+    "status": "PASS",
+    "details": "No command execution detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.523161",
+    "category": "COMMAND_INJECTION",
+    "test_name": "Command Injection - /Addcsvjson",
+    "status": "PASS",
+    "details": "No command execution detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.525620",
+    "category": "COMMAND_INJECTION",
+    "test_name": "Command Injection - /Addcsvjson",
+    "status": "PASS",
+    "details": "No command execution detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.528624",
+    "category": "COMMAND_INJECTION",
+    "test_name": "Command Injection - /signup",
+    "status": "PASS",
+    "details": "No command execution detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.532017",
+    "category": "COMMAND_INJECTION",
+    "test_name": "Command Injection - /signup",
+    "status": "PASS",
+    "details": "No command execution detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.535104",
+    "category": "COMMAND_INJECTION",
+    "test_name": "Command Injection - /signup",
+    "status": "PASS",
+    "details": "No command execution detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T11:52:44.538484",
+    "category": "COMMAND_INJECTION",
+    "test_name": "Command Injection - /signup",
+    "status": "PASS",
+    "details": "No command execution detected",
+    "severity": "INFO"
+  }
+]

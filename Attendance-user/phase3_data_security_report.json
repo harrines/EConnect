@@ -1,0 +1,314 @@
+[
+  {
+    "timestamp": "2025-09-11T12:01:07.469550",
+    "category": "DATABASE",
+    "test_name": "Database Security Testing",
+    "status": "INFO",
+    "details": "Testing database security...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:07.513467",
+    "category": "DATABASE",
+    "test_name": "MongoDB Security - localhost:27017",
+    "status": "FAIL",
+    "details": "Unauthenticated database access possible. Databases: ['RBG_AI', 'admin', 'config']",
+    "severity": "CRITICAL"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:10.035465",
+    "category": "DATABASE",
+    "test_name": "MongoDB Security - localhost:27018",
+    "status": "PASS",
+    "details": "Database connection properly secured/not accessible",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:12.051580",
+    "category": "DATABASE",
+    "test_name": "MongoDB Security - localhost:27019",
+    "status": "PASS",
+    "details": "Database connection properly secured/not accessible",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:12.073134",
+    "category": "DATABASE",
+    "test_name": "MongoDB Security - 127.0.0.1:27017",
+    "status": "FAIL",
+    "details": "Unauthenticated database access possible. Databases: ['RBG_AI', 'admin', 'config']",
+    "severity": "CRITICAL"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:14.603596",
+    "category": "DATABASE",
+    "test_name": "MongoDB Security - 127.0.0.1:27018",
+    "status": "PASS",
+    "details": "Database connection properly secured/not accessible",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:17.109333",
+    "category": "DATABASE",
+    "test_name": "MongoDB Security - 127.0.0.1:27019",
+    "status": "PASS",
+    "details": "Database connection properly secured/not accessible",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.200556",
+    "category": "DATABASE",
+    "test_name": "NoSQL Injection - Login",
+    "status": "PASS",
+    "details": "No NoSQL injection vulnerabilities detected in login",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.207263",
+    "category": "DATABASE",
+    "test_name": "Data Access Control - 507f1f77bcf86cd799439011",
+    "status": "PASS",
+    "details": "No data returned for unauthorized access",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.213312",
+    "category": "DATABASE",
+    "test_name": "Data Access Control - 507f191e810c19729de860ea",
+    "status": "PASS",
+    "details": "No data returned for unauthorized access",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.218453",
+    "category": "DATABASE",
+    "test_name": "Data Access Control - 000000000000000000000000",
+    "status": "PASS",
+    "details": "No data returned for unauthorized access",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.223919",
+    "category": "DATABASE",
+    "test_name": "Information Disclosure - /",
+    "status": "PASS",
+    "details": "No database information disclosed",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.227919",
+    "category": "DATABASE",
+    "test_name": "Information Disclosure - /test",
+    "status": "PASS",
+    "details": "No database information disclosed",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.233225",
+    "category": "DATABASE",
+    "test_name": "Information Disclosure - /docs",
+    "status": "PASS",
+    "details": "No database information disclosed",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.245514",
+    "category": "DATABASE",
+    "test_name": "Information Disclosure - /openapi.json",
+    "status": "FAIL",
+    "details": "Database information exposed: connection.*string",
+    "severity": "MEDIUM"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.256671",
+    "category": "ENCRYPTION",
+    "test_name": "Data Encryption Testing",
+    "status": "INFO",
+    "details": "Testing encryption mechanisms...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.261805",
+    "category": "ENCRYPTION",
+    "test_name": "Password Storage",
+    "status": "INFO",
+    "details": "Signup failed with status 422",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:19.261805",
+    "category": "ENCRYPTION",
+    "test_name": "Transmission Encryption",
+    "status": "FAIL",
+    "details": "HTTP in use - data transmitted in plain text",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.016613",
+    "category": "ENCRYPTION",
+    "test_name": "HTTPS Availability",
+    "status": "WARN",
+    "details": "HTTPS not available or configured",
+    "severity": "MEDIUM"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.023177",
+    "category": "ENCRYPTION",
+    "test_name": "Token Exposure",
+    "status": "PASS",
+    "details": "No token exposed in failed login",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.027597",
+    "category": "ENCRYPTION",
+    "test_name": "Sensitive Data Exposure",
+    "status": "PASS",
+    "details": "No obvious sensitive data patterns in responses",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.028607",
+    "category": "DATA_LEAKAGE",
+    "test_name": "Data Leakage Testing",
+    "status": "INFO",
+    "details": "Testing data leakage...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.035117",
+    "category": "DATA_LEAKAGE",
+    "test_name": "PII Exposure - /get_all_users",
+    "status": "FAIL",
+    "details": "PII detected: ['sadhanashree.2253041@srec.ac.in', 'sadhanashreep90@gmail.com']",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.044470",
+    "category": "DATA_LEAKAGE",
+    "test_name": "PII Exposure - /attendance/",
+    "status": "PASS",
+    "details": "No obvious PII patterns detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.050298",
+    "category": "DATA_LEAKAGE",
+    "test_name": "PII Exposure - /all_users_leave_requests/",
+    "status": "PASS",
+    "details": "Endpoint properly protected (Status: 422)",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.056417",
+    "category": "DATA_LEAKAGE",
+    "test_name": "PII Exposure - /clock-records/test",
+    "status": "PASS",
+    "details": "No obvious PII patterns detected",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.063281",
+    "category": "DATA_LEAKAGE",
+    "test_name": "Cross-User Access - 507f1f77bcf86cd799439011",
+    "status": "FAIL",
+    "details": "User data accessible without authentication",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.069803",
+    "category": "DATA_LEAKAGE",
+    "test_name": "Cross-User Access - 507f191e810c19729de860ea",
+    "status": "FAIL",
+    "details": "User data accessible without authentication",
+    "severity": "HIGH"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.081525",
+    "category": "DATA_LEAKAGE",
+    "test_name": "Error Information - /id",
+    "status": "PASS",
+    "details": "Clean error messages without sensitive data",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.116822",
+    "category": "BACKUP",
+    "test_name": "Backup Security Testing",
+    "status": "INFO",
+    "details": "Testing backup security...",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.121170",
+    "category": "BACKUP",
+    "test_name": "Backup Exposure - /backup",
+    "status": "PASS",
+    "details": "Backup path properly protected (Status: 404)",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.125178",
+    "category": "BACKUP",
+    "test_name": "Backup Exposure - /backups",
+    "status": "PASS",
+    "details": "Backup path properly protected (Status: 404)",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.130174",
+    "category": "BACKUP",
+    "test_name": "Backup Exposure - /db_backup",
+    "status": "PASS",
+    "details": "Backup path properly protected (Status: 404)",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.134165",
+    "category": "BACKUP",
+    "test_name": "Backup Exposure - /dump",
+    "status": "PASS",
+    "details": "Backup path properly protected (Status: 404)",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.139545",
+    "category": "BACKUP",
+    "test_name": "Backup Exposure - /exports",
+    "status": "PASS",
+    "details": "Backup path properly protected (Status: 404)",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.145106",
+    "category": "BACKUP",
+    "test_name": "Database Dump - /users.json",
+    "status": "PASS",
+    "details": "Database dump not accessible",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.149834",
+    "category": "BACKUP",
+    "test_name": "Database Dump - /users.bson",
+    "status": "PASS",
+    "details": "Database dump not accessible",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.154193",
+    "category": "BACKUP",
+    "test_name": "Database Dump - /database.json",
+    "status": "PASS",
+    "details": "Database dump not accessible",
+    "severity": "INFO"
+  },
+  {
+    "timestamp": "2025-09-11T12:01:22.158348",
+    "category": "BACKUP",
+    "test_name": "Database Dump - /database.bson",
+    "status": "PASS",
+    "details": "Database dump not accessible",
+    "severity": "INFO"
+  }
+]

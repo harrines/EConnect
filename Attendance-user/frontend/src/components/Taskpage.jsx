@@ -629,7 +629,7 @@ const TaskPage = () => {
         </div>
 
         {/* Add Task Form */}
-        {!isPastDate(date) && (
+        {/* {!isPastDate(date) && (
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="flex flex-col sm:flex-row gap-4">
               <input
@@ -656,7 +656,7 @@ const TaskPage = () => {
             </div>
             {errorMessage && <p className="text-red-500 text-sm mt-3">{errorMessage}</p>}
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Kanban Board */}
