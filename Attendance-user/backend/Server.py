@@ -3819,7 +3819,7 @@ async def get_threads(rootId: str):
 
 # ------------------ Assign Document ------------------
 @app.post("/assign_docs")
-def assign_docs(payload: AssignPayload, assigned_by: str = "HR"):
+def assign_docs(payload: AssignPayload, assigned_by: str = "Admin"):
     if not payload.userIds or not payload.docName:
         raise HTTPException(status_code=400, detail="docName and userIds required")
     
@@ -3843,7 +3843,7 @@ def assign_docs(payload: AssignPayload, assigned_by: str = "HR"):
             count += 1
 
     return {"message": f'"{payload.docName}" assigned to {count} user(s)'}
-    
+
 @app.get("/assign_docs")
 def get_assigned_docs(userId: str = Query(...)):
     """

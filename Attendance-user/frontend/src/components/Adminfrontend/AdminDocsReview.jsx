@@ -1,6 +1,6 @@
 // src/components/HRDocsReview.jsx
 import { useState, useEffect } from "react";
-import { Check, FileText, X, User, PlusCircle, Upload, CheckCircle, Clock } from "lucide-react";
+import { Check, FileText, X, User, PlusCircle, Upload, CheckCircle, Clock, Trash, Eye, Trash2 } from "lucide-react";
 import axios from "axios";
 
 export default function HRDocsReview() {
@@ -286,7 +286,7 @@ export default function HRDocsReview() {
                           rel="noreferrer"
                           className="text-blue-600 text-sm underline flex items-center gap-1"
                         >
-                          <FileText size={14} /> View
+                          <Eye size={14} /> 
                         </a>
                       )}
                       {doc.fileUrl && doc.status !== "verified" && (
@@ -294,14 +294,14 @@ export default function HRDocsReview() {
                           onClick={() => handleVerify(reviewUser.userId, doc.docName)}
                           className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 flex items-center gap-1 text-xs"
                         >
-                          <Check size={14} /> Verify
+                          <Check size={14} /> 
                         </button>
                       )}
                       <button
                         onClick={() => handleDelete(reviewUser.userId, doc.docName)}
-                        className="px-2 py-1 bg-red-200 text-red-700 rounded hover:bg-red-300 flex items-center gap-1 text-xs"
+                        className="px-2 py-1  text-red-700  flex items-center gap-1 text-xs"
                       >
-                        <X size={14} /> Delete
+                        <Trash2 size={14} />
                       </button>
                     </td>
                   </tr>

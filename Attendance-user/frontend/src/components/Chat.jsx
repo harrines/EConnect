@@ -52,7 +52,7 @@ export default function Chat() {
   // Fetch contacts
   const loggedIn = LS.get("isloggedin");
   const isManager = LS.get("position"); // "Manager" or other
-  const isDepart = LS.get("department"); // "HR" or other
+  const isDepart = LS.get("department"); 
   const userid = LS.get("userid");
 
   useEffect(() => {
