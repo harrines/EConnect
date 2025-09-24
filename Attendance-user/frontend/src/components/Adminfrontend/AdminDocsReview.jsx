@@ -19,21 +19,27 @@ export default function HRDocsReview() {
   }, []);
 
   const fetchUsers = async () => {
-    try {
-      setLoadingUsers(true);
-      const res = await axios.get("http://localhost:8000/get_all_users");
-      const normalizedUsers = res.data.map((u) => ({
-        ...u,
-        userId: u.id || u._id || u.userId,
-      }));
-      setUsers(normalizedUsers);
-      await Promise.all(normalizedUsers.map((user) => fetchAssignedDocs(user.userId)));
-    } catch (err) {
-      console.error("❌ Error fetching users:", err);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
+  try {
+    setLoadingUsers(true);
+    const res = await axios.get("http://localhost:8000/get_all_users");
+
+    // Use userId directly
+    const normalizedUsers = res.data.map((u) => ({
+      ...u,
+      userId: u.userId,  // Always trust userId
+    }));
+
+    setUsers(normalizedUsers);
+
+    // Fetch assigned docs for each userId
+    await Promise.all(normalizedUsers.map((user) => fetchAssignedDocs(user.userId)));
+  } catch (err) {
+    console.error("❌ Error fetching users:", err);
+  } finally {
+    setLoadingUsers(false);
+  }
+};
+
 
   const fetchAssignedDocs = async (userId) => {
     try {
@@ -59,9 +65,9 @@ export default function HRDocsReview() {
       setLoadingAssign(true);
       setAssignedDocs((prev) => {
         const updated = { ...prev };
-        selectedUsers.forEach((uid) => {
-          const prevDocs = prev[uid] || [];
-          updated[uid] = [
+        selectedUsers.forEach((userid) => {
+          const prevDocs = prev[userid] || [];
+          updated[userid] = [
             ...prevDocs,
             { docName: docNameTrimmed, status: "pending", assignedBy: "Admin", fileUrl: null },
           ];
@@ -79,7 +85,7 @@ export default function HRDocsReview() {
       setSelectedUsers([]);
     } catch (err) {
       console.error(err);
-      alert("❌ Failed to assign document");
+      alert(" Failed to assign document");
     } finally {
       setLoadingAssign(false);
     }
@@ -96,7 +102,7 @@ export default function HRDocsReview() {
       fetchAssignedDocs(userId);
     } catch (err) {
       console.error(err);
-      alert("❌ Verification failed");
+      alert(" Verification failed");
     }
   };
 
@@ -112,7 +118,7 @@ export default function HRDocsReview() {
       }));
     } catch (err) {
       console.error(err);
-      alert("❌ Failed to delete document");
+      alert(" Failed to delete document");
     }
   };
 

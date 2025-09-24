@@ -58,7 +58,7 @@ chats_collection = client.chat_app
 threads_collection = client.threads
 files_collection = client.files
 groups_collection = client.groups
-users_collection = client.users
+
 documents_collection = client.document
 assignments_collection = client.assignments
 
@@ -1455,8 +1455,6 @@ def managers_leave_recommend_notification():
     print(message)
     return message
 
-
-
 #TL page
 def users_leave_recommend_notification(TL):
     users = list(Users.find({"position": {"$ne":"Manager"}, "TL":TL}))
@@ -1821,6 +1819,7 @@ def get_all_users():
                 "name": user.get("name"),
                 "department": user.get("department"),
                 "position": user.get("position"),
+                "userId": user.get("userid"),
                 "status": user.get("status"),
             }
             user_list.append(user_data)

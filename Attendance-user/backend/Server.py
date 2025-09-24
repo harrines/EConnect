@@ -3825,7 +3825,7 @@ def assign_docs(payload: AssignPayload, assigned_by: str = "HR"):
     
     count = 0
     for uid in payload.userIds:
-        # Only add doc if not already assigned
+       
         result = Users.update_one(
             {"userid": uid, "assigned_docs.docName": {"$ne": payload.docName}},
             {"$push": {
@@ -3843,6 +3843,7 @@ def assign_docs(payload: AssignPayload, assigned_by: str = "HR"):
             count += 1
 
     return {"message": f'"{payload.docName}" assigned to {count} user(s)'}
+    
 @app.get("/assign_docs")
 def get_assigned_docs(userId: str = Query(...)):
     """
