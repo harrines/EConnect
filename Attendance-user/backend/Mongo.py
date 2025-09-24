@@ -43,7 +43,7 @@ from pymongo import MongoClient
 
   # For storing yearly working days
 
-client= MongoClient("mongodb+srv://harrine2253020:ybqDGEfzbpOJEsyT@cluster0.nzdj6se.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient("mongodb://localhost:27017")
 db = client["RBG_AI"]
 client=client.RBG_AI
 Users=client.Users
@@ -4914,3 +4914,243 @@ def update_file_status(file_id: str, status: str, remarks: str = None):
         {"assigned_docs.file_id": file_id},
         {"$set": {"assigned_docs.$.status": status}}
     )
+
+def get_manager_team_leave_details(user_id: str, statusFilter: str = None, leaveTypeFilter: str = None, departmentFilter: str = None):
+    """
+    Get leave details for team members under a specific manager using aggregation
+    """
+    try:
+        # First, verify the manager exists and get their info
+        manager = Users.find_one({"_id": ObjectId(user_id)})
+        if not manager:
+            return {"error": "Manager not found", "leave_details": []}
+        
+        manager_name = manager.get("name")
+        if not manager_name:
+            return {"error": "Manager name not found", "leave_details": []}
+        
+        # Build the aggregation pipeline
+        pipeline = []
+        
+        # Convert userid to ObjectId if it's a string
+        pipeline.append({
+            "$addFields": {
+                "userid_as_objectid": {
+                    "$cond": {
+                        "if": {"$eq": [{"$type": "$userid"}, "objectId"]},
+                        "then": "$userid",
+                        "else": {"$toObjectId": "$userid"}
+                    }
+                }
+            }
+        })
+        
+        # Join with Users collection
+        pipeline.append({
+            "$lookup": {
+                "from": "Users",
+                "localField": "userid_as_objectid",
+                "foreignField": "_id",
+                "as": "user_info"
+            }
+        })
+        
+        # Unwind the user_info array
+        pipeline.append({"$unwind": "$user_info"})
+        
+        # Filter to only show team members under this manager
+        base_match = {
+            "user_info.TL": manager_name,  # Team members have this manager as TL
+            "user_info.position": {"$ne": "Manager"}  # Exclude other managers
+        }
+        
+        # Add additional filters
+        if departmentFilter and departmentFilter != "All":
+            base_match["user_info.department"] = departmentFilter
+        
+        if statusFilter and statusFilter != "All":
+            if statusFilter == "Pending":
+                base_match["status"] = {"$exists": False}
+            else:
+                base_match["status"] = statusFilter
+        
+        if leaveTypeFilter and leaveTypeFilter != "All":
+            base_match["leaveType"] = leaveTypeFilter
+        
+        # Apply the match conditions
+        pipeline.append({"$match": base_match})
+        
+        # Add employee info fields to output
+        pipeline.append({
+            "$addFields": {
+                "employeeName": "$user_info.name",
+                "position": "$user_info.position",
+                "department": "$user_info.department",
+                "email": "$user_info.email",
+                "teamLeader": "$user_info.TL"
+            }
+        })
+        
+        # Remove temporary fields
+        pipeline.append({
+            "$project": {
+                "user_info": 0,
+                "userid_as_objectid": 0
+            }
+        })
+        
+        # Sort by request date (most recent first)
+        pipeline.append({
+            "$sort": {"requestDate": -1}
+        })
+        
+        # Execute aggregation
+        leave_details = list(Leave.aggregate(pipeline))
+        
+        # Format dates and ObjectIds
+        for leave in leave_details:
+            leave["_id"] = str(leave["_id"])
+            if "selectedDate" in leave and leave["selectedDate"]:
+                leave["selectedDate"] = leave["selectedDate"].strftime("%d-%m-%Y")
+            if "requestDate" in leave and leave["requestDate"]:
+                leave["requestDate"] = leave["requestDate"].strftime("%d-%m-%Y")
+            if "ToDate" in leave and leave["ToDate"]:
+                leave["ToDate"] = leave["ToDate"].strftime("%d-%m-%Y")
+        
+        return {
+            "manager_info": {
+                "user_id": user_id,
+                "manager_name": manager_name
+            },
+            "leave_details": leave_details,
+            "total_count": len(leave_details),
+            "filters_applied": {
+                "status": statusFilter or "All",
+                "leave_type": leaveTypeFilter or "All",
+                "department": departmentFilter or "All"
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error in get_manager_team_leave_details: {e}")
+        return {"error": str(e), "leave_details": []}
+
+
+def get_manager_team_remote_work_details(user_id: str, statusFilter: str = None, departmentFilter: str = None):
+    """
+    Get remote work details for team members under a specific manager using aggregation
+    """
+    try:
+        # First, verify the manager exists and get their info
+        manager = Users.find_one({"_id": ObjectId(user_id)})
+        if not manager:
+            return {"error": "Manager not found", "remote_work_details": []}
+        
+        manager_name = manager.get("name")
+        if not manager_name:
+            return {"error": "Manager name not found", "remote_work_details": []}
+        
+        # Build the aggregation pipeline
+        pipeline = []
+        
+        # Convert userid to ObjectId if it's a string
+        pipeline.append({
+            "$addFields": {
+                "userid_as_objectid": {
+                    "$cond": {
+                        "if": {"$eq": [{"$type": "$userid"}, "objectId"]},
+                        "then": "$userid",
+                        "else": {"$toObjectId": "$userid"}
+                    }
+                }
+            }
+        })
+        
+        # Join with Users collection
+        pipeline.append({
+            "$lookup": {
+                "from": "Users",
+                "localField": "userid_as_objectid",
+                "foreignField": "_id",
+                "as": "user_info"
+            }
+        })
+        
+        # Unwind the user_info array
+        pipeline.append({"$unwind": "$user_info"})
+        
+        # Filter to only show team members under this manager
+        base_match = {
+            "user_info.TL": manager_name,  # Team members have this manager as TL
+            "user_info.position": {"$ne": "Manager"}  # Exclude other managers
+        }
+        
+        # Add additional filters
+        if departmentFilter and departmentFilter != "All":
+            base_match["user_info.department"] = departmentFilter
+        
+        if statusFilter and statusFilter != "All":
+            if statusFilter == "Pending":
+                base_match["status"] = {"$exists": False}
+                base_match["Recommendation"] = {"$exists": False}
+            elif statusFilter == "Recommended":
+                base_match["Recommendation"] = "Recommend"
+            else:
+                base_match["status"] = statusFilter
+        
+        # Apply the match conditions
+        pipeline.append({"$match": base_match})
+        
+        # Add employee info fields to output
+        pipeline.append({
+            "$addFields": {
+                "employeeName": "$user_info.name",
+                "position": "$user_info.position",
+                "department": "$user_info.department",
+                "email": "$user_info.email",
+                "teamLeader": "$user_info.TL"
+            }
+        })
+        
+        # Remove temporary fields
+        pipeline.append({
+            "$project": {
+                "user_info": 0,
+                "userid_as_objectid": 0
+            }
+        })
+        
+        # Sort by request date (most recent first)
+        pipeline.append({
+            "$sort": {"requestDate": -1}
+        })
+        
+        # Execute aggregation
+        remote_work_details = list(RemoteWork.aggregate(pipeline))
+        
+        # Format dates and ObjectIds
+        for remote_work in remote_work_details:
+            remote_work["_id"] = str(remote_work["_id"])
+            if "fromDate" in remote_work and remote_work["fromDate"]:
+                remote_work["fromDate"] = remote_work["fromDate"].strftime("%d-%m-%Y")
+            if "toDate" in remote_work and remote_work["toDate"]:
+                remote_work["toDate"] = remote_work["toDate"].strftime("%d-%m-%Y")
+            if "requestDate" in remote_work and remote_work["requestDate"]:
+                remote_work["requestDate"] = remote_work["requestDate"].strftime("%d-%m-%Y")
+        
+        return {
+            "manager_info": {
+                "user_id": user_id,
+                "manager_name": manager_name
+            },
+            "remote_work_details": remote_work_details,
+            "total_count": len(remote_work_details),
+            "filters_applied": {
+                "status": statusFilter or "All",
+                "department": departmentFilter or "All"
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error in get_manager_team_remote_work_details: {e}")
+        return {"error": str(e), "remote_work_details": []}
