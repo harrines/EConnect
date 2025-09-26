@@ -43,8 +43,8 @@ from pymongo import MongoClient
 
   # For storing yearly working days
 
-client = MongoClient("mongodb://localhost:27017")
-db = client["RBG_AI"]
+client= MongoClient("mongodb+srv://harrine2253020:ybqDGEfzbpOJEsyT@cluster0.nzdj6se.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client.RBG_AI
 client=client.RBG_AI
 Users=client.Users
 Add=client.Dataset
@@ -1814,12 +1814,11 @@ def get_all_users():
         user_list = []
         for user in users:
             user_data = {
-                "id": str(user["_id"]),  # Convert ObjectId to string
+                "id": str(user["userid"]),  # Convert ObjectId to string
                 "email": user.get("email"),
                 "name": user.get("name"),
                 "department": user.get("department"),
                 "position": user.get("position"),
-                "userId": user.get("userid"),
                 "status": user.get("status"),
             }
             user_list.append(user_data)
@@ -4913,7 +4912,15 @@ def update_file_status(file_id: str, status: str, remarks: str = None):
         {"assigned_docs.file_id": file_id},
         {"$set": {"assigned_docs.$.status": status}}
     )
-
+def get_employee_id_from_db(name: str):
+    try:
+        user = Users.find_one({'name': name}, {'userid': 1})
+        if user:
+            return user["userid"]
+        else:
+            return None
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 def get_manager_team_leave_details(user_id: str, statusFilter: str = None, leaveTypeFilter: str = None, departmentFilter: str = None):
     """
     Get leave details for team members under a specific manager using aggregation

@@ -1,6 +1,6 @@
 // src/components/HRDocsReview.jsx
 import { useState, useEffect } from "react";
-import { Check, FileText, X, User, PlusCircle, Upload, CheckCircle, Clock, Trash, Eye, Trash2 } from "lucide-react";
+import { Check, FileText, X, User, PlusCircle, Upload, CheckCircle, Clock } from "lucide-react";
 import axios from "axios";
 
 export default function HRDocsReview() {
@@ -19,27 +19,21 @@ export default function HRDocsReview() {
   }, []);
 
   const fetchUsers = async () => {
-  try {
-    setLoadingUsers(true);
-    const res = await axios.get("http://localhost:8000/get_all_users");
-
-    // Use userId directly
-    const normalizedUsers = res.data.map((u) => ({
-      ...u,
-      userId: u.userId,  // Always trust userId
-    }));
-
-    setUsers(normalizedUsers);
-
-    // Fetch assigned docs for each userId
-    await Promise.all(normalizedUsers.map((user) => fetchAssignedDocs(user.userId)));
-  } catch (err) {
-    console.error("❌ Error fetching users:", err);
-  } finally {
-    setLoadingUsers(false);
-  }
-};
-
+    try {
+      setLoadingUsers(true);
+      const res = await axios.get("http://localhost:8000/get_all_users");
+      const normalizedUsers = res.data.map((u) => ({
+        ...u,
+        userId: u.id || u._id || u.userId,
+      }));
+      setUsers(normalizedUsers);
+      await Promise.all(normalizedUsers.map((user) => fetchAssignedDocs(user.userId)));
+    } catch (err) {
+      console.error("❌ Error fetching users:", err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   const fetchAssignedDocs = async (userId) => {
     try {
@@ -65,11 +59,11 @@ export default function HRDocsReview() {
       setLoadingAssign(true);
       setAssignedDocs((prev) => {
         const updated = { ...prev };
-        selectedUsers.forEach((userid) => {
-          const prevDocs = prev[userid] || [];
-          updated[userid] = [
+        selectedUsers.forEach((uid) => {
+          const prevDocs = prev[uid] || [];
+          updated[uid] = [
             ...prevDocs,
-            { docName: docNameTrimmed, status: "pending", assignedBy: "Admin", fileUrl: null },
+            { docName: docNameTrimmed, status: "pending", assignedBy: "HR", fileUrl: null },
           ];
         });
         return updated;
@@ -85,7 +79,7 @@ export default function HRDocsReview() {
       setSelectedUsers([]);
     } catch (err) {
       console.error(err);
-      alert(" Failed to assign document");
+      alert("❌ Failed to assign document");
     } finally {
       setLoadingAssign(false);
     }
@@ -102,7 +96,7 @@ export default function HRDocsReview() {
       fetchAssignedDocs(userId);
     } catch (err) {
       console.error(err);
-      alert(" Verification failed");
+      alert("❌ Verification failed");
     }
   };
 
@@ -118,7 +112,7 @@ export default function HRDocsReview() {
       }));
     } catch (err) {
       console.error(err);
-      alert(" Failed to delete document");
+      alert("❌ Failed to delete document");
     }
   };
 
@@ -286,7 +280,7 @@ export default function HRDocsReview() {
                           rel="noreferrer"
                           className="text-blue-600 text-sm underline flex items-center gap-1"
                         >
-                          <Eye size={14} /> 
+                          <FileText size={14} /> View
                         </a>
                       )}
                       {doc.fileUrl && doc.status !== "verified" && (
@@ -294,14 +288,14 @@ export default function HRDocsReview() {
                           onClick={() => handleVerify(reviewUser.userId, doc.docName)}
                           className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 flex items-center gap-1 text-xs"
                         >
-                          <Check size={14} /> 
+                          <Check size={14} /> Verify
                         </button>
                       )}
                       <button
                         onClick={() => handleDelete(reviewUser.userId, doc.docName)}
-                        className="px-2 py-1  text-red-700  flex items-center gap-1 text-xs"
+                        className="px-2 py-1 bg-red-200 text-red-700 rounded hover:bg-red-300 flex items-center gap-1 text-xs"
                       >
-                        <Trash2 size={14} />
+                        <X size={14} /> Delete
                       </button>
                     </td>
                   </tr>

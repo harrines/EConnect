@@ -52,7 +52,7 @@ export default function Chat() {
   // Fetch contacts
   const loggedIn = LS.get("isloggedin");
   const isManager = LS.get("position"); // "Manager" or other
-  const isDepart = LS.get("department"); 
+  const isDepart = LS.get("department"); // "HR" or other
   const userid = LS.get("userid");
 
   useEffect(() => {
@@ -125,13 +125,16 @@ export default function Chat() {
         }
 
         if (payload.type === "thread") {
-          setMessages((prev) => {
-            const threadKey = `thread:${payload.rootId}`;
-            const arr = prev[threadKey] || [];
-            return { ...prev, [threadKey]: [...arr, payload] };
-          });
-          return;
-        }
+  setMessages((prev) => {
+    const threadKey = `thread:${payload.rootId}`;
+    const arr = prev[threadKey] || [];
+    const exists = arr.some(m => m.tempId === payload.tempId || m.id === payload.id);
+    if (exists) return prev; 
+    return { ...prev, [threadKey]: [...arr, payload] };
+  });
+  return;
+}
+
 
         const msgChatId =
           payload.chatId ||
@@ -157,7 +160,12 @@ export default function Chat() {
       }
     };
   };
-
+ useEffect(() => {
+  if (!selectedThread) return;
+  fetch(`http://localhost:8000/thread/${selectedThread.id}`)
+    .then(res => res.json())
+    .then(data => setMessages(prev => ({ ...prev, [`thread:${selectedThread.id}`]: data })));
+}, [selectedThread]);
   const handleContactClick = async (contact) => {
     try {
       const res = await fetch(`http://localhost:8000/get_EmployeeId/${encodeURIComponent(contact.name)}`);
@@ -256,54 +264,67 @@ export default function Chat() {
     }
   };
 
-  const sendThreadMessage = async () => {
-    if (!selectedThread || !threadInput.trim()) return;
+ const sendThreadMessage = async () => {
+  if (!selectedThread || !threadInput.trim()) return;
 
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-      toast.error("Socket not connected");
-      return;
-    }
+  if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+    toast.error("Socket not connected");
+    return;
+  }
 
-    const tempId = `temp-${Date.now()}`;
-    const targetUser =
-      selectedThread.from_user === userid
-        ? selectedThread.to_user
-        : selectedThread.from_user;
+  const tempId = `temp-${Date.now()}`;
+  const targetUser = activeChat.type === "group"
+    ? null
+    : (selectedThread.from_user === userid ? selectedThread.to_user : selectedThread.from_user);
 
-    const payload = {
-      type: "thread",
-      id: tempId,
-      tempId,
-      from_user: userid,
-      to_user: targetUser,
-      text: threadInput.trim(),
-      rootId: selectedThread.id,
-      timestamp: new Date().toISOString(),
-    };
-
-    setMessages((prev) => {
-      const key = `thread:${payload.rootId}`;
-      const arr = prev[key] || [];
-      const exists = arr.some((m) => m.tempId === tempId);
-      if (exists) return prev;
-      return { ...prev, [key]: [...arr, payload] };
-    });
-
-    ws.current.send(JSON.stringify(payload));
-
-    try {
-      await fetch("http://localhost:8000/thread", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-    } catch (err) {
-      console.error(err);
-      toast.error("Error saving thread message");
-    }
-
-    setThreadInput("");
+  const payload = {
+    type: "thread",
+    id: tempId, // temporary until server assigns real id
+    tempId,
+    from_user: userid,
+    to_user: targetUser,
+    text: threadInput.trim(),
+    rootId: selectedThread.id,
+    chatId: activeChat.chatId,
+    timestamp: new Date().toISOString(),
   };
+
+  // Optimistic update
+  setMessages(prev => {
+    const key = `thread:${payload.rootId}`;
+    const arr = prev[key] || [];
+    return { ...prev, [key]: [...arr, payload] };
+  });
+
+  // Send via WebSocket
+  ws.current.send(JSON.stringify(payload));
+
+  try {
+    // Save to backend
+    const res = await fetch("http://localhost:8000/thread", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (data.status === "success" && data.thread) {
+      // Replace tempId with real id
+      setMessages(prev => {
+        const key = `thread:${payload.rootId}`;
+        const arr = prev[key].map(m => m.tempId === tempId ? data.thread : m);
+        return { ...prev, [key]: arr };
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Error saving thread message");
+  }
+
+  setThreadInput("");
+};
+
+
 
   const getInitials = (name = "") =>
     name.split(" ").map((n) => n[0] || "").join("").toUpperCase();
@@ -321,7 +342,7 @@ export default function Chat() {
   const filteredGroups = groups.filter(g =>
     g.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+const validGroupUsers = contacts.filter(u => u.id !== userid);
   return (
     <div className="flex h-screen w-full font-sans bg-gray-100 overflow-hidden">
       {/* Sidebar */}
@@ -374,7 +395,7 @@ export default function Chat() {
                 </div>
               </div>
 
-              {LS.get("position")?.toLowerCase() === "manager" && (
+              {LS.get("position")?.toLowerCase() === "Manager" && (
                 <button className="text-black-600 hover:underline" onClick={(e) => { e.stopPropagation(); handleRemoveGroup(group); }}>
                   <FiDelete />
                 </button>
@@ -524,6 +545,72 @@ export default function Chat() {
             <FiSend />
           </button>
         </div>
+        {/* Group Modal */}
+      {showGroupModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl w-96 shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Create Group</h2>
+            <input
+              type="text"
+              placeholder="Group Name"
+              className="w-full border p-2 rounded mb-3"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+            />
+            <div className="max-h-64 overflow-y-auto border p-2 rounded mb-3">
+              {validGroupUsers.map(user => (
+                <label key={user.id} className="flex items-center gap-2 mb-1">
+                  <input
+                    type="checkbox"
+                    value={user.id}
+                    checked={selectedUsers.includes(user.id)}
+                    onChange={(e) => {
+                      const uid = e.target.value;
+                      if (!uid) return;
+                      setSelectedUsers(prev =>
+                        prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
+                      );
+                    }}
+                  />
+                  {user.name} ({user.position || user.department})
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button className="px-4 py-2 bg-gray-300 rounded" onClick={() => setShowGroupModal(false)}>Cancel</button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+                onClick={async () => {
+                  const validMembers = Array.from(new Set([...selectedUsers.filter(id => id), userid]));
+                  if (!groupName.trim() || validMembers.length === 0) {
+                    toast.error("Enter group name and select valid users");
+                    return;
+                  }
+                  try {
+                    const res = await fetch("http://localhost:8000/create_group", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: groupName, members: validMembers })
+                    });
+                    const data = await res.json();
+                    if (data.status === "success") {
+                      setGroups(prev => [...prev, { _id: data.group_id, name: groupName, members: validMembers }]);
+                      toast.success("Group created!");
+                      setShowGroupModal(false);
+                      setGroupName("");
+                      setSelectedUsers([]);
+                    } else toast.error("Failed to create group");
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
       <ToastContainer />
     </div>

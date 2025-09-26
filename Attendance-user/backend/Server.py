@@ -3768,7 +3768,16 @@ async def websocket_endpoint(websocket: WebSocket, userid: str):
         direct_chat_manager.disconnect(userid, websocket)
 
 
-
+@app.get("/get_EmployeeId/{name}")
+async def get_employee_id(name: str = Path(..., title="The username of the user")):
+    try:
+        employee_id = get_employee_id_from_db(name)
+        if employee_id:
+            return {"Employee_ID": employee_id}
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/history/{chatId}")
 async def history(chatId: str):
@@ -4073,24 +4082,39 @@ async def view_file(file_id: str):
     )
 
 @app.post("/create_group")
-async def create_group(group: GroupCreate):
+async def create_group(group: GroupCreate, request: Request):
+    # Extract manager's userid (e.g., from JWT/session or request)
+    manager_id = request.headers.get("userid")  # or from auth middleware
+    
     group_id = str(uuid.uuid4())
+    
+    # Ensure manager is also added as a member
+    members = list(set(group.members + [manager_id]))  
+
     doc = {
         "_id": group_id,
         "name": group.name,
-        "members": group.members,
+        "members": members,   # manager also included
         "created_at": datetime.utcnow()
     }
     groups_collection.insert_one(doc)
-    return {"status": "success", "group_id": group_id, "name": group.name}
+    
+    return {
+        "status": "success",
+        "group_id": group_id,
+        "name": group.name,
+        "members": members
+    }
+
+
 
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
-@app.get("/get_user_groups/{user_id}")
-async def get_user_groups(user_id: str):
+@app.get("/get_user_groups/{userid}")
+async def get_user_groups(userid: str):
     # Fetch groups where user is a member
-    groups_cursor = groups_collection.find({"members": user_id})
+    groups_cursor = groups_collection.find({"members": userid})
     groups = list(groups_cursor)  # <--- await here
 
     # Convert MongoDB ObjectId and datetime to JSON-safe
@@ -4101,15 +4125,18 @@ async def get_user_groups(user_id: str):
 
 @app.get("/group_members/{group_id}")
 async def get_group_members(group_id: str):
-    group = db.groups.find_one({"_id": ObjectId(group_id)})
+    group = groups_collection.find_one({"_id": group_id})
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
     
-    members = list(db.users.find({"_id": {"$in": group.get("members", [])}}, {"name": 1, "depart": 1}))
-    # Convert ObjectId to string for frontend
-    for m in members:
-        m["_id"] = str(m["_id"])
+    # group["members"] contains userids, not _ids
+    members = list(db.users.find(
+        {"userid": {"$in": group.get("members", [])}}, 
+        {"_id": 0, "userid": 1, "name": 1, "depart": 1}
+    ))
+    
     return members
+
 
 
 
