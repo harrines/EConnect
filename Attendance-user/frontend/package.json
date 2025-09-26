@@ -1,16 +1,15 @@
-
 {
   "name": "frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://Nithya3038.github.io/E-Connect",
+  "homepage": "https://harrines.github.io/E-connect-final",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
     "update-browserslist": "npx update-browserslist-db@latest",
-     "predeploy": "npm run build",
+    "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
