@@ -217,6 +217,10 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(auto_clockout, "cron", hour=21, minute=30)  # example: 21:30 IST
 scheduler.start()
 
+@app.get("/")
+def root():
+    return {"message": "Hello from FastAPI on Vercel!"}
+
 # Initialize task scheduler on application startup
 @app.on_event("startup")
 async def startup_event():
