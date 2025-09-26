@@ -8,7 +8,8 @@ fastapi==0.109.0
 h11==0.14.0
 idna==3.6
 numpy==1.26.3
-pandas==2.2.0
+pandas==2.2.3
+
 pydantic==2.5.3
 pydantic_core==2.14.6
 PyJWT==2.10.1
