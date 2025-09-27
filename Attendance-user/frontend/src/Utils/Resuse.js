@@ -10,11 +10,11 @@
 
 import localstorageEncrypt from "localstorage-encrypt";
 import axios from "axios";
-var ip = import.meta.env.VITE_BACKEND_HOST 
+
 var host = import.meta.env.VITE_BACKEND_PORT 
 
 //export const ipadr=import.meta.env.VITE_HOST_IP;
-export const ipadr = import.meta.env.VITE_HOST_IP;
+export const ipadr = import.meta.env.VITE_BACKEND_HOST ;
 console.log(import.meta.env.VITE_HOST_IP); // Debugging step
 console.log("j",import.meta.env.VITE_BACKEND_HOST)
 console.log("a",import.meta.env.VITE_BACKEND_PORT)
