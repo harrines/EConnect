@@ -1,8 +1,8 @@
 // src/components/HRDocsReview.jsx
 import { useState, useEffect } from "react";
-import { Check, FileText, X, User, PlusCircle, Upload, CheckCircle, Clock } from "lucide-react";
+import { Check, FileText, X, User, PlusCircle, Upload, CheckCircle, Clock, Trash2, Eye } from "lucide-react";
 import axios from "axios";
-
+import { ipadr } from "../../Utils/Resuse";
 export default function HRDocsReview() {
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -12,7 +12,7 @@ export default function HRDocsReview() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingAssign, setLoadingAssign] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // "all", "pending", "uploaded", "verified"
+  const [statusFilter, setStatusFilter] = useState("all"); 
 
   useEffect(() => {
     fetchUsers();
@@ -21,7 +21,7 @@ export default function HRDocsReview() {
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const res = await axios.get("http://localhost:8000/get_all_users");
+      const res = await axios.get(`${ipadr}/get_all_users`);
       const normalizedUsers = res.data.map((u) => ({
         ...u,
         userId: u.id || u._id || u.userId,
@@ -29,7 +29,7 @@ export default function HRDocsReview() {
       setUsers(normalizedUsers);
       await Promise.all(normalizedUsers.map((user) => fetchAssignedDocs(user.userId)));
     } catch (err) {
-      console.error("❌ Error fetching users:", err);
+      console.error(" Error fetching users:", err);
     } finally {
       setLoadingUsers(false);
     }
@@ -37,10 +37,10 @@ export default function HRDocsReview() {
 
   const fetchAssignedDocs = async (userId) => {
     try {
-      const res = await axios.get(`http://localhost:8000/documents/assigned/${userId}`);
+      const res = await axios.get(`${ipadr}/documents/assigned/${userId}`);
       setAssignedDocs((prev) => ({ ...prev, [userId]: res.data }));
     } catch (err) {
-      console.error(`❌ Error fetching docs for user ${userId}:`, err);
+      console.error(` Error fetching docs for user ${userId}:`, err);
     }
   };
 
@@ -69,7 +69,7 @@ export default function HRDocsReview() {
         return updated;
       });
 
-      await axios.post("http://localhost:8000/assign_docs", {
+      await axios.post(`${ipadr}/assign_docs`, {
         userIds: selectedUsers,
         docName: docNameTrimmed,
       });
@@ -79,7 +79,7 @@ export default function HRDocsReview() {
       setSelectedUsers([]);
     } catch (err) {
       console.error(err);
-      alert("❌ Failed to assign document");
+      alert(" Failed to assign document");
     } finally {
       setLoadingAssign(false);
     }
@@ -87,7 +87,7 @@ export default function HRDocsReview() {
 
   const handleVerify = async (userId, docName) => {
     try {
-      await axios.put("http://localhost:8000/review_document", {
+      await axios.put(`${ipadr}/review_document`, {
         userId,
         docName,
         status: "verified",
@@ -96,14 +96,14 @@ export default function HRDocsReview() {
       fetchAssignedDocs(userId);
     } catch (err) {
       console.error(err);
-      alert("❌ Verification failed");
+      alert(" Verification failed");
     }
   };
 
   const handleDelete = async (userId, docName) => {
     try {
       if (!window.confirm(`Are you sure to delete "${docName}"?`)) return;
-      await axios.delete("http://localhost:8000/assigned_doc_delete", {
+      await axios.delete(`${ipadr}/assigned_doc_delete`, {
         data: { userId, docName },
       });
       setAssignedDocs((prev) => ({
@@ -112,7 +112,7 @@ export default function HRDocsReview() {
       }));
     } catch (err) {
       console.error(err);
-      alert("❌ Failed to delete document");
+      alert(" Failed to delete document");
     }
   };
 
@@ -275,12 +275,12 @@ export default function HRDocsReview() {
                     <td className="py-2 px-4 flex gap-2">
                       {doc.fileUrl && (
                         <a
-                          href={`http://localhost:8000${doc.fileUrl}`}
+                          href={`${ipadr}${doc.fileUrl}`}
                           target="_blank"
                           rel="noreferrer"
                           className="text-blue-600 text-sm underline flex items-center gap-1"
                         >
-                          <FileText size={14} /> View
+                          <Eye size={14} /> 
                         </a>
                       )}
                       {doc.fileUrl && doc.status !== "verified" && (
@@ -288,14 +288,14 @@ export default function HRDocsReview() {
                           onClick={() => handleVerify(reviewUser.userId, doc.docName)}
                           className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 flex items-center gap-1 text-xs"
                         >
-                          <Check size={14} /> Verify
+                          <Check size={14} /> 
                         </button>
                       )}
                       <button
                         onClick={() => handleDelete(reviewUser.userId, doc.docName)}
                         className="px-2 py-1 bg-red-200 text-red-700 rounded hover:bg-red-300 flex items-center gap-1 text-xs"
                       >
-                        <X size={14} /> Delete
+                        <Trash2 size={14} /> 
                       </button>
                     </td>
                   </tr>

@@ -13,7 +13,8 @@ import clsx from "clsx";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Picker from "emoji-picker-react";
-
+const ipadr = import.meta.env.VITE_BACKEND_HOST;
+const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws";
 const formatTime = (isoString, withDate = false) => {
   if (!isoString) return "";
   let date = new Date(isoString);
@@ -58,7 +59,7 @@ export default function Chat() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://localhost:8000/get_all_users");
+        const res = await fetch(`${ipadr}/get_all_users`);
         const data = await res.json();
         const filtered = data.filter((user) => {
           if (user.id === userid) return false;
@@ -78,7 +79,7 @@ export default function Chat() {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/get_user_groups/${userid}`);
+        const res = await fetch(`${ipadr}/get_user_groups/${userid}`);
         const data = await res.json();
         setGroups(data);
       } catch (err) {
@@ -98,8 +99,8 @@ export default function Chat() {
     ws.current?.close();
     const url =
       chatType === "group"
-        ? `ws://127.0.0.1:8000/ws/group/${chatId}`
-        : `ws://127.0.0.1:8000/ws/${userid}`;
+       ? `${wsProtocol}://${ipadr.replace(/^https?:\/\//, '')}/ws/group/${chatId}`
+    : `${wsProtocol}://${ipadr.replace(/^https?:\/\//, '')}/ws/${userid}`;
     ws.current = new WebSocket(url);
 
     ws.current.onopen = () => setIsConnected(true);
@@ -162,13 +163,13 @@ export default function Chat() {
   };
  useEffect(() => {
   if (!selectedThread) return;
-  fetch(`http://localhost:8000/thread/${selectedThread.id}`)
+  fetch(`${ipadr}/thread/${selectedThread.id}`)
     .then(res => res.json())
     .then(data => setMessages(prev => ({ ...prev, [`thread:${selectedThread.id}`]: data })));
 }, [selectedThread]);
   const handleContactClick = async (contact) => {
     try {
-      const res = await fetch(`http://localhost:8000/get_EmployeeId/${encodeURIComponent(contact.name)}`);
+      const res = await fetch(`${ipadr}/get_EmployeeId/${encodeURIComponent(contact.name)}`);
       const data = await res.json();
       const employeeId = data.Employee_ID || data.employee_id || data.EmployeeId;
       if (!employeeId) return toast.error(`Failed to get employee ID for ${contact.name}`);
@@ -178,7 +179,7 @@ export default function Chat() {
       setUnread((prev) => ({ ...prev, [chatId]: 0 }));
       openWebSocket("user");
 
-      const historyRes = await fetch(`http://localhost:8000/history/${chatId}`);
+      const historyRes = await fetch(`${ipadr}/history/${chatId}`);
       if (historyRes.ok) {
         const history = await historyRes.json();
         setMessages((prev) => ({ ...prev, [chatId]: history }));
@@ -195,7 +196,7 @@ export default function Chat() {
     openWebSocket("group", group._id);
 
     try {
-      const res = await fetch(`http://localhost:8000/group_history/${group._id}`);
+      const res = await fetch(`${ipadr}/group_history/${group._id}`);
       if (res.ok) {
         const history = await res.json();
         setMessages((prev) => ({ ...prev, [group._id]: history }));
@@ -208,7 +209,7 @@ export default function Chat() {
   const handleRemoveGroup = async (group) => {
     if (!confirm(`Are you sure you want to delete group "${group.name}"?`)) return;
     try {
-      const res = await fetch(`http://localhost:8000/delete_group/${group._id}`, { method: "DELETE" });
+      const res = await fetch(`${ipadr}/delete_group/${group._id}`, { method: "DELETE" });
       if (res.ok) {
         setGroups((prev) => prev.filter((g) => g._id !== group._id));
         toast.success("Group deleted successfully");
@@ -301,7 +302,7 @@ export default function Chat() {
 
   try {
     // Save to backend
-    const res = await fetch("http://localhost:8000/thread", {
+    const res = await fetch(`${ipadr}/thread`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -364,7 +365,7 @@ const validGroupUsers = contacts.filter(u => u.id !== userid);
             <FiSearch className="text-gray-400" />
             <input
               type="text"
-              placeholder="Search contacts / messages..."
+              placeholder="Search contacts/messages"
               className="bg-transparent w-full focus:outline-none text-gray-700 placeholder-gray-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -587,7 +588,7 @@ const validGroupUsers = contacts.filter(u => u.id !== userid);
                     return;
                   }
                   try {
-                    const res = await fetch("http://localhost:8000/create_group", {
+                    const res = await fetch(`${ipadr}/create_group`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ name: groupName, members: validMembers })

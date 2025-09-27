@@ -177,12 +177,9 @@ import atexit
 app = FastAPI()
 origins = [
     
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-    "http://localhost:8000",
-   
-    "http://127.0.0.1:8000"
-    "*"  # Allow all origins for development
+    "https://e-connect-final.up.railway.app",
+    "http://www.econnect.com",
+    "http://localhost:5173"
 ]
 
 app.add_middleware(

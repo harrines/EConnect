@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { Upload, X, Trash2 } from "lucide-react";
 import axios from "axios";
-
+import { ipadr } from "../Utils/Resuse";
 export default function Fileuploader({ userid, docName, onUpload, onClose }) {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -27,7 +27,7 @@ export default function Fileuploader({ userid, docName, onUpload, onClose }) {
 
     try {
       const res = await axios.post(
-        "http://localhost:8000/upload_document",
+        `${ipadr}/upload_document`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
