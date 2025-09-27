@@ -1,23 +1,10 @@
-// import localstorageEncrypt from "localstorage-encrypt";
-// import axios from "axios";
-// var ip = import.meta.env.BACKEND_HOST || "localhost";
-// var host = import.meta.env.BACKEND_PORT || "8000";
-// export const LS = localstorageEncrypt.init("Quillbot", "RGBQUILLBOT");
-// export const Baseaxios = axios.create({
-//   baseURL: `https://${ip}:${host}/`,
-//   headers: { Authorization: `Bearer ${LS.get("access_token")}` },
-// });
-
 import localstorageEncrypt from "localstorage-encrypt";
 import axios from "axios";
 
-var host = import.meta.env.VITE_BACKEND_PORT 
+// Backend host from env
+export const ipadr = import.meta.env.VITE_BACKEND_HOST;
 
-//export const ipadr=import.meta.env.VITE_HOST_IP;
-export const ipadr = import.meta.env.VITE_BACKEND_HOST ;
-console.log(import.meta.env.VITE_HOST_IP); // Debugging step
-console.log("j",import.meta.env.VITE_BACKEND_HOST)
-console.log("a",import.meta.env.VITE_BACKEND_PORT)
+// Local storage helper
 export const LS = {
   save: (key, value) => localStorage.setItem(key, JSON.stringify(value)),
   get: (key) => {
@@ -31,7 +18,8 @@ export const LS = {
   remove: (key) => localStorage.removeItem(key),
 };
 
+// Axios instance
 export const Baseaxios = axios.create({
-  baseURL: ipadr,
+  baseURL: ipadr,  // Just the host, no port needed
   headers: { Authorization: `Bearer ${LS.get("access_token")}` },
 });
