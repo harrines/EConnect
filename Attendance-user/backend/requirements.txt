@@ -9,6 +9,7 @@ h11==0.14.0
 idna==3.6
 numpy==1.26.3
 pandas==2.2.3
+python-multipart==0.0.20
 
 pydantic==2.9.2
 pydantic_core==2.23.4
