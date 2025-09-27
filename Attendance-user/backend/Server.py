@@ -177,9 +177,7 @@ import atexit
 app = FastAPI()
 origins = [
     
-    "https://e-connect-final.up.railway.app",
-    "http://www.econnect.com",
-    "http://localhost:5173"
+   "https://e-connect-final-ldj9.vercel.app"
 ]
 
 app.add_middleware(
