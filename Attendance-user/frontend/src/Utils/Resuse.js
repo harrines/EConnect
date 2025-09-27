@@ -32,6 +32,6 @@ export const LS = {
 };
 
 export const Baseaxios = axios.create({
-  baseURL: ip,
+  baseURL: ipadr,
   headers: { Authorization: `Bearer ${LS.get("access_token")}` },
 });
