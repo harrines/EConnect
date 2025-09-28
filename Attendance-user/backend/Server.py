@@ -27,6 +27,7 @@ from fastapi.responses import FileResponse
 import uuid, os
 from datetime import datetime
 from bson import ObjectId
+PORT = int(os.getenv("PORT", 8000))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
@@ -177,7 +178,7 @@ import atexit
 app = FastAPI()
 origins = [
     
-  "https://e-connect-final-production.up.railway.app",
+  "https://e-connect-final-ldj9.vercel.app",
    "http://localhost:5173"
 ]
 
@@ -2843,11 +2844,11 @@ def get_assigned_tasks(TL: str = Query(..., alias="TL"), userid: str | None = Qu
     return result
 
 @app.get("/ip-info")
-def fetch_ip_info():
-    return {
-        "public_ip": get_public_ip(),
-        "local_ip": get_local_ip()
-}
+def ip_info():
+    import socket, requests
+    local_ip = socket.gethostbyname(socket.gethostname())
+    public_ip = requests.get("https://api.ipify.org").text
+    return {"local_ip": local_ip, "public_ip": public_ip}
 
 # Notification System Endpoints
 @app.post("/notifications/create")
@@ -4203,3 +4204,6 @@ async def update_group(group_id: str, group: GroupUpdate):
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Group not found")
     return {"status": "success", "group_id": group_id, "name": group.name}
+
+if __name__ == "__main__":
+    uvicorn.run("Server:app", host="0.0.0.0", port=PORT)
