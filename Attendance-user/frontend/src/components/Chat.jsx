@@ -14,7 +14,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Picker from "emoji-picker-react";
 const ipadr = import.meta.env.VITE_BACKEND_HOST;
-const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws";
+
 const formatTime = (isoString, withDate = false) => {
   if (!isoString) return "";
   let date = new Date(isoString);
@@ -582,7 +582,8 @@ const validGroupUsers = contacts.filter(u => u.id !== userid);
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded"
                 onClick={async () => {
-                  const validMembers = Array.from(new Set([...selectedUsers.filter(id => id), userid]));
+                  const validMembers = Array.from(new Set([...selectedUsers.filter(id => id)]));
+
                   if (!groupName.trim() || validMembers.length === 0) {
                     toast.error("Enter group name and select valid users");
                     return;
