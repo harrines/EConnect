@@ -1,3 +1,6 @@
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 export const Apisignup = async ({ email, password, name }) => {
   try {
     const response = await Baseaxios.post("/signup", {

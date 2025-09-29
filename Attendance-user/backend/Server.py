@@ -178,8 +178,7 @@ import atexit
 app = FastAPI()
 origins = [
     
-  "https://e-connect-final-ldj9.vercel.app",
-   "http://localhost:5173"
+  "*"
 ]
 
 app.add_middleware(
