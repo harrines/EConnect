@@ -13,7 +13,7 @@ import clsx from "clsx";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Picker from "emoji-picker-react";
-const ipadr = import.meta.env.VITE_BACKEND_HOST;
+const ipadr = import.meta.env.VITE_API_BASE_URL;
 
 const formatTime = (isoString, withDate = false) => {
   if (!isoString) return "";
