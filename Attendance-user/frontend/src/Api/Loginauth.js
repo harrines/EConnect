@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Baseaxios } from '../Utils/Resuse';
+import { Baseaxios, LS } from '../Utils/Resuse';
 
 
 export const Apisignup = async ({ email, password, name }) => {
