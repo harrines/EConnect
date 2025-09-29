@@ -13,7 +13,9 @@ import clsx from "clsx";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Picker from "emoji-picker-react";
+
 const ipadr = import.meta.env.VITE_API_BASE_URL;
+const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws";
 
 const formatTime = (isoString, withDate = false) => {
   if (!isoString) return "";
@@ -97,10 +99,12 @@ export default function Chat() {
   // WebSocket connection
   const openWebSocket = (chatType = "user", chatId = "") => {
     ws.current?.close();
+     const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws"; 
+  const host = ipadr.replace(/^https?:\/\//, '');
     const url =
       chatType === "group"
-       ? `${wsProtocol}://${ipadr.replace(/^https?:\/\//, '')}/ws/group/${chatId}`
-    : `${wsProtocol}://${ipadr.replace(/^https?:\/\//, '')}/ws/${userid}`;
+        ? `${wsProtocol}://${host}/ws/group/${chatId}`
+      : `${wsProtocol}://${host}/ws/${userid}`;
     ws.current = new WebSocket(url);
 
     ws.current.onopen = () => setIsConnected(true);
