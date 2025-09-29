@@ -42,8 +42,12 @@ from pymongo import MongoClient
 
 
   # For storing yearly working days
+MONGO_URL = os.environ.get("MONGODB_URI")
+if not MONGO_URL:
+    raise Exception("MONGODB_URI environment variable not set")
 
-client= MongoClient("mongodb+srv://harrine2253020:ybqDGEfzbpOJEsyT@cluster0.nzdj6se.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient(MONGO_URL)
+
 db = client.RBG_AI
 client=client.RBG_AI
 Users=client.Users
