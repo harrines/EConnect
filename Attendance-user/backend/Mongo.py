@@ -2201,7 +2201,7 @@ def generate_userid(dept,doj):
 
 
 def add_an_employee(employee_data):
-        Insert the employee data into the Users collection
+        
         userid = generate_userid(employee_data["department"],employee_data["date_of_joining"])
         employee_data["userid"] = userid
         print(employee_data)
