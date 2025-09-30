@@ -39,7 +39,10 @@ from pymongo import MongoClient
 
 
 
+from dotenv import load_dotenv
 
+# Load environment variables from .env
+load_dotenv()
 
   # For storing yearly working days
 MONGO_URL = os.environ.get("MONGO_URI")
