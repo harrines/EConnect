@@ -2201,12 +2201,18 @@ def generate_userid(dept,doj):
 
 
 def add_an_employee(employee_data):
-        
-        userid = generate_userid(employee_data["department"],employee_data["date_of_joining"])
+    try:
+        userid = generate_userid(employee_data["department"], employee_data["date_of_joining"])
         employee_data["userid"] = userid
-        print(employee_data)
         result = Users.insert_one(employee_data)
-        return {"message": "Employee details added successfully"}
+        return {
+            "message": "Employee details added successfully",
+            "userid": userid,
+            "employee_id": str(result.inserted_id)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     
     
 def auto_approve_manager_leaves():
