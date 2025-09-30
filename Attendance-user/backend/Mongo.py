@@ -2202,9 +2202,13 @@ def generate_userid(dept,doj):
 
 def add_an_employee(employee_data):
     try:
+        # generate userid
         userid = generate_userid(employee_data["department"], employee_data["date_of_joining"])
         employee_data["userid"] = userid
+
+        # insert into MongoDB
         result = Users.insert_one(employee_data)
+
         return {
             "message": "Employee details added successfully",
             "userid": userid,
@@ -2213,7 +2217,6 @@ def add_an_employee(employee_data):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    
     
 def auto_approve_manager_leaves():
     Leave.update_many(
