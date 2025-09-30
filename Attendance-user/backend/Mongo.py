@@ -42,9 +42,9 @@ from pymongo import MongoClient
 
 
   # For storing yearly working days
-MONGO_URL = os.environ.get("MONGODB_URI")
+MONGO_URL = os.environ.get("MONGO_URI")
 if not MONGO_URL:
-    raise Exception("MONGODB_URI environment variable not set")
+    raise Exception("MONGO_URI environment variable not set")
 
 client = MongoClient(MONGO_URL)
 
@@ -2201,9 +2201,9 @@ def generate_userid(dept,doj):
 
 
 def add_an_employee(employee_data):
-        # Insert the employee data into the Users collection
-        # userid = generate_userid(employee_data["department"],employee_data["date_of_joining"])
-        # employee_data["userid"] = userid
+        Insert the employee data into the Users collection
+        userid = generate_userid(employee_data["department"],employee_data["date_of_joining"])
+        employee_data["userid"] = userid
         print(employee_data)
         result = Users.insert_one(employee_data)
         return {"message": "Employee details added successfully"}
