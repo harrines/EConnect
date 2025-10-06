@@ -1812,21 +1812,26 @@ def Permission_History_Details(userid):
     return leave_history
 
 def get_all_users():
-        # Fetch all users from the Users collection
-        users = list(Users.find({}, {"password": 0}))  # Exclude the password field
-        # Prepare a list of users with only name, email, and id
-        user_list = []
-        for user in users:
-            user_data = {
-                "id": str(user["userid"]),  # Convert ObjectId to string
-                "email": user.get("email"),
-                "name": user.get("name"),
-                "department": user.get("department"),
-                "position": user.get("position"),
-                "status": user.get("status"),
-            }
-            user_list.append(user_data)
-        return user_list
+    # Fetch all users from the Users collection, excluding passwords
+    users = list(Users.find({}, {"password": 0}))
+
+    user_list = []
+    for user in users:
+        # Use 'userid' if it exists, otherwise fall back to '_id'
+        user_id = user.get("userid", user.get("_id"))
+
+        user_data = {
+            "id": str(user_id),
+            "email": user.get("email"),
+            "name": user.get("name"),
+            "department": user.get("department"),
+            "position": user.get("position"),
+            "status": user.get("status"),
+        }
+        user_list.append(user_data)
+
+    return user_list
+
 
 def get_admin_info(email):
     admin_info = admin.find_one({'email':email}, {"password":0})
