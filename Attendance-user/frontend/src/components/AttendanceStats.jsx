@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Calendar, TrendingUp, Clock, UserCheck } from "lucide-react";
 import { LS, ipadr } from "../Utils/Resuse";
 
-const API_BASE_URL = `${ipadr}`;
+
 
 const AttendanceStats = ({ onClose }) => {
   const userid = LS.get("userid");
@@ -65,7 +65,7 @@ const AttendanceStats = ({ onClose }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/attendance/user/${userid}/year/${year}`);
+      const response = await fetch(`${ipadr}/attendance/user/${userid}/year/${year}`);
       
       if (response.ok) {
         const data = await response.json();

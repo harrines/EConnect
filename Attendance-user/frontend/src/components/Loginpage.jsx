@@ -91,7 +91,7 @@ import { Authdata } from "../Utils/Authprovider";
 import { Apisignin } from "../Api/Loginauth";
 import { jwtDecode } from "jwt-decode";
 import { LS } from "../Utils/Resuse";
-const ip = import.meta.env.VITE_API_BASE_URL;
+const ipadr = import.meta.env.VITE_API_BASE_URL;
 export default function LoginPage() {
   const navigate = useNavigate();
   const { SetStatedata } = Authdata();
@@ -100,9 +100,9 @@ export default function LoginPage() {
     
     
     try {
-      console.log("Attempting to reach:", `${ip}/ip-info`);
+      console.log("Attempting to reach:", `${ipadr}/ip-info`);
       
-      const response = await fetch(`${ip}/ip-info`, {
+      const response = await fetch(`${ipadr}/ip-info`, {
         method: "GET",
         redirect: "follow",
         // Adding these options might help with certificate issues

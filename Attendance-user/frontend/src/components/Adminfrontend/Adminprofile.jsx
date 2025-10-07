@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LS } from "../../Utils/Resuse";
 import { ipadr } from "../../Utils/Resuse";
 
-const API_BASE_URL =  `${ipadr}`; // Backend URL
+// Backend URL
 
 const AdminProfile = () => {
     const navigate = useNavigate();
@@ -30,7 +30,7 @@ const AdminProfile = () => {
                 return;
             }
             try {
-                const response = await fetch(`${API_BASE_URL}/get_admin/${userid}`);
+                const response = await fetch(`${ipadr}/get_admin/${userid}`);
                 const contentType = response.headers.get("content-type");
 
                 if (response.ok && contentType?.includes("application/json")) {
