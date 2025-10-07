@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faCalendarCheck, faUsers, faUserTie, faChartBar, faClock, faPercentage, faCalendarDays, faBuilding, faSearch, faTimes} from '@fortawesome/free-solid-svg-icons';
-import { LS, ipadr} from '../../Utils/Resuse';
+import { LS, ip} from '../../Utils/Resuse';
 
 const Attendance = () => {
   const [attendanceData, setAttendanceData] = useState(null);

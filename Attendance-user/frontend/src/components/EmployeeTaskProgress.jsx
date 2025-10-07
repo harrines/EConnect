@@ -7,11 +7,11 @@ import {
   FaComments, FaTasks, FaSearch, FaFilter, FaChevronDown, FaChevronUp,
   FaCalendarAlt, FaUserTie, FaClipboardList, FaChartLine, FaPlus
 } from "react-icons/fa";
-import { LS, ipadr } from "../Utils/Resuse";
+import { LS, ip } from "../Utils/Resuse";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from "moment";
-
+const ip = import.meta.env.VITE_API_BASE_URL;
 const normalizeFiles = (files = []) =>
   (files || []).map(f => ({
     id: String(f.id),
@@ -128,7 +128,7 @@ const EmployeeTaskProgress = () => {
         manager_name: managerName
       });
       
-      const response = await fetch(`${ipadr}/manager_tasks?${queryParams.toString()}`);
+      const response = await fetch(`${ip}/manager_tasks?${queryParams.toString()}`);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -208,7 +208,7 @@ const EmployeeTaskProgress = () => {
     if (!task) return;
 
     try {
-      const response = await fetch(`${ipadr}/edit_task`, {
+      const response = await fetch(`${ip}/edit_task`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
