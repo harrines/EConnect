@@ -65,8 +65,8 @@ export default function Chat() {
         const data = await res.json();
         const filtered = data.filter((user) => {
           if (user.id === userid) return false;
-          if (isManager?.toLowerCase() === "manager") return true;
-          if (isDepart?.toLowerCase() === "hr") return user.position?.toLowerCase() === "manager";
+          if (isManager?.toLowerCase() === "Manager") return true;
+          if (isDepart?.toLowerCase() === "hr") return user.position?.toLowerCase() === "Manager";
           return user.department?.toLowerCase() !== "hr";
         });
         setContacts(filtered);
