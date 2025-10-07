@@ -165,13 +165,13 @@ def admin_Signup(email,password,name,phone,position,date_of_joining):
     else:
         Haspass=Hashpassword(password)
         a=admin.insert_one({'email':email,'password':Haspass,'name':name, 'phone':phone, 'position':position, 'date_of_joining':date_of_joining})
-        return signJWT(email, "admin")
+        return signJWT(email)
     
 def admin_signin(checkuser, password, email):
     if (checkuser):
         checkpass=CheckPassword(password,checkuser.get('password'))
         if (checkpass):
-            a=signJWT(email, "admin")
+            a=signJWT(email)
             b=checkuser
             checkuser=cleanid(checkuser)
             checkuser.update(a)
@@ -205,42 +205,30 @@ def admin_signin(checkuser, password, email):
 #         raise HTTPException(status_code=300, detail="Given Email does not exists")
 
 # Google Signin      
-def Gsignin(client_name, email):
-    checkuser = Users.find_one({'email': email})
-    checkadmin = admin.find_one({'email': email})
-    checkmanager = Managers.find_one({'email': email})
+# Google Signin      
+def Gsignin(client_name,email):
+    checkuser=Users.find_one({'email': email})
+    checkadmin=admin.find_one({'email': email})
+    checkmanager=Managers.find_one({'email': email})
     selected_date = date.today().strftime("%d-%m-%Y")
-
-    if checkuser:
-        a = signJWT(client_name)
-        b = checkuser
-        checkuser = cleanid(checkuser)
-        checkuser.update(a)
-        is_admin_from_db = checkuser.get("isadmin", False)
-        checkuser.update({"isloggedin": True, "isadmin": is_admin_from_db})
-        # checkuser.update({"isloggedin": True, "isadmin": False})
-        return checkuser
-    elif checkadmin:
+    if (checkuser):
+            a=signJWT(client_name)
+            b=checkuser
+            checkuser=cleanid(checkuser)
+            checkuser.update(a)
+            print(checkuser)
+            checkuser.update({"isloggedin":True, "isadmin":False})
+            return checkuser
+    elif (checkadmin):
         result = admin_Gsignin(checkadmin, client_name)
         return result
-    elif checkmanager:
+    elif (checkmanager):
         result = manager_Gsignin(checkmanager, client_name)
+        print(result)
         return result
     else:
-        # Auto-create a new user if email doesn't exist
-        new_user = {
-            "name": client_name,
-            "email": email,
-            "isadmin": False,
-            "isloggedin": True,
-            "created_at": selected_date,
-        }
-        inserted_id = Users.insert_one(new_user).inserted_id
-        user_doc = Users.find_one({"_id": inserted_id})
-        user_doc = cleanid(user_doc)
-        jwt_token = signJWT(client_name)
-        user_doc.update(jwt_token)
-        return user_doc
+        raise HTTPException(status_code=300, detail="Given Email does not exists")
+
 
 
 # UserID
@@ -277,7 +265,7 @@ def admin_Gsignin(checkuser, client_name):
 def manager_Gsignin(checkuser, client_name):
     
     if (checkuser):
-        a = signJWT(str(checkuser['_id']))
+        a = signJWT(client_name)
         b = checkuser
         checkuser = cleanid(checkuser)
         checkuser.update(a)
@@ -285,6 +273,7 @@ def manager_Gsignin(checkuser, client_name):
         return checkuser
     else:
         raise HTTPException(status_code=404, detail="User not found")
+
 
 
 def Clockin(userid, name, time):
@@ -2141,45 +2130,45 @@ def get_assigned_tasks(manager_name: str, userid: str = None):
         task_list.append(task_data)
     return task_list
 
-# def get_user_info(userid):
-#     result = Users.find_one({"_id": ObjectId(userid)}, {"_id": 0, "password": 0})
-#     return result
-
 def get_user_info(userid):
-    print("Connected DB:", db.name)
-    print("Collection:", Users.name)
-    print("Searching for user ID:", userid)
-    
-    try:
-        obj_id = ObjectId(userid)
-    except Exception as e:
-        return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
+    result = Users.find_one({"_id": ObjectId(userid)}, {"_id": 0, "password": 0})
+    return result
 
-    result = Users.find_one({"_id": obj_id}, {"password": 0})
-    if result:
-        result["_id"] = str(result["_id"])  # JSON safe
-        return result
-    else:
-        print("User not found in collection")
-        return {"error": "User not found", "userid": userid}
+# def get_user_info(userid):
+#     print("Connected DB:", db.name)
+#     print("Collection:", Users.name)
+#     print("Searching for user ID:", userid)
+    
+#     try:
+#         obj_id = ObjectId(userid)
+#     except Exception as e:
+#         return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
+
+#     result = Users.find_one({"_id": obj_id}, {"password": 0})
+#     if result:
+#         result["_id"] = str(result["_id"])  # JSON safe
+#         return result
+#     else:
+#         print("User not found in collection")
+#         return {"error": "User not found", "userid": userid}
 
 
 def get_admin_information(userid):
-    # print(userid)
-    # result = admin.find_one({"_id":ObjectId(userid)},{"_id":0,"password":0})
-    # return result
-    try:
-        obj_id = ObjectId(userid)
-    except Exception as e:
-        return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
+    print(userid)
+    result = admin.find_one({"_id":ObjectId(userid)},{"_id":0,"password":0})
+    return result
+    # try:
+    #     obj_id = ObjectId(userid)
+    # except Exception as e:
+    #     return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
 
-    result = Users.find_one({"_id": obj_id}, {"password": 0})
-    if result:
-        result["_id"] = str(result["_id"])  # JSON safe
-        return result
-    else:
-        print("User not found in collection")
-        return {"error": "User not found", "userid": userid}
+    # result = Users.find_one({"_id": obj_id}, {"password": 0})
+    # if result:
+    #     result["_id"] = str(result["_id"])  # JSON safe
+    #     return result
+    # else:
+    #     print("User not found in collection")
+    #     return {"error": "User not found", "userid": userid}
 
 
 def get_last_digits():
@@ -2208,8 +2197,8 @@ def generate_userid(dept,doj):
 
 def add_an_employee(employee_data):
         # Insert the employee data into the Users collection
-        # userid = generate_userid(employee_data["department"],employee_data["date_of_joining"])
-        # employee_data["userid"] = userid
+        userid = generate_userid(employee_data["department"],employee_data["date_of_joining"])
+        employee_data["userid"] = userid
         print(employee_data)
         result = Users.insert_one(employee_data)
         return {"message": "Employee details added successfully"}

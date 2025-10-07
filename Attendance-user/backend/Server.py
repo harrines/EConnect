@@ -2622,37 +2622,8 @@ async def get_task_file(taskid: str, fileid: str):
 
 @app.get("/get_user/{userid}")
 def get_user(userid: str):
-    try:
-        result = Users.find_one({"_id": ObjectId(userid)}, {"_id": 0, "password": 0})
-        if result:
-            return result
-        else:
-            return {"error": "User not found", "userid": userid}
-    except Exception as e:
-        return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
-
-@app.get("/get_user/{userid}")
-def get_user(userid: str):
-    print("Searching user ID:", userid, "in collection:", Users.name)
-
-
-    try:
-        obj_id = ObjectId(userid)
-    except Exception as e:
-        return JSONResponse(content={"error": f"Invalid ID format: {str(e)}", "userid": userid})
-
-
-    user = Users.find_one({"_id": obj_id}, {"password": 0})
-
-
-    if user:
-        # Convert ObjectId to string for JSON
-        user["_id"] = str(user["_id"])
-        return JSONResponse(content=user)
-    else:
-        print("User not found in collection!")
-        return JSONResponse(content={"error": "User not found", "userid": userid})
-
+ result = get_user_info(userid)
+ return result
 
 # @app.put("/edit_employee")
 # def add_employee(item:EditEmployee):
@@ -2660,19 +2631,9 @@ def get_user(userid: str):
 #  return result
 
 @app.put("/edit_employee")
-def edit_employee(item: EditEmployee):
-    try:
-        # Convert Pydantic model to dict
-        employee_dict = item.dict()
-       
-        # Call the edit function
-        result = edit_an_employee(employee_dict)
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error in edit_employee endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+def add_employee(item:EditEmployee):
+ result = edit_an_employee(item.dict())
+ return result
 
 @app.get("/get_managers_list")
 async def fetch_managers():
