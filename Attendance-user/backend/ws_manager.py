@@ -4,6 +4,12 @@ from collections import defaultdict
 
 
 
+from fastapi import WebSocket
+from collections import defaultdict
+import base64
+from bson import Binary
+from datetime import datetime
+
 class DirectChatManager:
     def __init__(self):
         # user_id -> list of sockets
@@ -19,13 +25,16 @@ class DirectChatManager:
                 self.active_connections[user_id].remove(websocket)
             if not self.active_connections[user_id]:
                 del self.active_connections[user_id]
-    
+
     async def handle_message(self, message: dict):
         """
         Handle incoming messages:
-        - type: "text" or "file"
+        - type: "text", "file", or "reaction"
         """
-        if message.get("type") == "file":
+        msg_type = message.get("type")
+
+        # ✅ Handle file upload
+        if msg_type == "file":
             try:
                 file_bytes = base64.b64decode(message["content"])
                 file_doc = {
@@ -40,15 +49,24 @@ class DirectChatManager:
                 result = files_collection.insert_one(file_doc)
                 message["id"] = str(result.inserted_id)
                 message["type"] = "file"
-                # Remove base64 content before broadcasting
                 message.pop("content", None)
             except Exception as e:
                 print("File upload error:", e)
-                return  # optionally send error back to sender
+                return
 
+            await self.send_message(message["to_user"], message)
+            return
+
+        # ✅ Handle emoji reactions (NEW)
+        if msg_type == "reaction":
+            await self.broadcast_reaction(message)
+            return
+
+        # ✅ Default: normal text message
         await self.send_message(message["to_user"], message)
 
     async def send_message(self, to_user_id: str, message: dict):
+        """Send a message to recipient and echo to sender."""
         # send to recipient
         if to_user_id in self.active_connections:
             for ws in list(self.active_connections[to_user_id]):
@@ -56,15 +74,37 @@ class DirectChatManager:
                     await ws.send_json(message)
                 except Exception:
                     self.active_connections[to_user_id].remove(ws)
-     
-        # echo back to sender
-        sender_id = message.get("from")
+
+        # echo to sender
+        sender_id = message.get("from_user") or message.get("from")
         if sender_id in self.active_connections:
             for ws in list(self.active_connections[sender_id]):
                 try:
                     await ws.send_json(message)
                 except Exception:
                     self.active_connections[sender_id].remove(ws)
+
+    async def broadcast_reaction(self, data: dict):
+        """Broadcast emoji reaction to both sender and receiver."""
+        from_user = data.get("from_user")
+        to_user = data.get("to_user")
+        payload = {
+            "type": "reaction",
+            "messageId": data.get("messageId"),
+            "emoji": data.get("emoji"),
+            "from_user": from_user,
+            "chatId": data.get("chatId"),
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+        # send to both
+        for uid in [from_user, to_user]:
+            if uid in self.active_connections:
+                for ws in list(self.active_connections[uid]):
+                    try:
+                        await ws.send_json(payload)
+                    except Exception:
+                        self.active_connections[uid].remove(ws)
 
 
 class GeneralChatManager:
