@@ -3698,7 +3698,7 @@ active_users: dict[str, WebSocket] = {}
 
 @app.websocket("/ws/{userid}")
 async def websocket_endpoint(websocket: WebSocket, userid: str):
-    # connect socket
+    # Connect the WebSocket client
     await direct_chat_manager.connect(userid, websocket)
     try:
         while True:
@@ -3709,24 +3709,46 @@ async def websocket_endpoint(websocket: WebSocket, userid: str):
 
             msg_type = msg.get("type", "chat")
 
+            # 🧩 1️⃣ REACTION TYPE HANDLING
+            if msg_type == "reaction":
+                reaction_data = {
+                    "messageId": msg.get("messageId"),
+                    "emoji": msg.get("emoji"),
+                    "user": msg.get("user"),
+                    "timestamp": msg["timestamp"],
+                    "type": "reaction"
+                }
+
+                # ✅ Save to MongoDB if needed
+                chats_collection.update_one(
+                    {"id": msg.get("messageId")},
+                    {"$addToSet": {"reactions": {"emoji": msg.get("emoji"), "user": msg.get("user")}}},
+                    upsert=True
+                )
+
+                # ✅ Broadcast reaction to recipient (and sender if needed)
+                await direct_chat_manager.send_message(msg["user"], reaction_data)
+                continue
+
+            # 🧩 2️⃣ THREAD MESSAGE HANDLING
             if msg_type == "thread":
                 msg["id"] = msg.get("id") or str(ObjectId())
                 threads_collection.insert_one(msg.copy())
                 msg.pop("_id", None)
 
-                # send to both sender and recipient
                 await direct_chat_manager.send_message(msg["to_user"], msg)
+                continue
 
-            else:  # normal chat
-                msg["chatId"] = msg.get("chatId") or "_".join(sorted([userid, msg["to_user"]]))
-                chats_collection.insert_one(msg.copy())
-                msg.pop("_id", None)
+            # 🧩 3️⃣ NORMAL CHAT HANDLING
+            msg["chatId"] = msg.get("chatId") or "_".join(sorted([userid, msg["to_user"]]))
+            chats_collection.insert_one(msg.copy())
+            msg.pop("_id", None)
 
-                # send to both sender and recipient
-                await direct_chat_manager.send_message(msg["to_user"], msg)
+            await direct_chat_manager.send_message(msg["to_user"], msg)
 
     except WebSocketDisconnect:
         direct_chat_manager.disconnect(userid, websocket)
+
 
 
 @app.get("/get_EmployeeId/{name}")
