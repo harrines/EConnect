@@ -204,40 +204,47 @@ const [hrAssignedTasks, setHrAssignedTasks] = useState([]);
     }
 },[userid])
      
-  const fetchEmpdata = async() => {
+  const fetchEmpdata = async () => {
   try {
     setLoading(true);
     setError('');
-    
-    if (isHR) {
-      
-      const assignedResponse = await axios.get(`${ipadr}/get_manager_hr_tasks/${LS.get('id')}`);
-      const hrAssignedTasks = assignedResponse.data && Array.isArray(assignedResponse.data) ? assignedResponse.data : [];
-      // Filter to exclude HR's own tasks from assigned list
-      const managerAssignedTasks = hrAssignedTasks.filter(task => task.userid !== LS.get('id'));
-      
-      setHrAssignedTasks(hrAssignedTasks);
 
-        setEmployeeData(hrAssignedTasks);
-        setFilteredData(hrAssignedTasks);
-      
+    let url = '';
+
+    if (isHR) {
+      // HR: Fetch manager HR tasks
+      const assignedResponse = await axios.get(`${ipadr}/get_manager_hr_tasks/${LS.get('id')}`);
+      const hrAssignedTasks = Array.isArray(assignedResponse.data)
+        ? assignedResponse.data
+        : [];
+
+      setHrAssignedTasks(hrAssignedTasks);
+      setEmployeeData(hrAssignedTasks);
+      setFilteredData(hrAssignedTasks);
     } else {
-      // For employees, use the existing logic
+      // Non-HR (Employee/Manager) logic
+      if (LS.get('position') === 'Manager') {
+        url = `${ipadr}/get_assigned_task?TL=${LS.get('name')}&manager_id=${LS.get('id')}`;
+      } else {
+        url = `${ipadr}/get_tasks/${userid}`;
+      }
+
+      console.log("Fetching from URL:", url);
       const response = await axios.get(url);
-      const Empdata = response.data && Array.isArray(response.data) ? response.data : [];
+      const Empdata = Array.isArray(response.data) ? response.data : [];
       setEmployeeData(Empdata);
       setFilteredData(Empdata);
     }
-    
+
     setLoading(false);
-  } catch(error) {
+  } catch (error) {
     console.error("Error fetching data:", error);
     setLoading(false);
     setEmployeeData([]);
     setFilteredData([]);
     setError("Error while fetching tasks");
   }
-}
+};
 
 useEffect(() => {
  if (isHR) {
