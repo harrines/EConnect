@@ -121,20 +121,13 @@ export default function Chat() {
         }
 
         if (payload.type === "reaction") {
-  const { messageId, emoji } = payload; // ✅ extract from payload
-  setReactionsMap(prev => {
-    const prevMsg = prev[messageId] || {};
-    const count = (prevMsg[emoji] || 0) + 1;
-    return { ...prev, [messageId]: { ...prevMsg, [emoji]: count } };
-  });
-
-  return;
-}
-
-
-  return;
-}
-
+          setReactionsMap((prev) => {
+            const prevMsg = prev[payload.messageId] || {};
+            const count = (prevMsg[payload.emoji] || 0) + (payload.delta || 0);
+            return { ...prev, [payload.messageId]: { ...prevMsg, [payload.emoji]: Math.max(0, count) } };
+          });
+          return;
+        }
 
         if (payload.type === "thread") {
   setMessages((prev) => {
@@ -264,20 +257,17 @@ export default function Chat() {
   };
 
   const toggleReaction = (messageId, emoji = "👍") => {
-  if (ws.current?.readyState === WebSocket.OPEN) {
-    ws.current.send(JSON.stringify({ 
-      type: "reaction",
-      messageId,
-      emoji,
-      from_user: userid,
-      to_user: activeChat.type === "user" ? activeChat.id : undefined,
-      chatId: activeChat.chatId,   // ✅ ADD THIS LINE
-      delta: 1
-    }));
-  }
-};
+    setReactionsMap((prev) => {
+      const cur = prev[messageId] || {};
+      const curCount = cur[emoji] || 0;
+      const nextCount = curCount > 0 ? curCount - 1 : 1;
+      return { ...prev, [messageId]: { ...cur, [emoji]: nextCount } };
+    });
 
-
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({ type: "reaction", messageId, emoji, user: userid }));
+    }
+  };
 
  const sendThreadMessage = async () => {
   if (!selectedThread || !threadInput.trim()) return;
