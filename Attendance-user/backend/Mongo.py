@@ -8,6 +8,7 @@ from model import RemoteWorkRequest
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from dateutil import parser
+from fastapi import HTTPException, status
 from bson import json_util
 from bson import ObjectId
 import os

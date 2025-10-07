@@ -167,10 +167,15 @@ export default function LoginPage() {
       });
       
       const res = await Apisignin({
-        client_name: userDecode.name,
-        email: userDecode.email,
-      });
-      console.log("API signin response:", res);
+  client_name: userDecode.name,
+  email: userDecode.email,
+});
+
+if (res.error) {
+  toast.error(res.error);
+  return;
+}
+
 
       // Check if IP validation is needed
       if (res.ip) {
