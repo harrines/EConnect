@@ -122,10 +122,11 @@ export default function Chat() {
 
         if (payload.type === "reaction") {
   setReactionsMap(prev => {
-    const prevMsg = prev[payload.messageId] || {};
-    const count = (prevMsg[payload.emoji] || 0) + (payload.delta || 1);
-    return { ...prev, [payload.messageId]: { ...prevMsg, [payload.emoji]: count } };
-  });
+  const prevMsg = prev[messageId] || {};
+  const count = (prevMsg[emoji] || 0) + 1;
+  return { ...prev, [messageId]: { ...prevMsg, [emoji]: count } };
+});
+
   return;
 }
 
@@ -258,18 +259,19 @@ export default function Chat() {
   };
 
   const toggleReaction = (messageId, emoji = "👍") => {
-  // Send reaction to server
   if (ws.current?.readyState === WebSocket.OPEN) {
     ws.current.send(JSON.stringify({ 
-      type: "reaction", 
-      messageId, 
-      emoji, 
-      from_user: userid, 
+      type: "reaction",
+      messageId,
+      emoji,
+      from_user: userid,
       to_user: activeChat.type === "user" ? activeChat.id : undefined,
-      delta: 1 // +1 reaction
+      chatId: activeChat.chatId,   // ✅ ADD THIS LINE
+      delta: 1
     }));
   }
 };
+
 
 
  const sendThreadMessage = async () => {
