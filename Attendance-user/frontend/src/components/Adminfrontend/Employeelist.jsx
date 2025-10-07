@@ -15,7 +15,7 @@ const EmployeeList = () => {
     const [show, setShow] = useState(false);
     const Admin = LS.get('isadmin');
     
-    const ip = import.meta.env.VITE_HOST_IP;
+    const ip = import.meta.env.VITE_API_BASE_URL;
     useEffect(() => {
         const fetchData = async () => {
             try {
