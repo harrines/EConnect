@@ -10,7 +10,7 @@
 
 import axios from "axios";
 
-export const ipadr = import.meta.env.VITE_API_BASE_URL;
+export const ip = import.meta.env.VITE_API_BASE_URL;
 
 export const LS = {
   save: (key, value) => localStorage.setItem(key, JSON.stringify(value)),
@@ -26,6 +26,6 @@ export const LS = {
 };
 
 export const Baseaxios = axios.create({
-  baseURL: ipadr,
+  baseURL: ip,
   headers: { Authorization: `Bearer ${LS.get("access_token")}` },
 });
