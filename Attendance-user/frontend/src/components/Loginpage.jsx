@@ -90,7 +90,7 @@ import { useNavigate } from "react-router-dom";
 import { Authdata } from "../Utils/Authprovider";
 import { Apisignin } from "../Api/Loginauth";
 import { jwtDecode } from "jwt-decode";
-import { LS, ip } from "../Utils/Resuse";
+import { LS } from "../Utils/Resuse";
 const ip = import.meta.env.VITE_API_BASE_URL;
 export default function LoginPage() {
   const navigate = useNavigate();
