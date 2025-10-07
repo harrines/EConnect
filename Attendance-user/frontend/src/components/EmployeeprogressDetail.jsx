@@ -7,10 +7,10 @@ import {
   FaCalendarAlt, FaUserTie, FaClipboardList, FaChartLine, FaPlus, FaArrowLeft,
   FaSave, FaUpload
 } from "react-icons/fa";
-import { LS, ip } from "../Utils/Resuse";
+import { LS, ipadr } from "../Utils/Resuse";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-const ip = import.meta.env.VITE_API_BASE_URL;
+
 const EmployeeprogressDetail = () => {
   const navigate = useNavigate();
   const { taskId } = useParams();
@@ -140,7 +140,7 @@ const EmployeeprogressDetail = () => {
         manager_name: managerName
       });
       
-      const response = await fetch(`${ip}/manager_tasks?${queryParams.toString()}`);
+      const response = await fetch(`${ipadr}/manager_tasks?${queryParams.toString()}`);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -218,7 +218,7 @@ const EmployeeprogressDetail = () => {
     setNewComment("");
 
     try {
-      const res = await fetch(`${ip}/edit_task`, {
+      const res = await fetch(`${ipadr}/edit_task`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -259,7 +259,7 @@ const EmployeeprogressDetail = () => {
     setNewSubtask("");
 
     try {
-      const res = await fetch(`${ip}/edit_task`, {
+      const res = await fetch(`${ipadr}/edit_task`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -293,7 +293,7 @@ const EmployeeprogressDetail = () => {
       formData.append("file", selectedFile);
       formData.append("uploaded_by", "Manager");
 
-      const res = await fetch(`${ip}/task/${task.id}/files`, {
+      const res = await fetch(`${ipadr}/task/${task.id}/files`, {
         method: "POST",
         body: formData
       });
@@ -320,7 +320,7 @@ const EmployeeprogressDetail = () => {
     if (!task) return;
 
     try {
-      const res = await fetch(`${ip}/edit_task`, {
+      const res = await fetch(`${ipadr}/edit_task`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -350,7 +350,7 @@ const EmployeeprogressDetail = () => {
     if (!task) return;
 
     try {
-      const res = await fetch(`${ip}/edit_task`, {
+      const res = await fetch(`${ipadr}/edit_task`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -663,7 +663,7 @@ const EmployeeprogressDetail = () => {
                   </div>
                 </div>
                 <a 
-                  href={`${ip}/task/${task.id}/files/${file.id}`} 
+                  href={`${ipadr}/task/${task.id}/files/${file.id}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-blue-600 hover:text-blue-800 transition-colors p-2 hover:bg-blue-50 rounded"
