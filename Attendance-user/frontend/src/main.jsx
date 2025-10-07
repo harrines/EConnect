@@ -56,13 +56,8 @@ import HRDocsReview from './components/Adminfrontend/AdminDocsReview';
 
 import Fileuploader from './components/Fileuploader';
 
-// Create a simple dashboard home component for admin
-const DashboardHome = () => (
-  <div className="p-6">
-    <h1 className="text-2xl font-bold text-gray-800 mb-4">Admin Dashboard</h1>
-    <p className="text-gray-600">Welcome to the admin panel. Select an option from the sidebar to get started.</p>
-  </div>
-);
+
+
 
 const DashboardPage = () => (
   <Checkauth>
@@ -78,18 +73,14 @@ const DashboardPage = () => (
   </Checkauth>
 );
 
-const AdminDashboardPage = () => (
-  <AdminAuth>
-    <DashboardPage />
-  </AdminAuth>
-);
 
-/*const rou = [];
+
+const rou = [];
 const tempdata = [
   rou.map((item) => {
     return item;
   }),
-];*/
+];
 
 
 
@@ -97,32 +88,31 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
-    children: [
-     { index: true, element: <LoginPage /> }, // 👈 default for "/"
-  ],
+    
   },
-  {
-    path: "/Login",
-    element: <LoginPage />,
-  },
+  
   {
     path: "/websocket-test",
     element: <NotificationDashboard />,
   },
-  // {path:"Login",
-  // element:<LoginPage />
-  // },
+ 
   {
     path: "/User",
     element: <DashboardPage />,
     children: [
-      { path: "", element: <></> },
+      { path: "",
+        element: <></> 
+      },
       {
         path: "Clockin_int",
         element: <Clockin_int />,
         children: [
-          { path: "", element: <Clockin /> },
-          { path: "Clockdashboard", element: <Clockdashboard /> },
+          { path: "", 
+            element: <Clockin /> 
+          },
+          { path: "Clockdashboard", 
+            element: <Clockdashboard /> 
+          },
         ],
       },
       {
@@ -203,7 +193,7 @@ const router = createBrowserRouter([
 },
 {
   path: 'chat',
-  element: <Chat />, // your Slack-like chat component
+  element: <Chat />, 
 },
 {
   path:"viewtask",
@@ -251,7 +241,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <AdminDashboardPage />,
+    element: <DashboardPage />,
     children: [
       {
         path: "",
@@ -327,22 +317,34 @@ const router = createBrowserRouter([
       },
       
       
-      { index: true, element: <DashboardHome /> }, // default admin page
-      { path: "leave", element: <Leavemanagement /> },
-      { path: "time", element: <Timemanagement /> },
-      { path: "employee", element: <Employeelist /> },
-      { path: "employee/:id", element: <EmployeeDetails /> },
-      { path: "leaveapproval", element: <Leaveapproval /> },
-      { path: "leave_details", element: <LeaveDetails /> },
-      { path: "wfh", element: <Wfh /> },
-      { path: "wfh_details", element: <RemoteDetails />},
-      { path: "profile", element: <AdminProfile /> },
-      { path: "history", element: <Leavehistory /> },
-      { path: "attendance", element: <Attendance />},
-      { path: "newUser", element: <AddUser /> },
-      { path: "addLeave", element: <AddLeave /> },
+      { 
+        path: "employee/:id",
+        element: <EmployeeDetails /> 
+      },
+      
+      { 
+        path: "leave_details", 
+        element: <LeaveDetails /> 
+
+      },
+     
+      { 
+        path: "wfh_details", 
+        element: <RemoteDetails />
+      },
+      
+      
+      { 
+        path: "attendance", 
+        element: <Attendance />
+      },
+      
+      { 
+        path: "addLeave", 
+        element: <AddLeave /> 
+      },
     ],
-  }, // Fixed: Added missing comma here
+  }, 
 ]);
 
 const MainApp = () => {
@@ -378,7 +380,7 @@ const MainApp = () => {
 
     
   );
-  //return <RouterProvider router={router} />;
+ 
 };
 
 createRoot(document.getElementById("root")).render(<MainApp />);
