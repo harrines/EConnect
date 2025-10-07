@@ -18,7 +18,7 @@ const AddLeave = () => {
   const [selectedHolidays, setSelectedHolidays] = useState([]);
   const [workingDaysError, setWorkingDaysError] = useState(null);
 
-  const API_BASE_URL = `${ipadr}`;
+ 
   const isAdmin = LS.get('isadmin');
 
   // If not admin, redirect or show access denied
@@ -60,7 +60,7 @@ const AddLeave = () => {
     setLoading(true);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/holidays/${year}`);
+      const response = await fetch(`${ipadr}/api/holidays/${year}`);
       if (response.ok) {
         const data = await response.json();
         const sortedHolidays = sortHolidays(data.holidays || []);
@@ -86,7 +86,7 @@ const AddLeave = () => {
     setWorkingDaysError(null);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/working-days/${year}`);
+      const response = await fetch(`${ipadr}/working-days/${year}`);
       if (response.ok) {
         const data = await response.json();
         setWorkingDays(data);
@@ -124,7 +124,7 @@ const AddLeave = () => {
         holidays: sortedHolidays
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/holidays/${selectedYear}`, {
+      const response = await fetch(`${ipadr}/api/holidays/${selectedYear}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -176,7 +176,7 @@ const AddLeave = () => {
         holidays: sortedRemainingHolidays
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/holidays/${selectedYear}`, {
+      const response = await fetch(`${ipadr}/api/holidays/${selectedYear}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
