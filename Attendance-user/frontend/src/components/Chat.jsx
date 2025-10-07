@@ -257,17 +257,27 @@ export default function Chat() {
   };
 
   const toggleReaction = (messageId, emoji = "👍") => {
-    setReactionsMap((prev) => {
-      const cur = prev[messageId] || {};
-      const curCount = cur[emoji] || 0;
-      const nextCount = curCount > 0 ? curCount - 1 : 1;
-      return { ...prev, [messageId]: { ...cur, [emoji]: nextCount } };
-    });
+  setReactionsMap((prev) => {
+    const cur = prev[messageId] || {};
+    const curCount = cur[emoji] || 0;
+    const adding = curCount === 0; // toggle
+    const nextCount = adding ? 1 : 0;
 
+    // Send WS message immediately with delta
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ type: "reaction", messageId, emoji, user: userid }));
+      ws.current.send(JSON.stringify({
+        type: "reaction",
+        messageId,
+        emoji,
+        delta: adding ? 1 : -1, // tells backend add/remove
+        user: userid
+      }));
     }
-  };
+
+    return { ...prev, [messageId]: { ...cur, [emoji]: nextCount } };
+  });
+};
+
 
  const sendThreadMessage = async () => {
   if (!selectedThread || !threadInput.trim()) return;
