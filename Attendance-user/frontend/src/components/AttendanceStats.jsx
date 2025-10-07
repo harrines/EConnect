@@ -13,6 +13,7 @@ const AttendanceStats = ({ onClose }) => {
     const currentYear = getCurrentYear();
     return [currentYear, currentYear - 1, currentYear - 2];
   };
+  
 
   const [availableYears] = useState(generateAvailableYears());
   const [selectedYear, setSelectedYear] = useState(getCurrentYear());

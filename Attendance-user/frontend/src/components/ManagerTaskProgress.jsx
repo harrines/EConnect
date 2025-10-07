@@ -127,6 +127,7 @@ const ManagerTaskProgress = () => {
     setLoading(true);
     try {
       const managerName = LS.get("name");
+      
       const queryParams = new URLSearchParams({
         manager_name: managerName
       });

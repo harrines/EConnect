@@ -479,7 +479,7 @@ const handleonSubmit = async () => {
 
       const response = await axios({
         method: "post",
-        url: `${ip}/task_assign_to_multiple_members`,
+        url: `${ipadr}/task_assign_to_multiple_members`,
         data: { Task_details: taskArr },
         headers: {
           "Content-Type": "application/json",
@@ -515,7 +515,7 @@ const handleonSubmit = async () => {
       
       console.log("singletask:", singletask);
 
-      const response = await fetch(`${ip}/add_task`, {
+      const response = await fetch(`${ipadr}/add_task`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -555,7 +555,7 @@ const handleonSubmit = async () => {
           console.log("Deleting task with ID:", taskId);
           
           try {
-            const response = await fetch(`${ip}/task_delete/${taskId}`, {
+            const response = await fetch(`${ipadr}/task_delete/${taskId}`, {
               method: "DELETE",
               headers: {
                 "Content-Type": "application/json",
@@ -580,7 +580,7 @@ const handleonSubmit = async () => {
             console.log(selectedDate);
             try {
               const response = await fetch(
-                `${ip}/get_tasks/${userId}/${selectedDate}`
+                `${ipadr}/get_tasks/${userId}/${selectedDate}`
               );
         
               if (!response.ok) {
@@ -626,7 +626,7 @@ const handleonSubmit = async () => {
 
             const response=await  axios({
                 method: 'put',
-                url: `${ip}/edit_task`,
+                url: `${ipadr}/edit_task`,
                 data: updatedetails, 
                 headers: {
                     'Content-Type': 'application/json'
@@ -654,7 +654,7 @@ const confirm = async (id) => {
   }
   
   try {
-    const response = await axios.get(`${ip}/get_single_task/${id}`);
+    const response = await axios.get(`${ipadr}/get_single_task/${id}`);
     const taskdetails = response.data;
     console.log("Raw taskdetails:", taskdetails);
 
@@ -710,9 +710,9 @@ const confirm = async (id) => {
       let url2='';
       
       if(isManager) {
-        url1=`${ip}/get_team_members?TL=${LS.get('name')}`;
+        url1=`${ipadr}/get_team_members?TL=${LS.get('name')}`;
         // url2=`${ipadr}/get_assigned_task?TL=${LS.get('name')}&userid=${ValueSelected}`
-        url2=`${ip}/get_assigned_task?manager_name=${LS.get('name')}&userid=${ValueSelected}`
+        url2=`${ipadr}/get_assigned_task?manager_name=${LS.get('name')}&userid=${ValueSelected}`
 
       }
 
@@ -736,7 +736,7 @@ const confirm = async (id) => {
    const dropdown = async () => {
   if (isManager && ValueSelected) {
     try {
-      const url = `${ip}/get_assigned_task?TL=${LS.get('name')}&userid=${ValueSelected}`;
+      const url = `${ipadr}/get_assigned_task?TL=${LS.get('name')}&userid=${ValueSelected}`;
       const response = await axios.get(url);
       const Empdata = Array.isArray(response.data) ? response.data : [];
       const employeeFilteredTasks = Empdata.filter(task => task.userid !== LS.get('id'));
