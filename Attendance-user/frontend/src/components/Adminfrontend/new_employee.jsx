@@ -3,8 +3,12 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ipadr } from "../../Utils/Resuse";
 import { LS } from "../../Utils/Resuse";
+import { useParams } from "react-router-dom";
 
 const AddUser = () => {
+  const { id } = useParams(); // e.g., HR12102025017
+  const isEditMode = Boolean(id);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -24,10 +28,10 @@ const AddUser = () => {
   const [selectedValue, setSelectedValue] = useState("");
   const [options, setOptions] = useState([]);
   const [error, setError] = useState(null);
-  const Admin = LS.get('isadmin');
-  const Position = LS.get('position');
+  const Admin = LS.get("isadmin");
+  const Position = LS.get("position");
 
-  // Fetch TL list
+  // ✅ Fetch TL list
   useEffect(() => {
     fetch(`${ipadr}/get_managers_list`)
       .then((response) => {
@@ -38,6 +42,40 @@ const AddUser = () => {
       .catch((error) => setError(error));
   }, []);
 
+  // ✅ Load employee data if in edit mode
+  useEffect(() => {
+    if (isEditMode) {
+      fetch(`${ipadr}/get_employee/${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setFormData({
+            name: data.name || "",
+            email: data.email || "",
+            personal_email: data.personal_email || "",
+            resume_link: data.resume_link || "",
+            TL: data.TL || "",
+            phone: data.phone || "",
+            address: data.address || "",
+            position: data.position || "",
+            department: data.department || "",
+            status: data.status || "",
+            dateOfJoining: data.date_of_joining || "",
+            education:
+              data.education?.length > 0
+                ? data.education
+                : [{ degree: "", institution: "", year: "" }],
+            skills:
+              data.skills?.length > 0
+                ? data.skills
+                : [{ name: "", level: "" }],
+          });
+          setSelectedValue(data.TL || "");
+        })
+        .catch((err) => console.error("Error fetching employee:", err));
+    }
+  }, [id, isEditMode]);
+
+  // ✅ Handle form input changes
   const handleChange = (e, index, type) => {
     const { name, value } = e.target;
 
@@ -56,13 +94,16 @@ const AddUser = () => {
 
   const handleSelectChange = (event) => {
     setSelectedValue(event.target.value);
-    setFormData({ ...formData, TL: event.target.value }); // keep TL synced
+    setFormData({ ...formData, TL: event.target.value });
   };
 
   const addEducation = () => {
     setFormData({
       ...formData,
-      education: [...formData.education, { degree: "", institution: "", year: "" }],
+      education: [
+        ...formData.education,
+        { degree: "", institution: "", year: "" },
+      ],
     });
   };
 
@@ -73,124 +114,126 @@ const AddUser = () => {
     });
   };
 
+  // ✅ Add new employee
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  let payload = {
-    name: formData.name,
-    email: formData.email,
-    personal_email: formData.personal_email,
-    resume_link: formData.resume_link,
-    TL: formData.TL,
-    phone: formData.phone,
-    position: formData.position,
-    department: formData.department,
-    address: formData.address,
-    status: formData.status,
-    date_of_joining: formData.dateOfJoining, // snake_case for backend
-    education: formData.education,
-    skills: formData.skills.map((skill) => ({
-      name: skill.name,
-      level: parseInt(skill.level) || 0,
-    })),
-    ip: "127.0.0.1", // ✅ added ip so backend validation passes
-  };
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      personal_email: formData.personal_email,
+      resume_link: formData.resume_link,
+      TL: formData.TL,
+      phone: formData.phone,
+      position: formData.position,
+      department: formData.department,
+      address: formData.address,
+      status: formData.status,
+      date_of_joining: formData.dateOfJoining,
+      education: formData.education,
+      skills: formData.skills.map((skill) => ({
+        name: skill.name,
+        level: parseInt(skill.level) || 0,
+      })),
+      ip: "127.0.0.1",
+    };
 
-  try {
-    const response = await fetch(`${ipadr}/add_employee`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      toast.success(data.message || "Employee added successfully!");
-      setFormData({
-        name: "",
-        email: "",
-        personal_email: "",
-        resume_link: "",
-        TL: "",
-        phone: "",
-        address: "",
-        position: "",
-        department: "",
-        status: "",
-        dateOfJoining: "",
-        education: [{ degree: "", institution: "", year: "" }],
-        skills: [{ name: "", level: "" }],
+    try {
+      const response = await fetch(`${ipadr}/add_employee`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-      setSelectedValue("");
-    } else {
-      toast.error(data.detail || "Error occurred while adding employee.");
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(data.message || "Employee added successfully!");
+        setFormData({
+          name: "",
+          email: "",
+          personal_email: "",
+          resume_link: "",
+          TL: "",
+          phone: "",
+          address: "",
+          position: "",
+          department: "",
+          status: "",
+          dateOfJoining: "",
+          education: [{ degree: "", institution: "", year: "" }],
+          skills: [{ name: "", level: "" }],
+        });
+        setSelectedValue("");
+      } else {
+        toast.error(data.detail || "Error occurred while adding employee.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("An error occurred while adding the employee.");
     }
-  } catch (error) {
-    console.error("Error:", error);
-    toast.error("An error occurred while adding the employee.");
-  }
 
-  console.log("Payload:", payload);
-};
-
-
-const { id } = useParams(); // this gets HR12102025017
-
-const handleConfirm = async (e) => {
-  e.preventDefault();
-
-  const payload = {
-    id, // include employee ID so backend knows who to update
-    name: formData.name,
-    email: formData.email,
-    personal_email: formData.personal_email,
-    resume_link: formData.resume_link,
-    TL: formData.TL,
-    phone: formData.phone,
-    position: formData.position,
-    department: formData.department,
-    address: formData.address,
-    status: formData.status,
-    date_of_joining: formData.dateOfJoining,
-    education: formData.education,
-    skills: formData.skills.map((skill) => ({
-      name: skill.name,
-      level: parseInt(skill.level) || 0,
-    })),
-    ip: "127.0.0.1",
+    console.log("Payload:", payload);
   };
 
-  try {
-    const response = await fetch(`${ipadr}/update_employee`, {
-      method: "POST", // or PUT, depending on backend
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  // ✅ Edit existing employee
+  const handleConfirm = async (e) => {
+    e.preventDefault();
 
-    const data = await response.json();
+    const payload = {
+      id, // plain string (not object)
+      name: formData.name,
+      email: formData.email,
+      personal_email: formData.personal_email,
+      resume_link: formData.resume_link,
+      TL: formData.TL,
+      phone: formData.phone,
+      position: formData.position,
+      department: formData.department,
+      address: formData.address,
+      status: formData.status,
+      date_of_joining: formData.dateOfJoining,
+      education: formData.education,
+      skills: formData.skills.map((skill) => ({
+        name: skill.name,
+        level: parseInt(skill.level) || 0,
+      })),
+      ip: "127.0.0.1",
+    };
 
-    if (response.ok) {
-      toast.success(data.message || "Employee updated successfully!");
-    } else {
-      toast.error(data.message || data.detail || "Update failed.");
+    console.log("Update payload:", payload);
+
+    try {
+      const response = await fetch(`${ipadr}/edit_employee`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(data.message || "Employee updated successfully!");
+      } else {
+        toast.error(data.message || data.detail || "Update failed.");
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+      toast.error("An error occurred while updating employee.");
     }
-  } catch (error) {
-    console.error("Update error:", error);
-    toast.error("An error occurred while updating employee.");
-  }
-};
+  };
 
-
-  return (
-    (Admin || Position === "HR") ?
+  return (Admin || Position === "HR") ? (
     <div className="min-h-screen flex items-center justify-center">
       <ToastContainer />
       <form
         className="bg-white p-6 rounded-lg shadow-md w-full max-w-6xl border"
-        onSubmit={handleSubmit}
+        onSubmit={isEditMode ? handleConfirm : handleSubmit} // ✅ switch handler
       >
-        <h2 className="text-xl font-semibold mb-6 text-center">Add New Employee</h2>
+        <h2 className="text-xl font-semibold mb-6 text-center">
+          {isEditMode ? "Edit Employee" : "Add New Employee"}
+        </h2>
+
         <div className="grid grid-cols-4 gap-4">
           {/* Basic fields */}
           <div>
@@ -395,21 +438,26 @@ const handleConfirm = async (e) => {
           </div>
         </div>
 
+        {/* ✅ Dynamic Button */}
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded mt-6 hover:bg-blue-600 transition"
+          className={`w-full ${
+            isEditMode
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-blue-500 hover:bg-blue-600"
+          } text-white py-2 rounded mt-6 transition`}
         >
-          Add
+          {isEditMode ? "Confirm" : "Add"}
         </button>
       </form>
-    </div> : (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg shadow-md">
-          <h1 className="text-xl font-semibold mb-2">Access Denied</h1>
-          <p>Only administrators and HR can access this page.</p>
-        </div>
+    </div>
+  ) : (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg shadow-md">
+        <h1 className="text-xl font-semibold mb-2">Access Denied</h1>
+        <p>Only administrators and HR can access this page.</p>
       </div>
-    )
+    </div>
   );
 };
 
