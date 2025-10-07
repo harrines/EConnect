@@ -11,7 +11,7 @@ const Attendance = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [searchTerm, setSearchTerm] = useState(''); // New state for search
 
-  const API_BASE_URL = `${ipadr}`
+   const ip = import.meta.env.VITE_API_BASE_URL;
 
   // User info from localStorage
   const userId = LS.get('userid');
@@ -39,19 +39,19 @@ const Attendance = () => {
       
       switch (userRole) {
         case 'admin':
-          url = `${API_BASE_URL}/attendance/admin/overview?year=${year}`;
+          url = `${ip}/attendance/admin/overview?year=${year}`;
           break;
         case 'hr':
           // For HR, we'll need to implement the endpoint later
           // For now, use admin endpoint as placeholder
-          url = `${API_BASE_URL}/attendance/admin/overview?year=${year}`;
+          url = `${ip}/attendance/admin/overview?year=${year}`;
           break;
         case 'manager':
           // Fetch manager's own data first
-          url = `${API_BASE_URL}/attendance/user/${userId}`;
+          url = `${ip}/attendance/user/${userId}`;
           break;
         case 'user':
-          url = `${API_BASE_URL}/attendance/user/${userId}`;
+          url = `${ip}/attendance/user/${userId}`;
           break;
         default:
           throw new Error('Unknown user role');
@@ -66,7 +66,7 @@ const Attendance = () => {
 
       // If manager, also fetch team data
       if (userRole === 'manager') {
-        const teamResponse = await fetch(`${API_BASE_URL}/attendance/team/${userName}?year=${year}`);
+        const teamResponse = await fetch(`${ip}/attendance/team/${userName}?year=${year}`);
         if (teamResponse.ok) {
           const teamData = await teamResponse.json();
           setAttendanceData(prev => ({ ...prev, teamData }));
