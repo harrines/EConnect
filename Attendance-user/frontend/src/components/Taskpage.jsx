@@ -271,14 +271,21 @@ const TaskPage = () => {
           : `${ipadr}/get_hr_self_tasks/${userId}`;
       }
 
-      const response = await fetch(endpoint);
+     const response = await fetch(endpoint);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to fetch tasks");
-      }
+let data;
+try {
+  data = await response.json();
+} catch {
+  const text = await response.text(); // fallback for HTML/error page
+  console.error("Non-JSON response:", text);
+  throw new Error("Server returned invalid data (not JSON). Check backend endpoint.");
+}
 
-      const data = await response.json();
+if (!response.ok) {
+  throw new Error(data.detail || "Failed to fetch tasks");
+}
+
 
       if (data.message) {
         setTasks([]);
