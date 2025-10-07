@@ -135,6 +135,53 @@ const AddUser = () => {
 };
 
 
+const { id } = useParams(); // this gets HR12102025017
+
+const handleConfirm = async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    id, // include employee ID so backend knows who to update
+    name: formData.name,
+    email: formData.email,
+    personal_email: formData.personal_email,
+    resume_link: formData.resume_link,
+    TL: formData.TL,
+    phone: formData.phone,
+    position: formData.position,
+    department: formData.department,
+    address: formData.address,
+    status: formData.status,
+    date_of_joining: formData.dateOfJoining,
+    education: formData.education,
+    skills: formData.skills.map((skill) => ({
+      name: skill.name,
+      level: parseInt(skill.level) || 0,
+    })),
+    ip: "127.0.0.1",
+  };
+
+  try {
+    const response = await fetch(`${ipadr}/update_employee`, {
+      method: "POST", // or PUT, depending on backend
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      toast.success(data.message || "Employee updated successfully!");
+    } else {
+      toast.error(data.message || data.detail || "Update failed.");
+    }
+  } catch (error) {
+    console.error("Update error:", error);
+    toast.error("An error occurred while updating employee.");
+  }
+};
+
+
   return (
     (Admin || Position === "HR") ?
     <div className="min-h-screen flex items-center justify-center">
