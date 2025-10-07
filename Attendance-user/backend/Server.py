@@ -3698,45 +3698,37 @@ active_users: dict[str, WebSocket] = {}
 
 @app.websocket("/ws/{userid}")
 async def websocket_endpoint(websocket: WebSocket, userid: str):
-    await direct_chat_manager.connect(userid, websocket)
+    await websocket.accept()
+    direct_chat_manager.connect(userid, websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            msg = json.loads(data)
-            msg["timestamp"] = datetime.utcnow().isoformat() + "Z"
-            msg.pop("pending", None)
+            data_text = await websocket.receive_text()
+            msg = json.loads(data_text)
 
-            msg_type = msg.get("type", "chat")
+            if msg.get("type") == "reaction":
+                message_id = msg.get("messageId")
+                emoji = msg.get("emoji")
+                user = msg.get("user")
 
-            if msg_type == "thread":
-                msg["id"] = msg.get("id") or str(ObjectId())
-                threads_collection.insert_one(msg.copy())
-                msg.pop("_id", None)
-                await direct_chat_manager.send_message(msg["to_user"], msg)
-
-            elif msg_type == "reaction":
-                message_id = msg["messageId"]
-                emoji = msg["emoji"]
-                user = msg["user"]
-
-                # broadcast to all participants in the same chat
-                chat_id = msg.get("chatId")
-                recipients = direct_chat_manager.get_chat_users(chat_id)  # you may need a helper to get all users in this chat
-
-                for uid in recipients:
-                    await direct_chat_manager.send_message(uid, {
+                # send to both sender and recipient
+                to_user = msg.get("to_user")
+                if to_user:
+                    await direct_chat_manager.send_message(to_user, {
                         "type": "reaction",
                         "messageId": message_id,
                         "emoji": emoji,
                         "user": user,
                         "delta": 1
                     })
+                # optionally send back to sender so they see the reaction too
+                await direct_chat_manager.send_message(user, {
+                    "type": "reaction",
+                    "messageId": message_id,
+                    "emoji": emoji,
+                    "user": user,
+                    "delta": 1
+                })
 
-            else:  # normal chat
-                msg["chatId"] = msg.get("chatId") or "_".join(sorted([userid, msg["to_user"]]))
-                chats_collection.insert_one(msg.copy())
-                msg.pop("_id", None)
-                await direct_chat_manager.send_message(msg["to_user"], msg)
 
     except WebSocketDisconnect:
         direct_chat_manager.disconnect(userid, websocket)

@@ -4796,10 +4796,14 @@ def update_daily_attendance_stats():
     
     print(f"Updated attendance stats for {updated_count} users")
     return updated_count
+from datetime import datetime, timezone
+from bson import ObjectId
+
 def append_chat_message(chatId: str, message: dict):
     message_doc = message.copy()
     message_doc["chatId"] = chatId
-    message_doc["timestamp"] = datetime.utcnow() + "Z" # ensure we can sort later
+    message_doc["timestamp"] = datetime.utcnow().replace(tzinfo=timezone.utc)
+    message_doc["reactions"] = {}  # initialize reactions
     chats_collection.insert_one(message_doc)
 
 def get_chat_history(chatId: str):
@@ -4807,15 +4811,17 @@ def get_chat_history(chatId: str):
     messages = []
     for doc in cursor:
         messages.append({
-            "id": str(doc.get("id") or doc.get("_id")),
+            "id": str(doc.get("_id")),
             "from_user": doc.get("from_user"),
             "to_user": doc.get("to_user"),
             "text": doc.get("text"),
             "file": doc.get("file"),
             "timestamp": doc["timestamp"].isoformat() + "Z",
             "chatId": doc.get("chatId"),
+            "reactions": doc.get("reactions", {}),
         })
     return messages
+
 
 
     # Get allowed contacts for a given user
