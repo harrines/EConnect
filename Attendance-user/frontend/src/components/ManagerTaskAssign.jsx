@@ -176,7 +176,7 @@ const [hrAssignedTasks, setHrAssignedTasks] = useState([]);
 
     // const isManager=LS.get('position')==="Manager"? true:false;
     const isHR=LS.get('position')==="Manager"? true:false;
-
+const isManager=LS.get('position')==="Manager";
     // Fixed parameter extraction
     const params = useParams();
     let userid = params.userid;
