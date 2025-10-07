@@ -89,7 +89,10 @@ const router = createBrowserRouter([
     element: <App />,
     
   },
-  
+  {
+    path: "/websocket-test",
+    element: <NotificationDashboard />,
+  },
  
   {
     path: "/User",
@@ -162,10 +165,7 @@ const router = createBrowserRouter([
         path: "enhanced-notifications",
         element: <EnhancedNotificationDashboard />,
       },
-      {
-    path: "/websocket-test",
-    element: <NotificationDashboard />,
-  },
+      
       {
         path: "test",
         element: <ApiTest />,
