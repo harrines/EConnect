@@ -9,23 +9,19 @@
 // });
 
 import axios from "axios";
+import localstorageEncrypt from "localstorage-encrypt";
 
+// Backend base URL
 export const ipadr = import.meta.env.VITE_API_BASE_URL;
 
-export const LS = {
-  save: (key, value) => localStorage.setItem(key, JSON.stringify(value)),
-  get: (key) => {
-    const val = localStorage.getItem(key);
-    try {
-      return JSON.parse(val);
-    } catch {
-      return val;
-    }
-  },
-  remove: (key) => localStorage.removeItem(key),
-};
+// LocalStorage utility with encryption
+export const LS = localstorageEncrypt.init("Quillbot", "RGBQUILLBOT");
 
+// Axios instance
 export const Baseaxios = axios.create({
   baseURL: ipadr,
-  headers: { Authorization: `Bearer ${LS.get("access_token")}` },
+  headers: {
+    Authorization: `Bearer ${LS.get("access_token")}`,
+  },
 });
+

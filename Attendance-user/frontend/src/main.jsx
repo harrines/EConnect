@@ -30,12 +30,11 @@ import EmployeeDetails from "./components/EmployeeDetails";
 import TaskAssign from "./components/TaskAssign";
 import ViewAssignedTask from "./components/ViewAssignedTask";
 import TaskDetails from "./components/TaskDetails";
-import LoginPage from "./components/Loginpage";
 import NotificationDashboard from "./components/NotificationDashboard";
 import EnhancedNotificationDashboard from "./components/EnhancedNotificationDashboard";
 import NotificationSystemTest from "./components/NotificationSystemTest";
 import ApiTest from "./components/ApiTest";
-import AdminAuth from "./Utils/AdminAuth";
+
 import TaskDetailsPage from "./components/TaskDetailsPage";
 import EmployeeTaskProgress from "./components/EmployeeTaskProgress";
 import ManagerTaskProgress from "./components/ManagerTaskProgress";
@@ -91,10 +90,6 @@ const router = createBrowserRouter([
     
   },
   
-  {
-    path: "/websocket-test",
-    element: <NotificationDashboard />,
-  },
  
   {
     path: "/User",
@@ -167,6 +162,10 @@ const router = createBrowserRouter([
         path: "enhanced-notifications",
         element: <EnhancedNotificationDashboard />,
       },
+      {
+    path: "/websocket-test",
+    element: <NotificationDashboard />,
+  },
       {
         path: "test",
         element: <ApiTest />,

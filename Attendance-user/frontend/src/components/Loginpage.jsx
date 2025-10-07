@@ -90,8 +90,8 @@ import { useNavigate } from "react-router-dom";
 import { Authdata } from "../Utils/Authprovider";
 import { Apisignin } from "../Api/Loginauth";
 import { jwtDecode } from "jwt-decode";
-import { LS } from "../Utils/Resuse";
-const ipadr = import.meta.env.VITE_API_BASE_URL;
+import { LS,ipadr } from "../Utils/Resuse";
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { SetStatedata } = Authdata();

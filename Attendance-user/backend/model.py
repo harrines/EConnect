@@ -225,33 +225,22 @@ class AddEmployee(BaseModel):
     
 
 
+
 class EditEmployee(BaseModel):
-    userid: str
-    name: str
-    email: str
-    phone: str
-    position: str
-    department: str
-    address: str 
-    date_of_joining: str 
-    education: List[Dict[str, Union[str, int]]]
-    skills: List[Dict[str, Union[str, int]]]
-    TL: str
-    personal_email: str
-    resume_link: str
-    status: str
-    ip: str
-    
-    @validator('skills')
-    def validate_skills(cls, v):
-        """Ensure skill levels are integers"""
-        for skill in v:
-            if 'level' in skill:
-                try:
-                    skill['level'] = int(skill['level'])
-                except (ValueError, TypeError):
-                    skill['level'] = 0
-        return v
+ userid: str
+ name: str
+ email: str
+ phone: str
+ position: str
+ department: str
+ address: str 
+ education: List[Dict[str, Union[str,int]]] # A list of educational qualifications
+ skills: List[Dict[str, Union[str, int]]] # A list of skills with 'name' and 'level'
+ TL: str
+ personal_email: str
+ resume_link:str
+ status: str
+ ip:str
 # class EditEmployee(BaseModel):
 #  userid: str
 #  name: str
