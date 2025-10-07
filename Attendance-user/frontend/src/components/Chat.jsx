@@ -65,8 +65,8 @@ export default function Chat() {
         const data = await res.json();
         const filtered = data.filter((user) => {
           if (user.id === userid) return false;
-          if (isManager?.toLowerCase() === "Manager") return true;
-          if (isDepart?.toLowerCase() === "hr") return user.position?.toLowerCase() === "Manager";
+          if (isManager?.toLowerCase() === "manager") return true;
+          if (isDepart?.toLowerCase() === "hr") return user.position?.toLowerCase() === "manager";
           return user.department?.toLowerCase() !== "hr";
         });
         setContacts(filtered);
@@ -257,27 +257,17 @@ export default function Chat() {
   };
 
   const toggleReaction = (messageId, emoji = "👍") => {
-  setReactionsMap((prev) => {
-    const cur = prev[messageId] || {};
-    const curCount = cur[emoji] || 0;
-    const adding = curCount === 0; // toggle
-    const nextCount = adding ? 1 : 0;
+    setReactionsMap((prev) => {
+      const cur = prev[messageId] || {};
+      const curCount = cur[emoji] || 0;
+      const nextCount = curCount > 0 ? curCount - 1 : 1;
+      return { ...prev, [messageId]: { ...cur, [emoji]: nextCount } };
+    });
 
-    // Send WS message immediately with delta
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({
-        type: "reaction",
-        messageId,
-        emoji,
-        delta: adding ? 1 : -1, // tells backend add/remove
-        user: userid
-      }));
+      ws.current.send(JSON.stringify({ type: "reaction", messageId, emoji, user: userid }));
     }
-
-    return { ...prev, [messageId]: { ...cur, [emoji]: nextCount } };
-  });
-};
-
+  };
 
  const sendThreadMessage = async () => {
   if (!selectedThread || !threadInput.trim()) return;
