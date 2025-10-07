@@ -154,7 +154,7 @@ import { BarChart3 } from "lucide-react";
 import { LS, ipadr } from "../Utils/Resuse";
 import AttendanceStats from "./AttendanceStats"; // Import the new component
 
-const API_BASE_URL = `${ipadr}`; // Backend URL
+
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -181,7 +181,7 @@ const UserProfile = () => {
         return;
       }
       try {
-        const response = await fetch(`${API_BASE_URL}/get_user/${userid}`);
+        const response = await fetch(`${ipadr}/get_user/${userid}`);
         const contentType = response.headers.get("content-type");
 
         if (response.ok && contentType?.includes("application/json")) {
