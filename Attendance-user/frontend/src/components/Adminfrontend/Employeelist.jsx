@@ -15,12 +15,12 @@ const EmployeeList = () => {
     const [show, setShow] = useState(false);
     const Admin = LS.get('isadmin');
     
-    const ip = import.meta.env.VITE_API_BASE_URL;
+    const ipadr= import.meta.env.VITE_API_BASE_URL;
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${ip}/get_all_users`);
+                const response = await axios.get(`${ipadr}/get_all_users`);
                 const filteredData =
                     response.data && Array.isArray(response.data)
                         ? response.data.filter((item) =>

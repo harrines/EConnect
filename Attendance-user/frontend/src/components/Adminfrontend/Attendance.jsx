@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faCalendarCheck, faUsers, faUserTie, faChartBar, faClock, faPercentage, faCalendarDays, faBuilding, faSearch, faTimes} from '@fortawesome/free-solid-svg-icons';
-import { LS, ip} from '../../Utils/Resuse';
+import { LS,ipadr} from '../../Utils/Resuse';
 
 const Attendance = () => {
   const [attendanceData, setAttendanceData] = useState(null);
@@ -11,7 +11,7 @@ const Attendance = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [searchTerm, setSearchTerm] = useState(''); // New state for search
 
-   const ip = import.meta.env.VITE_API_BASE_URL;
+ 
 
   // User info from localStorage
   const userId = LS.get('userid');
@@ -39,19 +39,19 @@ const Attendance = () => {
       
       switch (userRole) {
         case 'admin':
-          url = `${ip}/attendance/admin/overview?year=${year}`;
+          url = `${ipadr}/attendance/admin/overview?year=${year}`;
           break;
         case 'hr':
           // For HR, we'll need to implement the endpoint later
           // For now, use admin endpoint as placeholder
-          url = `${ip}/attendance/admin/overview?year=${year}`;
+          url = `${ipadr}/attendance/admin/overview?year=${year}`;
           break;
         case 'manager':
           // Fetch manager's own data first
-          url = `${ip}/attendance/user/${userId}`;
+          url = `${ipadr}/attendance/user/${userId}`;
           break;
         case 'user':
-          url = `${ip}/attendance/user/${userId}`;
+          url = `${ipadr}/attendance/user/${userId}`;
           break;
         default:
           throw new Error('Unknown user role');
@@ -66,7 +66,7 @@ const Attendance = () => {
 
       // If manager, also fetch team data
       if (userRole === 'manager') {
-        const teamResponse = await fetch(`${ip}/attendance/team/${userName}?year=${year}`);
+        const teamResponse = await fetch(`${ipadr}/attendance/team/${userName}?year=${year}`);
         if (teamResponse.ok) {
           const teamData = await teamResponse.json();
           setAttendanceData(prev => ({ ...prev, teamData }));
