@@ -2,7 +2,7 @@ import React,{useState,useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { ip,LS } from "../Utils/Resuse";
+import { ipadr,LS } from "../Utils/Resuse";
 import { Modal } from "./Modal";
 import { createPortal } from "react-dom";
 import { FaEdit } from "react-icons/fa";
@@ -15,7 +15,7 @@ import { useParams } from 'react-router-dom';
 import { ArrowUp, ArrowDown, ArrowUpDown, RotateCw } from "lucide-react";
 import { AiOutlineDelete, AiOutlineEdit } from 'react-icons/ai';
 import { useSearchParams } from 'react-router-dom';
-const ip = import.meta.env.VITE_API_BASE_URL;
+
 // Note Component
 const Note = ({ empdata, handleDelete, handleEdit }) => {
   return (
@@ -204,11 +204,11 @@ const [hrAssignedTasks, setHrAssignedTasks] = useState([]);
      let url=''
 
      if(isManager) {
-      url=`${ip}/get_assigned_task?TL=${LS.get('name')}&manager_id=${LS.get('id')}`;
+      url=`${ipadr}/get_assigned_task?TL=${LS.get('name')}&manager_id=${LS.get('id')}`;
      } 
   
   else {
-      url=`${ip}/get_tasks/${userid}`
+      url=`${ipadr}/get_tasks/${userid}`
      }
 
      useEffect(()=>{
@@ -224,7 +224,7 @@ const [hrAssignedTasks, setHrAssignedTasks] = useState([]);
     setError('');
     
     if (isManager) {
-      const assignedResponse = await axios.get(`${ip}/get_assigned_task?TL=${LS.get('name')}`);
+      const assignedResponse = await axios.get(`${ipadr}/get_assigned_task?TL=${LS.get('name')}`);
       const managerAssignedTasks = assignedResponse.data && Array.isArray(assignedResponse.data) ? assignedResponse.data : [];
       
       const employeeAssignedTasks = managerAssignedTasks.filter(task => task.userid !== LS.get('id'));
@@ -281,7 +281,7 @@ const fetchEmployeeTasks = async (employeeId) => {
   try {
     setLoading(true);
     const response = await axios.get(
-      `${ip}/get_assigned_task?TL=${LS.get('name')}&userid=${employeeId}`
+      `${ipadr}/get_assigned_task?TL=${LS.get('name')}&userid=${employeeId}`
     );
     const tasks = response.data && Array.isArray(response.data) ? response.data : [];
     setEmployeeData(tasks);
