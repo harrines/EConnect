@@ -121,11 +121,16 @@ export default function Chat() {
         }
 
         if (payload.type === "reaction") {
+  const { messageId, emoji } = payload; // ✅ extract from payload
   setReactionsMap(prev => {
-  const prevMsg = prev[messageId] || {};
-  const count = (prevMsg[emoji] || 0) + 1;
-  return { ...prev, [messageId]: { ...prevMsg, [emoji]: count } };
-});
+    const prevMsg = prev[messageId] || {};
+    const count = (prevMsg[emoji] || 0) + 1;
+    return { ...prev, [messageId]: { ...prevMsg, [emoji]: count } };
+  });
+
+  return;
+}
+
 
   return;
 }
