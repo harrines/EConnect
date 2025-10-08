@@ -19,7 +19,7 @@ const ipadr = import.meta.env.VITE_API_BASE_URL;
 
 const formatTime = (isoString, withDate = false) => {
   if (!isoString) return "";
-  const date = new Date(isoString);
+  let date = new Date(isoString);
   if (isNaN(date.getTime())) return isoString;
   return withDate
     ? date.toLocaleString([], { dateStyle: "short", timeStyle: "short" })
@@ -31,43 +31,41 @@ export default function Chat() {
   const [newMessage, setNewMessage] = useState("");
   const [activeChat, setActiveChat] = useState({ id: "", name: "", chatId: "", type: "user" });
   const [contacts, setContacts] = useState([]);
-  const [groups, setGroups] = useState([]);
   const [unread, setUnread] = useState({});
+  const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedThread, setSelectedThread] = useState(null);
   const [threadInput, setThreadInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [reactionsMap, setReactionsMap] = useState({});
-  const [showEmojiPickerForInput, setShowEmojiPickerForInput] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [groupUsers, setGroupUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [groupName, setGroupName] = useState("");
-  const [hoveredMessage, setHoveredMessage] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [groups, setGroups] = useState([]);
 
   const chatEndRef = useRef(null);
+  const textareaRef = useRef(null);
   const ws = useRef(null);
-  const loggedIn = LS.get("isloggedin");
-  const userid = LS.get("userid");
-  const username = LS.get("username") || "You";
-  const position = LS.get("position");
-  const department = LS.get("department");
 
-  const quickEmojis = ["👍", "❤️", "😂"];
+  const loggedIn = LS.get("isloggedin");
+  const isManager = LS.get("position"); 
+  const isDepart = LS.get("department");
+  const userid = LS.get("userid");
 
   const buildChatId = (a, b) => [a, b].sort().join("_");
 
-  // Fetch users
+  // Fetch contacts
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await fetch(`${ipadr}/get_all_users`);
         const data = await res.json();
-        const filtered = data.filter(user => {
+        const filtered = data.filter((user) => {
           if (user.id === userid) return false;
-          if (position?.toLowerCase() === "manager") return true;
-          if (department?.toLowerCase() === "hr") return user.position?.toLowerCase() === "manager";
+          if (isManager?.toLowerCase() === "manager") return true;
+          if (isDepart?.toLowerCase() === "hr") return user.position?.toLowerCase() === "manager";
           return user.department?.toLowerCase() !== "hr";
         });
         setContacts(filtered);
@@ -76,7 +74,7 @@ export default function Chat() {
       }
     };
     fetchUsers();
-  }, [userid, position, department]);
+  }, [userid, isManager, isDepart]);
 
   // Fetch groups
   useEffect(() => {
@@ -92,7 +90,7 @@ export default function Chat() {
     fetchGroups();
   }, [userid]);
 
-  // Scroll to bottom
+  // Scroll to bottom on new messages
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeChat, selectedThread]);
@@ -100,7 +98,8 @@ export default function Chat() {
   // WebSocket connection
   const openWebSocket = (chatType = "user", chatId = "") => {
     ws.current?.close();
-    const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws";
+
+    const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws"; 
     const host = ipadr.replace(/^https?:\/\//, '');
     const url =
       chatType === "group"
@@ -111,17 +110,19 @@ export default function Chat() {
 
     ws.current.onopen = () => setIsConnected(true);
     ws.current.onclose = () => setIsConnected(false);
-    ws.current.onerror = err => { console.error("WS error", err); setIsConnected(false); };
+    ws.current.onerror = (err) => { console.error("WS error", err); setIsConnected(false); };
 
-    ws.current.onmessage = event => {
+    ws.current.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
 
+        // --- PRESENCE ---
         if (payload.type === "presence" && Array.isArray(payload.users)) {
           setOnlineUsers(payload.users);
           return;
         }
 
+        // --- THREAD MESSAGES ---
         if (payload.type === "thread") {
           const threadKey = `thread:${payload.rootId}`;
           setMessages(prev => {
@@ -130,11 +131,15 @@ export default function Chat() {
             if (exists) return prev;
             return { ...prev, [threadKey]: [...arr, payload] };
           });
-          return;
+          return; // thread messages are separate
         }
 
-        const msgChatId = payload.chatId || 
-          (payload.type === "user" ? buildChatId(payload.from_user || payload.from, payload.to_user || payload.to) : payload.chatId);
+        // --- MAIN CHAT MESSAGES ---
+        const msgChatId =
+          payload.chatId ||
+          (payload.type === "user"
+            ? buildChatId(payload.from_user || payload.from, payload.to_user || payload.to)
+            : payload.chatId);
 
         setMessages(prev => {
           const chatMessages = prev[msgChatId] || [];
@@ -144,8 +149,12 @@ export default function Chat() {
 
         if (msgChatId !== activeChat.chatId) {
           setUnread(prev => ({ ...prev, [msgChatId]: (prev[msgChatId] || 0) + 1 }));
-          toast.info(`New message from ${payload.from_user || payload.from}: ${payload.text ? payload.text.slice(0, 60) : "File"}`, { position: "top-right", autoClose: 4000 });
+          toast.info(
+            `New message from ${payload.from_user || payload.from}: ${payload.text ? payload.text.slice(0, 60) : "File"}`,
+            { position: "top-right", autoClose: 4000 }
+          );
         }
+
       } catch (err) {
         console.error("Invalid WS payload:", event.data, err);
       }
@@ -155,12 +164,14 @@ export default function Chat() {
   // Fetch thread messages
   useEffect(() => {
     if (!selectedThread) return;
+
     fetch(`${ipadr}/thread/${selectedThread.id}`)
       .then(res => res.json())
       .then(data => setMessages(prev => ({ ...prev, [`thread:${selectedThread.id}`]: data })));
   }, [selectedThread]);
 
-  const handleContactClick = async contact => {
+  // Contact click
+  const handleContactClick = async (contact) => {
     try {
       const res = await fetch(`${ipadr}/get_EmployeeId/${encodeURIComponent(contact.name)}`);
       const data = await res.json();
@@ -183,7 +194,8 @@ export default function Chat() {
     }
   };
 
-  const handleGroupClick = async group => {
+  // Group click
+  const handleGroupClick = async (group) => {
     setActiveChat({ id: group._id, name: group.name, chatId: group._id, type: "group" });
     setUnread(prev => ({ ...prev, [group._id]: 0 }));
     openWebSocket("group", group._id);
@@ -199,7 +211,7 @@ export default function Chat() {
     }
   };
 
-  const handleRemoveGroup = async group => {
+  const handleRemoveGroup = async (group) => {
     if (!confirm(`Are you sure you want to delete group "${group.name}"?`)) return;
     try {
       const res = await fetch(`${ipadr}/delete_group/${group._id}`, { method: "DELETE" });
@@ -213,29 +225,40 @@ export default function Chat() {
     }
   };
 
+  // Send main message
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
-    const tempId = `temp-${Date.now()}-${Math.random()}`;
-    const messageData = {
-      id: tempId,
-      tempId,
-      type: "message",
-      from_user: userid,
-      to_user: activeChat.type === "user" ? activeChat.id : undefined,
-      text: newMessage,
-      timestamp: new Date().toISOString(),
-      chatId: activeChat.chatId,
+    const attemptSend = async () => {
+      if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+        setTimeout(attemptSend, 100);
+        return;
+      }
+
+      const tempId = `temp-${Date.now()}-${Math.random()}`;
+      const messageData = {
+        id: tempId,
+        tempId,
+        type: "message",
+        from_user: userid,
+        to_user: activeChat.type === "user" ? activeChat.id : undefined,
+        text: newMessage,
+        timestamp: new Date().toISOString(),
+        chatId: activeChat.chatId,
+      };
+
+      setMessages(prev => {
+        const chatMessages = prev[activeChat.chatId] || [];
+        return { ...prev, [activeChat.chatId]: [...chatMessages, messageData] };
+      });
+
+      ws.current.send(JSON.stringify(messageData));
+      setNewMessage("");
     };
 
-    setMessages(prev => {
-      const chatMessages = prev[activeChat.chatId] || [];
-      return { ...prev, [activeChat.chatId]: [...chatMessages, messageData] };
-    });
-
-    ws.current?.send(JSON.stringify(messageData));
-    setNewMessage("");
+    attemptSend();
   };
 
+  // Send thread message (works for both private and group)
   const sendThreadMessage = async () => {
     if (!selectedThread || !threadInput.trim()) return;
 
@@ -252,13 +275,16 @@ export default function Chat() {
       id: tempId,
       tempId,
       from_user: userid,
-      to_user: isGroup ? null : (selectedThread.from_user === userid ? selectedThread.to_user : selectedThread.from_user),
+      to_user: isGroup
+        ? null
+        : (selectedThread.from_user === userid ? selectedThread.to_user : selectedThread.from_user),
       text: threadInput.trim(),
       rootId: selectedThread.id,
       chatId: activeChat.chatId,
       timestamp: new Date().toISOString(),
     };
 
+    // Optimistic UI update
     setMessages(prev => {
       const key = `thread:${payload.rootId}`;
       const arr = prev[key] || [];
@@ -275,6 +301,7 @@ export default function Chat() {
       });
 
       const data = await res.json();
+
       if (data.status === "success" && data.thread) {
         setMessages(prev => {
           const key = `thread:${payload.rootId}`;
@@ -286,35 +313,18 @@ export default function Chat() {
       console.error(err);
       toast.error("Error saving thread message");
     }
+
     setThreadInput("");
   };
 
-  const handleAddReaction = (messageId, emoji) => {
-    setReactionsMap(prev => {
-      const prevReacts = prev[messageId] || [];
-      return { ...prev, [messageId]: [...prevReacts, emoji] };
-    });
-
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({
-        type: "reaction",
-        messageId,
-        emoji,
-        from_user: userid,
-        chatId: activeChat.chatId,
-      }));
-    }
-  };
-
   const getInitials = (name = "") => name.split(" ").map(n => n[0] || "").join("").toUpperCase();
-
   const activeMessages = Array.isArray(messages[activeChat.chatId])
     ? messages[activeChat.chatId].filter(m => m.text ? m.text.toLowerCase().includes(searchTerm.toLowerCase()) : true)
     : [];
 
   const filteredContacts = contacts.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  const validGroupUsers = [{ id: userid, name: username, position: "Manager" }, ...contacts];
+  const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", position: "Manager" }, ...contacts];
 
   return (
     <div className="flex h-screen w-full font-sans bg-gray-100 overflow-hidden">
@@ -436,68 +446,27 @@ export default function Chat() {
           {/* Messages */}
           <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {activeMessages.map((m) => {
-  const isSender = m.from_user === userid;
-  const msgId = m.id || m.tempId;
-
-  const reactionData = reactionsMap[msgId] || {};
-  const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
-
-  return (
-    <div
-      key={msgId}
-      onMouseEnter={() => setHoveredMessage(msgId)}
-      onMouseLeave={() => setHoveredMessage(null)}
-      className={clsx(
-        "flex transition-transform duration-300 transform relative",
-        isSender ? "justify-end" : "justify-start"
-      )}
-    >
-      {/* Message Bubble */}
-      <div className={clsx(
-        "max-w-xl p-4 rounded-2xl break-words shadow-lg relative transition-all duration-300",
-        isSender ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none hover:shadow-xl" : "bg-white text-gray-800 rounded-bl-none hover:shadow-md"
-      )}>
-        <div className="flex items-center justify-between mb-1">
-          <span className="font-semibold text-sm">{isSender ? "You" : m.from_user}</span>
-          <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
-        </div>
-        <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
-        <div className="flex items-center gap-3 mt-3">
-          {(reactionsMap[msgId] || []).length > 0 && (
-            <div className="flex gap-1 mt-2">
-              {(reactionsMap[msgId] || []).map((emoji, i) => (
-                <span key={i} className="text-lg">{emoji}</span>
-              ))}
-            </div>
-          )}
-
-          <button className="text-xs text-white-500 hover:text-blue-600 transition" onClick={() => setSelectedThread(m)}>Reply</button>
-          <div className="text-xs text-white-400 ml-auto">{(messages[`thread:${msgId}`] || []).length ? `${(messages[`thread:${msgId}`] || []).length} replies` : ""}</div>
-        </div>
-      </div>
-
-      {/* Emoji Picker for this message */}
-    {hoveredMessage === msgId && (
-  <div className="absolute top-0 right-0 flex gap-1 bg-white border rounded shadow-md p-1">
-    {quickEmojis.map((emoji) => (
-      <button
-        key={emoji}
-        className="text-lg"
-        onClick={() => handleAddReaction(msgId, emoji)}
-      >
-        {emoji}
-      </button>
-    ))}
-  </div>
-)}
-
-
-
-
-    </div>
-  );
-})}
-
+              const isSender = m.from_user === userid;
+              const msgId = m.id || m.tempId;
+              const reactionData = reactionsMap[msgId] || {};
+              const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
+              return (
+                <div key={msgId} className={clsx("flex transition-transform duration-300 transform", isSender ? "justify-end" : "justify-start")}>
+                  <div className={clsx("max-w-xl p-4 rounded-2xl break-words shadow-lg relative transition-all duration-300", isSender ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none hover:shadow-xl" : "bg-white text-gray-800 rounded-bl-none hover:shadow-md")}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-sm">{isSender ? "You" : m.from_user}</span>
+                      <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
+                    </div>
+                    <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
+                    <div className="flex items-center gap-3 mt-3">
+                      <button className="text-xs text-white-500 hover:text-blue-600 transition" onClick={() => setSelectedThread(m)}>Reply</button>
+                    
+                      <div className="text-xs text-white-400 ml-auto">{(messages[`thread:${msgId}`] || []).length ? `${(messages[`thread:${msgId}`] || []).length} replies` : ""}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
             <div ref={chatEndRef}></div>
           </div>
 
@@ -534,22 +503,14 @@ export default function Chat() {
 
         {/* Input */}
         <div className="flex items-center gap-3 p-3 border-t border-gray-200 relative">
-         <button
-  className="p-2 rounded-full hover:bg-gray-100 transition"
-  onClick={() => setShowInputEmojiPicker(prev => !prev)}
->
-  <FiSmile className="text-gray-600" />
-</button>
-
-{showInputEmojiPicker && (
-  <div className="absolute bottom-16 left-3 z-50">
-    <Picker
-      onEmojiClick={(emojiData) => setNewMessage(prev => prev + emojiData.emoji)}
-    />
-  </div>
-)}
-
-
+          <button className="p-2 rounded-full hover:bg-gray-100 transition" onClick={() => setShowEmojiPicker(prev => !prev)}>
+            <FiSmile className="text-gray-600" />
+          </button>
+          {showEmojiPicker && (
+            <div className="absolute bottom-16 left-3 z-50 shadow-lg rounded-lg overflow-hidden">
+              <Picker onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} searchPlaceholder="Search emojis..." />
+            </div>
+          )}
           <textarea
             ref={textareaRef}
             className="flex-1 p-2 rounded-full border border-gray-300 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
