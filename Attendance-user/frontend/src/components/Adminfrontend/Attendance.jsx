@@ -15,7 +15,7 @@ const Attendance = () => {
  
 
   // User info from localStorage
-  const userId = LS.get('user.userid');
+  const userId = LS.get('userid');
   const userPosition = LS.get('position');
   const userName = LS.get('name');
   const isAdmin = LS.get('isadmin');
