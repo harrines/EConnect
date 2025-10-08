@@ -444,31 +444,52 @@ export default function Chat() {
         {/* Messages & Thread */}
         <div className="flex flex-1 overflow-hidden">
           {/* Messages */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            {activeMessages.map((m) => {
-              const isSender = m.from_user === userid;
-              const msgId = m.id || m.tempId;
-              const reactionData = reactionsMap[msgId] || {};
-              const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
-              return (
-                <div key={msgId} className={clsx("flex transition-transform duration-300 transform", isSender ? "justify-end" : "justify-start")}>
-                  <div className={clsx("max-w-xl p-4 rounded-2xl break-words shadow-lg relative transition-all duration-300", isSender ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none hover:shadow-xl" : "bg-white text-gray-800 rounded-bl-none hover:shadow-md")}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-sm">{isSender ? "You" : m.from_user}</span>
-                      <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
-                    </div>
-                    <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
-                    <div className="flex items-center gap-3 mt-3">
-                      <button className="text-xs text-white-500 hover:text-blue-600 transition" onClick={() => setSelectedThread(m)}>Reply</button>
-                    
-                      <div className="text-xs text-white-400 ml-auto">{(messages[`thread:${msgId}`] || []).length ? `${(messages[`thread:${msgId}`] || []).length} replies` : ""}</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={chatEndRef}></div>
+          <div className="flex-1 p-6 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+  {activeMessages.map((m) => {
+    const isSender = m.from_user === userid;
+    const msgId = m.id || m.tempId;
+    const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
+    return (
+      <div
+        key={msgId}
+        className={clsx(
+          "flex transition-transform duration-200 transform",
+          isSender ? "justify-end" : "justify-start"
+        )}
+      >
+        <div
+          className={clsx(
+            "max-w-xs p-2 rounded-xl break-words shadow-sm relative transition-all duration-200",
+            isSender
+              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none hover:shadow-md"
+              : "bg-white text-gray-800 rounded-bl-none hover:shadow-sm"
+          )}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-medium text-xs">{isSender ? "You" : m.from_user}</span>
+            <span className="text-[10px] text-gray-400">{formatTime(m.timestamp)}</span>
           </div>
+          <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              className="text-xs text-gray-500 hover:text-blue-600 transition"
+              onClick={() => setSelectedThread(m)}
+            >
+              Reply
+            </button>
+            <div className="text-xs text-gray-400 ml-auto">
+              {(messages[`thread:${msgId}`] || []).length
+                ? `${(messages[`thread:${msgId}`] || []).length} replies`
+                : ""}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  })}
+  <div ref={chatEndRef}></div>
+</div>
+
 
           {/* Thread Panel */}
           <div className="w-96 bg-white border-l border-gray-200 flex flex-col shadow-lg animate-slideLeft">
