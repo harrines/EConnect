@@ -290,22 +290,7 @@ function Clockin() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Current Time Display */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
-              <div className="text-center">
-                <div className="text-sm font-medium text-gray-700 mb-2">Current Time</div>
-                <div className="text-3xl font-mono font-bold text-gray-800 mb-1">
-                  {formatTime(currentTime)}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {currentTime.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    month: 'long', 
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </div>
-              </div>
-            </div>
+            
 
             {/* Status and Work Time Display */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-lg border border-gray-200">

@@ -19,17 +19,12 @@ function Clockin_int() {
   const [isRunning, setIsRunning] = useState(false);
   const [Login, Setlogin] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationAction, setConfirmationAction] = useState(null);
   // Update current time every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+ 
 
   useEffect(() => {
     const storedStartTime = parseInt(localStorage.getItem("startTime"));
