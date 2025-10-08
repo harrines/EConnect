@@ -481,8 +481,7 @@ const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", positi
                     <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
                     <div className="flex items-center gap-3 mt-3">
                       <button className="text-xs text-white-500 hover:text-blue-600 transition" onClick={() => setSelectedThread(m)}>Reply</button>
-                      <button className="text-xs text-gray-500 hover:text-green-600 transition flex items-center gap-1" onClick={() => toggleReaction(msgId, "👍")}>👍 {reactionData["👍"] || ""}</button>
-                      <button className="text-xs text-gray-500 hover:text-red-600 transition flex items-center gap-1" onClick={() => toggleReaction(msgId, "❤️")}>❤️ {reactionData["❤️"] || ""}</button>
+                    
                       <div className="text-xs text-white-400 ml-auto">{(messages[`thread:${msgId}`] || []).length ? `${(messages[`thread:${msgId}`] || []).length} replies` : ""}</div>
                     </div>
                   </div>
