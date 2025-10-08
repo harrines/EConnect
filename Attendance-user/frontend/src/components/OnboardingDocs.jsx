@@ -214,7 +214,7 @@ const filteredDocs = useMemo(() => {
         <button
           onClick={fetchAssignedDocs}
           disabled={loading || !userid}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 my-2 mt-10"
         >
           <RefreshCcw size={18} />
           {loading ? "Refreshing..." : "Refresh"}
