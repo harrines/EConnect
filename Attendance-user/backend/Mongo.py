@@ -2158,18 +2158,18 @@ def get_admin_information(userid):
     print(userid)
     result = admin.find_one({"_id":ObjectId(userid)},{"_id":0,"password":0})
     return result
-    # try:
-    #     obj_id = ObjectId(userid)
-    # except Exception as e:
-    #     return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
+    try:
+        obj_id = ObjectId(userid)
+    except Exception as e:
+        return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
 
-    # result = Users.find_one({"_id": obj_id}, {"password": 0})
-    # if result:
-    #     result["_id"] = str(result["_id"])  # JSON safe
-    #     return result
-    # else:
-    #     print("User not found in collection")
-    #     return {"error": "User not found", "userid": userid}
+    result = Users.find_one({"_id": obj_id}, {"password": 0})
+    if result:
+        result["_id"] = str(result["_id"])  # JSON safe
+        return result
+    else:
+        print("User not found in collection")
+        return {"error": "User not found", "userid": userid}
 
 
 def get_last_digits():

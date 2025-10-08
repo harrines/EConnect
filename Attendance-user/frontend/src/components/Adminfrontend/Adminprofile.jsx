@@ -29,7 +29,7 @@ const email = user.email;
                 return;
             }
             try {
-                const response = await fetch(`${ipadr}/get_admin/${userid}`);
+                const response = await fetch(`${ipadr}/get_admin_/${userid}`);
                 const contentType = response.headers.get("content-type");
 
                 if (response.ok && contentType?.includes("application/json")) {
