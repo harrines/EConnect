@@ -1,172 +1,265 @@
-import React, { useState } from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import { FaPlay, FaStop } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { useLocation, Link, Outlet, useNavigate } from "react-router-dom";
+import { AiOutlineMenuUnfold } from "react-icons/ai";
+import { FaClock, FaPlay, FaStop, FaSpinner, FaCheckCircle } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Baseaxios, LS } from "../Utils/Resuse";
 
 function Clockin_int() {
+  const location = useLocation();
+  let path = location.pathname.split("/")[2];
   const navigate = useNavigate();
-  const [isClockedIn, setIsClockedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [actionType, setActionType] = useState(null);
+  const [Navbool, Setnavbool] = useState(false);
+  const togglebtn = () => {
+    Setnavbool(!Navbool);
+  };
+  const [startTime, setStartTime] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const [Login, Setlogin] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
 
-  const showConfirmation = (type) => {
-    setActionType(type);
-    setShowConfirm(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationAction, setConfirmationAction] = useState(null);
+  // Update current time every second
+ 
+
+  useEffect(() => {
+    const storedStartTime = parseInt(localStorage.getItem("startTime"));
+    const storedElapsedTime = parseInt(localStorage.getItem("elapsedTime"));
+    const storedIsRunning = localStorage.getItem("isRunning") === "true";
+    const storedLogin = localStorage.getItem("Login") === "true";
+
+    if (!isNaN(storedStartTime)) {
+      setStartTime(storedStartTime);
+    }
+    if (!isNaN(storedElapsedTime)) {
+      setElapsedTime(storedElapsedTime);
+    }
+    setIsRunning(storedIsRunning);
+    Setlogin(storedLogin);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("startTime", startTime);
+    localStorage.setItem("elapsedTime", elapsedTime);
+    localStorage.setItem("isRunning", isRunning);
+    localStorage.setItem("Login", Login);
+  }, [startTime, elapsedTime, isRunning, Login]);
+
+  useEffect(() => {
+    let timer;
+
+    if (isRunning) {
+      timer = setInterval(() => {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        setElapsedTime(elapsed);
+      }, 1000);
+    } else {
+      clearInterval(timer);
+    }
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [isRunning, startTime]);
+
+  const toggleTimer = () => {
+    Setlogin(true);
+    if (isRunning) {
+      setIsRunning(false);
+    } else {
+      const now = Date.now() - elapsedTime;
+      setStartTime(now);
+      setIsRunning(true);
+    }
   };
 
-  const hideConfirmation = () => {
-    setShowConfirm(false);
-    setActionType(null);
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour12: true,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  const showConfirmationDialog = (action) => {
+    setConfirmationAction(action);
+    setShowConfirmation(true);
+  };
+
+  const hideConfirmationDialog = () => {
+    setShowConfirmation(false);
+    setConfirmationAction(null);
   };
 
   const executeAction = () => {
-    if (actionType === "clockin") {
-      handleClockIn();
-    } else if (actionType === "clockout") {
-      handleClockOut();
+    if (confirmationAction === 'clockin') {
+      clockinapi();
+    } else if (confirmationAction === 'clockout') {
+      clockoutapi();
     }
-    hideConfirmation();
+    hideConfirmationDialog();
   };
 
-  const handleClockIn = () => {
+  const resetTimer = () => {
+    Setlogin(false);
+    setIsRunning(false);
+    setElapsedTime(0);
+    setStartTime(null);
+  };
+
+  const clockinapi = () => {
     const userid = LS.get("userid");
     const userName = LS.get("name");
     setIsLoading(true);
-    const time = new Date().toLocaleTimeString();
-
-    Baseaxios.post("/Clockin", { userid, name: userName, time })
-      .then(() => {
+    let currentDate = new Date();
+    let time = currentDate.toLocaleTimeString().toString();
+    
+    Baseaxios.post("/Clockin", { userid, name: userName, time: time })
+      .then((response) => {
         setIsLoading(false);
-        setIsClockedIn(true);
-        toast.success(`✅ Clocked in successfully at ${time}`);
+        console.log("✅ Clock-in successful:", response.data);
+        toggleTimer();
+        
+        toast.success(`🎉 Successfully clocked in at ${formatTime(currentDate)}! Time tracking started.`);
       })
-      .catch(() => {
+      .catch((err) => {
         setIsLoading(false);
-        toast.error("❌ Failed to clock in. Please try again.");
+        console.error("❌ Clock-in error:", err);
+        toast.error("❌ Failed to clock in. Please check your connection and try again.");
       });
   };
 
-  const handleClockOut = () => {
+  const clockoutapi = () => {
     const userid = LS.get("userid");
     const userName = LS.get("name");
     setIsLoading(true);
-    const time = new Date().toLocaleTimeString();
-
-    Baseaxios.post("/Clockout", { userid, name: userName, time })
-      .then(() => {
+    console.log("Clock-out for user:", userid);
+    let currentDate = new Date();
+    let time = currentDate.toLocaleTimeString().toString();
+    
+    Baseaxios.post("/Clockout", {
+      userid: userid,
+      name: userName,
+      time: time,
+    })
+      .then((res) => {
         setIsLoading(false);
-        setIsClockedIn(false);
-        toast.success(`✅ Clocked out successfully at ${time}`);
+        console.log(res);
+        const workDuration = formatElapsedTime(elapsedTime);
+        resetTimer();
+        
+        toast.success(`✅ Successfully clocked out at ${formatTime(currentDate)}! Total work time: ${workDuration}`);
       })
-      .catch(() => {
+      .catch((err) => {
         setIsLoading(false);
-        toast.error("❌ Failed to clock out. Please try again.");
+        console.log(err);
+        toast.error("❌ Failed to clock out. Please check your connection and try again.");
       });
+  };
+
+  const formatElapsedTime = (time) => {
+    const seconds = Math.floor((time / 1000) % 60);
+    const minutes = Math.floor((time / (1000 * 60)) % 60);
+    const hours = Math.floor(time / (1000 * 60 * 60));
+    return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""
+      }${seconds}`;
+  };
+
+  const handleDetailsClick = () => {
+    setShowBackButton(true);
+  };
+
+  const handleBackClick = () => {
+    setShowBackButton(false);
+    navigate("/User/Clockin_int");
   };
 
   return (
-    <div className="min-h-[90vh] w-full p-8 bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-sm flex flex-col items-center justify-center relative transition-all duration-300">
-      {/* Confirmation Popup */}
-      {showConfirm && (
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 text-center w-80">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              {actionType === "clockin" ? "Confirm Clock In" : "Confirm Clock Out"}
-            </h3>
-            <p className="text-gray-500 mb-5">
-              {actionType === "clockin"
-                ? "Do you want to start your work day now?"
-                : "Do you want to end your work session now?"}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={hideConfirmation}
-                className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={executeAction}
-                className={`flex-1 py-2 rounded-lg text-white transition ${
-                  actionType === "clockin"
-                    ? "bg-emerald-500 hover:bg-emerald-600"
-                    : "bg-rose-500 hover:bg-rose-600"
-                }`}
-              >
-                Confirm
-              </button>
+    <div className="mr-8 p-10 bg-white min-h-96 lg:min-h-[90vh] w-full shadow-black rounded-xl justify-center items-center relative jsonback ml-10 rounded-md">
+      {/* Confirmation Dialog */}
+      {showConfirmation && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-xl z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <div className="text-center">
+              <div className="text-lg font-semibold mb-3">
+                {confirmationAction === 'clockin' ? '🔄 Confirm Clock In' : '🔄 Confirm Clock Out'}
+              </div>
+              <p className="text-gray-600 mb-4">
+                {confirmationAction === 'clockin' 
+                  ? 'Are you sure you want to clock in now?' 
+                  : 'Are you sure you want to clock out now?'}
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={hideConfirmationDialog}
+                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeAction}
+                  className={`flex-1 px-4 py-2 text-white rounded-md transition-colors ${
+                    confirmationAction === 'clockin' 
+                      ? 'bg-green-500 hover:bg-green-600' 
+                      : 'bg-red-500 hover:bg-red-600'
+                  }`}
+                >
+                  Confirm
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <div className="w-full flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
-        <h1 className="text-3xl font-semibold text-gray-800">
-          Welcome, <span className="text-blue-600">{LS.get("name")}</span> 👋
-        </h1>
-
-        {!showBackButton ? (
-          <Link
-            to={"Clockdashboard"}
-            onClick={() => setShowBackButton(true)}
-            className="px-5 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-          >
-            View Details
-          </Link>
-        ) : (
-          <button
-            onClick={() => {
-              setShowBackButton(false);
-              navigate("/User/Clockin_int");
-            }}
-            className="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
-          >
-            Go Back
-          </button>
-        )}
+      <div className="">
+        <div className="mb-6 w-full flex items-start justify-between font-poppins border-b-2 pb-3">
+          <div className="text-4xl font-semibold text-zinc-700">
+            Welcome{" "}
+            <span>
+              {LS.get("name")}
+            </span>
+            👋
+          </div>
+          <div className="">
+            {!showBackButton ? (
+              <Link
+                className="m-4 px-4 py-2 text-base bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black active:bg-white active:text-white"
+                to={"Clockdashboard"}
+                onClick={handleDetailsClick}
+              >
+                Details
+              </Link>
+            ) : (
+              <button
+                className="px-4 py-2 text-base bg-blue-500 rounded-md text-white hover:bg-[#b7c6df80] hover:text-black active:bg-white active:text-white"
+                onClick={handleBackClick}
+              >
+                Go Back
+              </button>
+            )}
+          </div>
+        </div>
+        <Outlet />
       </div>
 
-      {/* Main Card */}
-      <div className="bg-white rounded-2xl shadow-md w-full max-w-lg p-10 flex flex-col items-center border border-gray-100 transition">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-            {isClockedIn ? "You're Clocked In" : "Ready to Start Work?"}
-          </h2>
-          <p className="text-gray-500">
-            {isClockedIn
-              ? "Click below when you're done for the day."
-              : "Click below to start your work session."}
-          </p>
-        </div>
-
-        <div className="flex gap-4">
-          {!isClockedIn ? (
-            <button
-              onClick={() => showConfirmation("clockin")}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl shadow hover:bg-emerald-600 disabled:opacity-50 transition"
-            >
-              <FaPlay /> Clock In
-            </button>
-          ) : (
-            <button
-              onClick={() => showConfirmation("clockout")}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-6 py-3 bg-rose-500 text-white rounded-xl shadow hover:bg-rose-600 disabled:opacity-50 transition"
-            >
-              <FaStop /> Clock Out
-            </button>
-          )}
-        </div>
-      </div>
-
-      <Outlet />
-      <ToastContainer position="top-right" autoClose={4000} />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }
