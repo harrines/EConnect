@@ -124,7 +124,7 @@ const LeaveRequest = () => {
 
   const leaverequestapi = (newLeave) => {
     setIsApplying(true);
-    const userid = LS.get("userid");
+    const userid = LS.get("id");
     let currentDate = new Date();
     let time = currentDate.toLocaleTimeString().toString();
 
