@@ -183,51 +183,16 @@ export default function HRDocsReview() {
 
       {/* Users Grid */}
       {loadingUsers ? (
-  <p className="text-center text-gray-600">Loading users...</p>
-) : (
-  <div
-    className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-y-auto"
-    style={{
-      maxHeight: "70vh", // adjust based on your page height
-      paddingRight: "8px",
-    }}
-  >
-    {filteredUsers.map((user) => {
-      const userDocs = filterDocsByStatus(assignedDocs[user.userId] || []);
-      return (
-        <div
-          key={user.userId}
-          className="bg-white rounded-xl shadow-md p-4 flex flex-col justify-between hover:shadow-lg transition"
-        >
-          {/* User Card Content */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-600">
-              {user.name?.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <p className="font-semibold">{user.name}</p>
-              <p className="text-sm text-gray-500">{userDocs.length} Documents</p>
-            </div>
-          </div>
-          <div className="flex justify-between items-center">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={selectedUsers.includes(user.userId)}
-                onChange={() => toggleUserSelection(user.userId)}
-              />
-              Select
-            </label>
-            <button className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600">
-              Review
-            </button>
-          </div>
-      
-    
-  
-  
-
-
+        <p className="text-center text-gray-600">Loading users...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredUsers.map((user) => {
+            const userDocs = filterDocsByStatus(assignedDocs[user.userId] || []);
+            return (
+              <div
+                key={user.userId}
+                className="bg-white rounded-xl shadow-md p-4 flex flex-col justify-between hover:shadow-lg transition"
+              >
                 {/* Header */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
