@@ -48,6 +48,7 @@ const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false); // bool
   const [groupName, setGroupName] = useState("");
   const [groups, setGroups] = useState([]);
 const [hoveredMessage, setHoveredMessage] = useState(null);
+const quickEmojis = ["👍", "❤️", "😂"];
 
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -512,22 +513,22 @@ const [hoveredMessage, setHoveredMessage] = useState(null);
       </div>
 
       {/* Emoji Picker for this message */}
-     {hoveredMessage === msgId && (
-  <button
-    className="absolute top-0 right-0 p-1"
-    onClick={() => setShowEmojiPickerForMessage(msgId)}
-  >
-    <FiSmile className="text-gray-500 hover:text-blue-500" />
-  </button>
-)}
-
-{showEmojiPickerForMessage === msgId && (
-  <div className="absolute z-50 -top-12 right-0">
-    <Picker
-      onEmojiClick={(emojiData) => handleAddReaction(msgId, emojiData.emoji)}
-    />
+    {hoveredMessage === msgId && (
+  <div className="absolute top-0 right-0 flex gap-1 bg-white border rounded shadow-md p-1">
+    {quickEmojis.map((emoji) => (
+      <button
+        key={emoji}
+        className="text-lg"
+        onClick={() => handleAddReaction(msgId, emoji)}
+      >
+        {emoji}
+      </button>
+    ))}
   </div>
 )}
+
+
+
 
     </div>
   );
