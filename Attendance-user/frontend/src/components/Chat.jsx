@@ -15,6 +15,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Picker from "emoji-picker-react";
 
 const ipadr = import.meta.env.VITE_API_BASE_URL;
+const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws";
 
 const formatTime = (isoString, withDate = false) => {
   if (!isoString) return "";
@@ -43,6 +44,7 @@ export default function Chat() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [groupName, setGroupName] = useState("");
   const [groups, setGroups] = useState([]);
+  const [editingGroup, setEditingGroup] = useState(null);
 
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -50,13 +52,12 @@ export default function Chat() {
 
   const buildChatId = (a, b) => [a, b].sort().join("_");
 
-  // User info
+  // Fetch contacts
   const loggedIn = LS.get("isloggedin");
-  const isManager = LS.get("position"); 
-  const isDepart = LS.get("department"); 
+  const isManager = LS.get("position"); // "Manager" or other
+  const isDepart = LS.get("department"); // "HR" or other
   const userid = LS.get("userid");
 
-  // Fetch contacts
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -98,12 +99,12 @@ export default function Chat() {
   // WebSocket connection
   const openWebSocket = (chatType = "user", chatId = "") => {
     ws.current?.close();
-    const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws";
-    const host = ipadr.replace(/^https?:\/\//, '');
+     const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws"; 
+  const host = ipadr.replace(/^https?:\/\//, '');
     const url =
       chatType === "group"
         ? `${wsProtocol}://${host}/ws/group/${chatId}`
-        : `${wsProtocol}://${host}/ws/${userid}`;
+      : `${wsProtocol}://${host}/ws/${userid}`;
     ws.current = new WebSocket(url);
 
     ws.current.onopen = () => setIsConnected(true);
@@ -114,13 +115,11 @@ export default function Chat() {
       try {
         const payload = JSON.parse(event.data);
 
-        // Presence updates
         if (payload.type === "presence" && Array.isArray(payload.users)) {
           setOnlineUsers(payload.users);
           return;
         }
 
-        // Reaction updates
         if (payload.type === "reaction") {
           setReactionsMap((prev) => {
             const prevMsg = prev[payload.messageId] || {};
@@ -130,22 +129,23 @@ export default function Chat() {
           return;
         }
 
-        // Thread messages
         if (payload.type === "thread") {
-          setMessages(prev => {
-            const threadKey = `thread:${payload.rootId}`;
-            const arr = prev[threadKey] || [];
-            const updated = arr.map(m => (m.tempId && m.tempId === payload.tempId ? payload : m));
-            const exists = updated.some(m => m.id === payload.id);
-            if (!exists) updated.push(payload);
-            return { ...prev, [threadKey]: updated };
-          });
-          return;
-        }
+  setMessages((prev) => {
+    const threadKey = `thread:${payload.rootId}`;
+    const arr = prev[threadKey] || [];
+    const exists = arr.some(m => m.tempId === payload.tempId || m.id === payload.id);
+    if (exists) return prev; 
+    return { ...prev, [threadKey]: [...arr, payload] };
+  });
+  return;
+}
 
-        // Regular/group messages
+
         const msgChatId =
-          payload.chatId || (payload.type === "message" && payload.groupId ? payload.groupId : buildChatId(payload.from_user || payload.from, payload.to_user || payload.to));
+          payload.chatId ||
+          (chatType === "user"
+            ? buildChatId(payload.from_user || payload.from, payload.to_user || payload.to)
+            : chatId);
 
         setMessages((prev) => {
           const chatMessages = prev[msgChatId] || [];
@@ -165,16 +165,12 @@ export default function Chat() {
       }
     };
   };
-
-  // Thread history fetch
-  useEffect(() => {
-    if (!selectedThread) return;
-    fetch(`${ipadr}/thread/${selectedThread.id}`)
-      .then(res => res.json())
-      .then(data => setMessages(prev => ({ ...prev, [`thread:${selectedThread.id}`]: data })));
-  }, [selectedThread]);
-
-  // Contact click
+ useEffect(() => {
+  if (!selectedThread) return;
+  fetch(`${ipadr}/thread/${selectedThread.id}`)
+    .then(res => res.json())
+    .then(data => setMessages(prev => ({ ...prev, [`thread:${selectedThread.id}`]: data })));
+}, [selectedThread]);
   const handleContactClick = async (contact) => {
     try {
       const res = await fetch(`${ipadr}/get_EmployeeId/${encodeURIComponent(contact.name)}`);
@@ -198,7 +194,6 @@ export default function Chat() {
     }
   };
 
-  // Group click
   const handleGroupClick = async (group) => {
     setActiveChat({ id: group._id, name: group.name, chatId: group._id, type: "group" });
     setUnread((prev) => ({ ...prev, [group._id]: 0 }));
@@ -215,7 +210,6 @@ export default function Chat() {
     }
   };
 
-  // Delete group
   const handleRemoveGroup = async (group) => {
     if (!confirm(`Are you sure you want to delete group "${group.name}"?`)) return;
     try {
@@ -230,7 +224,6 @@ export default function Chat() {
     }
   };
 
-  // Send message
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
     const attemptSend = async () => {
@@ -263,7 +256,6 @@ export default function Chat() {
     attemptSend();
   };
 
-  // Toggle reaction
   const toggleReaction = (messageId, emoji = "👍") => {
     setReactionsMap((prev) => {
       const cur = prev[messageId] || {};
@@ -277,62 +269,75 @@ export default function Chat() {
     }
   };
 
-  // Send thread message
-  const sendThreadMessage = async () => {
-    if (!selectedThread || !threadInput.trim()) return;
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-      toast.error("Socket not connected");
-      return;
-    }
+ const sendThreadMessage = async () => {
+  if (!selectedThread || !threadInput.trim()) return;
 
-    const tempId = `temp-${Date.now()}`;
-    const targetUser = activeChat.type === "group"
-      ? null
-      : (selectedThread.from_user === userid ? selectedThread.to_user : selectedThread.from_user);
+  if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+    toast.error("Socket not connected");
+    return;
+  }
 
-    const payload = {
-      type: "thread",
-      tempId,
-      from_user: userid,
-      to_user: targetUser,
-      text: threadInput.trim(),
-      rootId: selectedThread.id,
-      chatId: activeChat.chatId,
-      timestamp: new Date().toISOString(),
-    };
+  const tempId = `temp-${Date.now()}`;
+  const targetUser = activeChat.type === "group"
+    ? null
+    : (selectedThread.from_user === userid ? selectedThread.to_user : selectedThread.from_user);
 
-    // Optimistic update
-    setMessages(prev => {
-      const threadKey = `thread:${payload.rootId}`;
-      const arr = prev[threadKey] || [];
-      return { ...prev, [threadKey]: [...arr, payload] };
-    });
-
-    // Send via WebSocket
-    ws.current.send(JSON.stringify(payload));
-
-    try {
-      const res = await fetch(`${ipadr}/thread`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-
-      if (data.status === "success" && data.thread) {
-        setMessages(prev => {
-          const key = `thread:${payload.rootId}`;
-          const arr = prev[key].map(m => m.tempId === tempId ? data.thread : m);
-          return { ...prev, [key]: arr };
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Error saving thread message");
-    }
-
-    setThreadInput("");
+  const payload = {
+    type: "thread",
+    id: tempId, // temporary until server assigns real id
+    tempId,
+    from_user: userid,
+    to_user: targetUser,
+    text: threadInput.trim(),
+    rootId: selectedThread.id,
+    chatId: activeChat.chatId,
+    timestamp: new Date().toISOString(),
   };
+
+  // Optimistic update
+ if (payload.type === "thread") {
+  setMessages(prev => {
+    const threadKey = `thread:${payload.rootId}`;
+    const arr = prev[threadKey] || [];
+    // Replace optimistic message with real message from server
+    const updated = arr.map(m => m.tempId === payload.tempId ? payload : m);
+    const exists = updated.some(m => m.id === payload.id);
+    if (exists) return { ...prev, [threadKey]: updated };
+    return { ...prev, [threadKey]: [...updated, payload] };
+  });
+  return;
+}
+
+
+  // Send via WebSocket
+  ws.current.send(JSON.stringify(payload));
+
+  try {
+    // Save to backend
+    const res = await fetch(`${ipadr}/thread`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (data.status === "success" && data.thread) {
+      // Replace tempId with real id
+      setMessages(prev => {
+        const key = `thread:${payload.rootId}`;
+        const arr = prev[key].map(m => m.tempId === tempId ? data.thread : m);
+        return { ...prev, [key]: arr };
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Error saving thread message");
+  }
+
+  setThreadInput("");
+};
+
+
 
   const getInitials = (name = "") =>
     name.split(" ").map((n) => n[0] || "").join("").toUpperCase();
@@ -350,10 +355,7 @@ export default function Chat() {
   const filteredGroups = groups.filter(g =>
     g.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const validGroupUsers = contacts.filter(u => u.id !== userid);
-
-  
+const validGroupUsers = contacts;
 
   return (
     <div className="flex h-screen w-full font-sans bg-gray-100 overflow-hidden">
@@ -367,6 +369,7 @@ export default function Chat() {
               onClick={() => setShowGroupModal(true)}
               title="Create Group"
             />
+            
           )}
         </div>
 
