@@ -133,15 +133,6 @@ export default function Chat() {
           });
           return; // thread messages are separate
         }
-// --- REACTION HANDLING ---
-if (payload.type === "reaction") {
-  const { messageId, emoji, from_user } = payload;
-  setReactionsMap(prev => ({
-    ...prev,
-    [messageId]: [...(prev[messageId] || []), { emoji, from_user }],
-  }));
-  return;
-}
 
         // --- MAIN CHAT MESSAGES ---
         const msgChatId =
@@ -293,7 +284,6 @@ if (payload.type === "reaction") {
       timestamp: new Date().toISOString(),
     };
 
-    
     // Optimistic UI update
     setMessages(prev => {
       const key = `thread:${payload.rootId}`;
@@ -326,30 +316,6 @@ if (payload.type === "reaction") {
 
     setThreadInput("");
   };
-
-  const sendReaction = (messageId, emoji) => {
-  if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-    toast.error("Not connected");
-    return;
-  }
-
-  const payload = {
-    type: "reaction",
-    messageId,
-    emoji,
-    from_user: userid,
-    chatId: activeChat.chatId,
-  };
-
-  ws.current.send(JSON.stringify(payload));
-
-  // Optimistic update
-  setReactionsMap(prev => ({
-    ...prev,
-    [messageId]: [...(prev[messageId] || []), { emoji, from_user: userid }],
-  }));
-};
-
 
   const getInitials = (name = "") => name.split(" ").map(n => n[0] || "").join("").toUpperCase();
   const activeMessages = Array.isArray(messages[activeChat.chatId])
@@ -480,77 +446,29 @@ if (payload.type === "reaction") {
           {/* Messages */}
           <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {activeMessages.map((m) => {
-  const isSender = m.from_user === userid;
-  const msgId = m.id || m.tempId;
-  const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
-  const messageReactions = reactionsMap[msgId] || [];
-
-  return (
-    <div
-      key={msgId}
-      className={clsx(
-        "flex relative group transition-transform duration-300",
-        isSender ? "justify-end" : "justify-start"
-      )}
-    >
-      <div
-        className={clsx(
-          "max-w-xl p-4 rounded-2xl break-words shadow-lg relative transition-all duration-300",
-          isSender
-            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none"
-            : "bg-white text-gray-800 rounded-bl-none"
-        )}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <span className="font-semibold text-sm">{isSender ? "You" : m.from_user}</span>
-          <span className="text-xs text-gray-300">{formatTime(m.timestamp)}</span>
-        </div>
-
-        <div
-          className="text-sm leading-snug"
-          dangerouslySetInnerHTML={{ __html: textHtml }}
-        />
-
-        {/* Reaction display */}
-        {messageReactions.length > 0 && (
-          <div className="flex gap-1 mt-2">
-            {messageReactions.map((r, idx) => (
-              <span key={idx} className="text-lg">{r.emoji}</span>
-            ))}
+              const isSender = m.from_user === userid;
+              const msgId = m.id || m.tempId;
+              const reactionData = reactionsMap[msgId] || {};
+              const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
+              return (
+                <div key={msgId} className={clsx("flex transition-transform duration-300 transform", isSender ? "justify-end" : "justify-start")}>
+                  <div className={clsx("max-w-xl p-4 rounded-2xl break-words shadow-lg relative transition-all duration-300", isSender ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none hover:shadow-xl" : "bg-white text-gray-800 rounded-bl-none hover:shadow-md")}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-sm">{isSender ? "You" : m.from_user}</span>
+                      <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
+                    </div>
+                    <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
+                    <div className="flex items-center gap-3 mt-3">
+                      <button className="text-xs text-white-500 hover:text-blue-600 transition" onClick={() => setSelectedThread(m)}>Reply</button>
+                    
+                      <div className="text-xs text-white-400 ml-auto">{(messages[`thread:${msgId}`] || []).length ? `${(messages[`thread:${msgId}`] || []).length} replies` : ""}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={chatEndRef}></div>
           </div>
-        )}
-
-        {/* Reaction buttons on hover */}
-        <div className="absolute -top-8 hidden group-hover:flex bg-white border rounded-full shadow px-2 py-1 gap-2 text-lg">
-          {["👍", "❤️", "😂", "😮", "😊"].map((emoji) => (
-            <button
-              key={emoji}
-              onClick={() => sendReaction(msgId, emoji)}
-              className="hover:scale-125 transition-transform"
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-
-        {/* Thread Reply Button */}
-        <div className="flex items-center gap-3 mt-3">
-          <button
-            className="text-xs text-white-500 hover:text-blue-600 transition"
-            onClick={() => setSelectedThread(m)}
-          >
-            Reply
-          </button>
-          <div className="text-xs text-white-400 ml-auto">
-            {(messages[`thread:${msgId}`] || []).length
-              ? `${(messages[`thread:${msgId}`] || []).length} replies`
-              : ""}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-})}
 
           {/* Thread Panel */}
           <div className="w-96 bg-white border-l border-gray-200 flex flex-col shadow-lg animate-slideLeft">
