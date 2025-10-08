@@ -355,7 +355,10 @@ export default function Chat() {
   const filteredGroups = groups.filter(g =>
     g.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-const validGroupUsers = contacts;
+const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", position: "Manager" }, ...contacts];
+
+
+
 
   return (
     <div className="flex h-screen w-full font-sans bg-gray-100 overflow-hidden">
@@ -587,7 +590,8 @@ const validGroupUsers = contacts;
                       );
                     }}
                   />
-                  {user.name} ({user.position || user.department})
+                  {user.name} {user.id === userid && <span className="text-gray-500 text-xs">(You)</span>}
+
                 </label>
               ))}
             </div>
@@ -596,7 +600,8 @@ const validGroupUsers = contacts;
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded"
                 onClick={async () => {
-                  const validMembers = Array.from(new Set([...selectedUsers.filter(id => id)]));
+                 const validMembers = Array.from(new Set([...selectedUsers.filter(id => id), userid]));
+
 
                   if (!groupName.trim() || validMembers.length === 0) {
                     toast.error("Enter group name and select valid users");
