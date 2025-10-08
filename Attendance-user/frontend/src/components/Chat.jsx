@@ -38,12 +38,14 @@ export default function Chat() {
   const [threadInput, setThreadInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [reactionsMap, setReactionsMap] = useState({});
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+const [showEmojiPicker, setShowEmojiPicker] = useState(null); // store messageId or null
+
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [groupUsers, setGroupUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [groupName, setGroupName] = useState("");
   const [groups, setGroups] = useState([]);
+const [hoveredMessage, setHoveredMessage] = useState(null);
 
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -316,6 +318,27 @@ export default function Chat() {
 
     setThreadInput("");
   };
+  const handleAddReaction = (messageId, emoji) => {
+  setShowEmojiPicker(null);
+
+  // Optimistic UI update
+  setReactionsMap(prev => {
+    const prevReacts = prev[messageId] || [];
+    return { ...prev, [messageId]: [...prevReacts, emoji] };
+  });
+
+  // Send reaction via WebSocket
+  if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+    ws.current.send(JSON.stringify({
+      type: "reaction",
+      messageId,
+      emoji,
+      from_user: userid,
+      chatId: activeChat.chatId
+    }));
+  }
+};
+
 
   const getInitials = (name = "") => name.split(" ").map(n => n[0] || "").join("").toUpperCase();
   const activeMessages = Array.isArray(messages[activeChat.chatId])
@@ -446,27 +469,56 @@ export default function Chat() {
           {/* Messages */}
           <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {activeMessages.map((m) => {
-              const isSender = m.from_user === userid;
-              const msgId = m.id || m.tempId;
-              const reactionData = reactionsMap[msgId] || {};
-              const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
-              return (
-                <div key={msgId} className={clsx("flex transition-transform duration-300 transform", isSender ? "justify-end" : "justify-start")}>
-                  <div className={clsx("max-w-xl p-4 rounded-2xl break-words shadow-lg relative transition-all duration-300", isSender ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none hover:shadow-xl" : "bg-white text-gray-800 rounded-bl-none hover:shadow-md")}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-sm">{isSender ? "You" : m.from_user}</span>
-                      <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
-                    </div>
-                    <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
-                    <div className="flex items-center gap-3 mt-3">
-                      <button className="text-xs text-white-500 hover:text-blue-600 transition" onClick={() => setSelectedThread(m)}>Reply</button>
-                    
-                      <div className="text-xs text-white-400 ml-auto">{(messages[`thread:${msgId}`] || []).length ? `${(messages[`thread:${msgId}`] || []).length} replies` : ""}</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+  const isSender = m.from_user === userid;
+  const msgId = m.id || m.tempId;
+
+  const reactionData = reactionsMap[msgId] || {};
+  const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
+
+  return (
+    <div
+      key={msgId}
+      onMouseEnter={() => setHoveredMessage(msgId)}
+      onMouseLeave={() => setHoveredMessage(null)}
+      className={clsx(
+        "flex transition-transform duration-300 transform relative",
+        isSender ? "justify-end" : "justify-start"
+      )}
+    >
+      {/* Message Bubble */}
+      <div className={clsx(
+        "max-w-xl p-4 rounded-2xl break-words shadow-lg relative transition-all duration-300",
+        isSender ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none hover:shadow-xl" : "bg-white text-gray-800 rounded-bl-none hover:shadow-md"
+      )}>
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-semibold text-sm">{isSender ? "You" : m.from_user}</span>
+          <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
+        </div>
+        <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
+        <div className="flex items-center gap-3 mt-3">
+          {(reactionsMap[msgId] || []).length > 0 && (
+            <div className="flex gap-1 mt-2">
+              {(reactionsMap[msgId] || []).map((emoji, i) => (
+                <span key={i} className="text-lg">{emoji}</span>
+              ))}
+            </div>
+          )}
+
+          <button className="text-xs text-white-500 hover:text-blue-600 transition" onClick={() => setSelectedThread(m)}>Reply</button>
+          <div className="text-xs text-white-400 ml-auto">{(messages[`thread:${msgId}`] || []).length ? `${(messages[`thread:${msgId}`] || []).length} replies` : ""}</div>
+        </div>
+      </div>
+
+      {/* Emoji Picker for this message */}
+      {hoveredMessage === msgId && showEmojiPicker === msgId && (
+        <div className="absolute z-50 -top-12 right-0">
+          <Picker onEmojiClick={(emojiData) => handleAddReaction(msgId, emojiData.emoji)} />
+        </div>
+      )}
+    </div>
+  );
+})}
+
             <div ref={chatEndRef}></div>
           </div>
 
@@ -507,10 +559,13 @@ export default function Chat() {
             <FiSmile className="text-gray-600" />
           </button>
           {showEmojiPicker && (
-            <div className="absolute bottom-16 left-3 z-50 shadow-lg rounded-lg overflow-hidden">
-              <Picker onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} searchPlaceholder="Search emojis..." />
-            </div>
-          )}
+  <div className="absolute z-50" style={{ top: '50%', left: '50%' }}>
+    <Picker
+      onEmojiClick={(emojiData) => handleAddReaction(showEmojiPicker, emojiData.emoji)}
+    />
+  </div>
+)}
+
           <textarea
             ref={textareaRef}
             className="flex-1 p-2 rounded-full border border-gray-300 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
