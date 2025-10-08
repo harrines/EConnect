@@ -5,7 +5,7 @@ import { LS, ipadr } from "../Utils/Resuse";
 
 
 const AttendanceStats = ({ onClose }) => {
-  const userid = LS.get("userid");
+  const userid = LS.get("user.userid");
   
   // Generate available years dynamically (current year and previous 2 years)
   const getCurrentYear = () => new Date().getFullYear();
