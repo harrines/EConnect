@@ -327,10 +327,10 @@ export default function Chat() {
   const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", position: "Manager" }, ...contacts];
 
   return (
-    <div className="mr-8 p-10 bg-white min-h-96 lg:min-h-[90vh] w-full  shadow-black rounded-xl justify-center items-center relative jsonback  ml-10 rounded-md">
+    <div className="flex h-screen w-full font-sans bg-gray-100 overflow-hidden">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg flex flex-col border-r border-gray-200 my-2 mt-10">
-        <div className="p-4 font-bold text-xl flex justify-between items-center border-b border-gray-200my-2 mt-10">
+      <div className="w-72 bg-gradient-to-b from-gray-50 to-white shadow-xl flex flex-col border-r border-gray-200">
+        <div className="p-4 font-bold text-xl flex justify-between items-center border-b border-gray-200">
           <span>CHAT</span>
           {LS.get("position") === "Manager" && (
             <FiPlus
@@ -343,13 +343,13 @@ export default function Chat() {
         </div>
 
         {/* Search */}
-        <div className="p-3 border-b">
-          <div className="flex items-center gap-3 bg-gray-100 rounded-xl px-3 py-2 shadow-inner hover:bg-gray-200 transition">
+        <div className="sticky top-0 z-10 bg-white p-3 shadow-sm">
+          <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-2 hover:bg-gray-200 focus-within:ring-2 focus-within:ring-blue-400">
             <FiSearch className="text-gray-400" />
             <input
               type="text"
               placeholder="Search contacts/messages"
-              className="bg-transparent w-full focus:outline-none text-gray-700 placeholder-gray-400"
+              className="w-full bg-transparent outline-none text-gray-700 placeholder-gray-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -471,7 +471,7 @@ export default function Chat() {
           </div>
 
           {/* Thread Panel */}
-          <div className="w-80 border-l bg-white flex flex-col overflow-y-auto">
+          <div className="w-96 bg-white border-l border-gray-200 flex flex-col shadow-lg animate-slideLeft">
             {!selectedThread ? (
               <div className="p-4 text-gray-500">No thread selected — click "Reply" on a message to open thread</div>
             ) : (
@@ -523,9 +523,10 @@ export default function Chat() {
           <button
             onClick={sendMessage}
             disabled={(!newMessage.trim()) || !isConnected}
-            className={`p-3 rounded-full transition ${newMessage.trim() && isConnected ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
+            className={`p-3 rounded-full transition-all duration-300 ${newMessage.trim() && isConnected ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:scale-105"
+      : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
           >
-            <FiSend />
+            <FiSend className ="text-lg" />
           </button>
         </div>
         {/* Group Modal */}
