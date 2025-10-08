@@ -7,7 +7,7 @@ import { ipadr } from "../../Utils/Resuse";
 
 const AdminProfile = () => {
     const navigate = useNavigate();
-    const userid = LS.get("userid"); // Get the user ID from local storage
+    const userid = LS.get("id"); // Get the user ID from local storage
     const email = LS.get("email"); // Get the user email from local storage
     console.log(userid)
     console.log(email)

@@ -42,7 +42,7 @@ const LeaveDetails = () => {
   });
 
   // User info from localStorage
-  const userId = LS.get('user.userid');
+  const userId = LS.get('id');
   const userPosition = LS.get('position');
   const userName = LS.get('name');
   const isAdmin = LS.get('isadmin');

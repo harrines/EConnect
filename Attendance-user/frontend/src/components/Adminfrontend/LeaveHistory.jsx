@@ -34,7 +34,7 @@ const LeaveHistory = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const userid = LS.get("user.userid");
+      const userid = LS.get("id");
       let endpoint = "";
 
       switch (selectedOption) {
