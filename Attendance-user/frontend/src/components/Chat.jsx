@@ -120,14 +120,23 @@ export default function Chat() {
           return;
         }
 
-        if (payload.type === "reaction") {
-          setReactionsMap((prev) => {
-            const prevMsg = prev[payload.messageId] || {};
-            const count = (prevMsg[payload.emoji] || 0) + (payload.delta || 0);
-            return { ...prev, [payload.messageId]: { ...prevMsg, [payload.emoji]: Math.max(0, count) } };
-          });
-          return;
-        }
+       if (payload.type === "reaction") {
+  setReactionsMap(prev => {
+    const prevMsg = prev[payload.messageId] || {};
+    const curUsers = prevMsg[payload.emoji] || [];
+    let updatedUsers;
+    if (payload.delta === 1) {
+      // add user
+      updatedUsers = Array.from(new Set([...curUsers, payload.user]));
+    } else {
+      // remove user
+      updatedUsers = curUsers.filter(u => u !== payload.user);
+    }
+    return { ...prev, [payload.messageId]: { ...prevMsg, [payload.emoji]: updatedUsers } };
+  });
+  return;
+}
+
 
         if (payload.type === "thread") {
   setMessages((prev) => {
@@ -257,17 +266,31 @@ export default function Chat() {
   };
 
   const toggleReaction = (messageId, emoji = "👍") => {
-    setReactionsMap((prev) => {
-      const cur = prev[messageId] || {};
-      const curCount = cur[emoji] || 0;
-      const nextCount = curCount > 0 ? curCount - 1 : 1;
-      return { ...prev, [messageId]: { ...cur, [emoji]: nextCount } };
-    });
+  setReactionsMap(prev => {
+    const msgReactions = prev[messageId] || {};
+    const users = msgReactions[emoji] || [];
+    const hasReacted = users.includes(userid);
 
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ type: "reaction", messageId, emoji, user: userid }));
-    }
-  };
+    const newUsers = hasReacted 
+      ? users.filter(u => u !== userid) 
+      : [...users, userid];
+
+    return {
+      ...prev,
+      [messageId]: {
+        ...msgReactions,
+        [emoji]: newUsers
+      }
+    };
+  });
+
+  if (ws.current?.readyState === WebSocket.OPEN) {
+    ws.current.send(JSON.stringify({ type: "reaction", messageId, emoji, user: userid }));
+  }
+};
+
+
+   
 
  const sendThreadMessage = async () => {
   if (!selectedThread || !threadInput.trim()) return;
@@ -490,12 +513,13 @@ const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", positi
                       <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
                     </div>
                     <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
-                    <div className="flex items-center gap-3 mt-3">
-                      <button className="text-xs text-white-500 hover:text-blue-600 transition" onClick={() => setSelectedThread(m)}>Reply</button>
-                      <button className="text-xs text-gray-500 hover:text-green-600 transition flex items-center gap-1" onClick={() => toggleReaction(msgId, "👍")}>👍 {reactionData["👍"] || ""}</button>
-                      <button className="text-xs text-gray-500 hover:text-red-600 transition flex items-center gap-1" onClick={() => toggleReaction(msgId, "❤️")}>❤️ {reactionData["❤️"] || ""}</button>
-                      <div className="text-xs text-white-400 ml-auto">{(messages[`thread:${msgId}`] || []).length ? `${(messages[`thread:${msgId}`] || []).length} replies` : ""}</div>
-                    </div>
+                    <button className="text-xs text-gray-500 hover:text-green-600 transition flex items-center gap-1" onClick={() => toggleReaction(msgId, "👍")}>
+  👍 {reactionData["👍"]?.length || 0}
+</button>
+<button className="text-xs text-gray-500 hover:text-red-600 transition flex items-center gap-1" onClick={() => toggleReaction(msgId, "❤️")}>
+  ❤️ {reactionData["❤️"]?.length || 0}
+</button>
+
                   </div>
                 </div>
               );
