@@ -22,13 +22,11 @@ function Clockin() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [currentStatus, setCurrentStatus] = useState("ready");
 
-  // Time updater
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Track elapsed work time
   useEffect(() => {
     let interval;
     if (currentStatus === "clocked-in" && clockInTime) {
@@ -40,7 +38,6 @@ function Clockin() {
     return () => clearInterval(interval);
   }, [currentStatus, clockInTime]);
 
-  // Load saved state
   useEffect(() => {
     const savedStatus = localStorage.getItem("clockStatus");
     const savedClockInTime = localStorage.getItem("clockInTime");
@@ -70,7 +67,6 @@ function Clockin() {
       .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Confirm dialog handlers
   const showConfirmationDialog = (action) => {
     setConfirmationAction(action);
     setShowConfirmation(true);
@@ -112,7 +108,7 @@ function Clockin() {
       })
       .catch(() => {
         setIsLoading(false);
-        toast.error("❌ Clock-in failed. Check your connection.");
+        toast.error("❌ Clock-in failed. Try again.");
       });
   };
 
@@ -150,103 +146,63 @@ function Clockin() {
   };
 
   return (
-    <div className="w-full min-h-[90vh] bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center p-6">
-      {/* Confirmation Dialog */}
-      {showConfirmation && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-2xl w-80 text-center">
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">
-              {confirmationAction === "clockin"
-                ? "Confirm Clock In"
-                : "Confirm Clock Out"}
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {confirmationAction === "clockin"
-                ? "Start your work session now?"
-                : "End your work session now?"}
-            </p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={hideConfirmationDialog}
-                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={executeAction}
-                className={`px-4 py-2 rounded-md text-white font-medium transition-all ${
-                  confirmationAction === "clockin"
-                    ? "bg-green-500 hover:bg-green-600"
-                    : "bg-red-500 hover:bg-red-600"
-                }`}
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+    <div className="relative min-h-[90vh] w-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-cyan-100 p-6 overflow-hidden">
+      {/* Animated gradient blobs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[300px] h-[300px] bg-purple-300 rounded-full blur-3xl opacity-40 animate-pulse"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[300px] h-[300px] bg-cyan-300 rounded-full blur-3xl opacity-40 animate-pulse"></div>
+
+      {/* Real-time Clock Display */}
+      <div className="text-2xl font-semibold text-gray-700 mb-6 tracking-wide drop-shadow-sm">
+        🕒 {currentTime.toLocaleTimeString("en-US", { hour12: true })}
+      </div>
 
       {/* Main Card */}
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8 border border-gray-200">
-        <div className="text-center mb-6">
-          <div className="flex items-center justify-center text-blue-600 text-3xl font-bold mb-2">
-            <FaClock className="mr-2" /> Productivity Dashboard
-          </div>
+      <div className="backdrop-blur-xl bg-white/60 border border-gray-200 shadow-2xl rounded-3xl p-8 w-full max-w-2xl transition-all hover:shadow-[0_0_40px_rgba(0,0,0,0.1)]">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            E-Connect Productivity
+          </h1>
           <p className="text-gray-500 text-sm">
-            Manage your work hours efficiently
+            Manage your work hours seamlessly
           </p>
         </div>
 
-        {/* Status Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-gray-50 rounded-xl p-6 border border-gray-200 mb-8 text-center">
-          <div className="text-lg font-semibold text-gray-700 mb-2">
-            Current Status
-          </div>
-          <div className="flex justify-center items-center gap-2 mb-4">
-            {currentStatus === "clocked-in" ? (
-              <>
-                <FaCheckCircle className="text-green-500 text-2xl" />
-                <span className="text-green-600 font-semibold text-lg">
-                  Clocked In
-                </span>
-              </>
-            ) : (
-              <>
-                <FaTimesCircle className="text-gray-400 text-2xl" />
-                <span className="text-gray-500 font-semibold text-lg">
-                  Not Clocked In
-                </span>
-              </>
-            )}
-          </div>
-
-          <div className="bg-white border rounded-xl py-4 px-6 inline-block shadow-sm">
-            {currentStatus === "clocked-in" ? (
-              <>
-                <div className="text-gray-600 text-sm mb-1">Work Duration</div>
-                <div className="text-3xl font-mono font-bold text-green-600 mb-1">
-                  {formatElapsedTime(elapsedTime)}
-                </div>
-                <div className="text-xs text-gray-500">
-                  Started at {clockInTime && formatTime(clockInTime)}
-                </div>
-              </>
-            ) : (
-              <div className="text-gray-400 text-sm">
-                Clock in to start tracking your time.
+        {/* Work Status */}
+        <div className="flex flex-col items-center justify-center mb-10">
+          {currentStatus === "clocked-in" ? (
+            <div className="flex flex-col items-center">
+              <FaCheckCircle className="text-green-500 text-5xl mb-3 drop-shadow-md" />
+              <h2 className="text-2xl font-semibold text-green-600">
+                You are Clocked In
+              </h2>
+              <p className="text-gray-500 mt-2">
+                Started at {clockInTime && formatTime(clockInTime)}
+              </p>
+              <div className="text-4xl font-mono mt-3 text-green-700 tracking-wider">
+                {formatElapsedTime(elapsedTime)}
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center">
+              <FaTimesCircle className="text-gray-400 text-5xl mb-3" />
+              <h2 className="text-2xl font-semibold text-gray-600">
+                You are not Clocked In
+              </h2>
+              <p className="text-gray-500 mt-2 text-sm">
+                Click below to start your work session.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Buttons */}
-        <div className="flex justify-center gap-6">
+        <div className="flex justify-center gap-8">
           <button
-            className={`flex items-center justify-center gap-3 px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-200 shadow-md ${
+            className={`flex items-center justify-center gap-3 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 transform ${
               currentStatus === "clocked-in" || isLoading
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-green-500 hover:bg-green-600 text-white hover:shadow-lg"
+                : "bg-green-500 text-white shadow-lg hover:scale-105 hover:bg-green-600"
             }`}
             onClick={() =>
               currentStatus !== "clocked-in" && !isLoading
@@ -266,10 +222,10 @@ function Clockin() {
           </button>
 
           <button
-            className={`flex items-center justify-center gap-3 px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-200 shadow-md ${
+            className={`flex items-center justify-center gap-3 px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 transform ${
               currentStatus !== "clocked-in" || isLoading
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-red-500 hover:bg-red-600 text-white hover:shadow-lg"
+                : "bg-red-500 text-white shadow-lg hover:scale-105 hover:bg-red-600"
             }`}
             onClick={() =>
               currentStatus === "clocked-in" && !isLoading
@@ -289,13 +245,56 @@ function Clockin() {
           </button>
         </div>
 
-        {/* Footer */}
-        <div className="text-center text-gray-500 text-sm mt-6 border-t pt-4">
+        {/* Footer Tip */}
+        <p className="text-center text-gray-500 text-sm mt-8 border-t pt-4">
           {currentStatus === "clocked-in"
-            ? "You're clocked in. Clock out when you're done working."
-            : "Click 'Clock In' to start your work session."}
-        </div>
+            ? "You're currently clocked in. Remember to clock out before leaving!"
+            : "Click Clock In to begin tracking your productive time."}
+        </p>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 text-center w-[340px] animate-fadeIn">
+            <div className="mb-4">
+              {confirmationAction === "clockin" ? (
+                <FaSignInAlt className="text-green-500 text-4xl mx-auto" />
+              ) : (
+                <FaSignOutAlt className="text-red-500 text-4xl mx-auto" />
+              )}
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              {confirmationAction === "clockin"
+                ? "Confirm Clock In"
+                : "Confirm Clock Out"}
+            </h3>
+            <p className="text-gray-500 mb-6 text-sm">
+              {confirmationAction === "clockin"
+                ? "Start tracking your working hours now?"
+                : "End your current work session?"}
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={hideConfirmationDialog}
+                className="px-5 py-2 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 font-medium transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeAction}
+                className={`px-5 py-2 rounded-full text-white font-medium transition ${
+                  confirmationAction === "clockin"
+                    ? "bg-green-500 hover:bg-green-600"
+                    : "bg-red-500 hover:bg-red-600"
+                }`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ToastContainer position="top-right" autoClose={4000} theme="colored" />
     </div>
