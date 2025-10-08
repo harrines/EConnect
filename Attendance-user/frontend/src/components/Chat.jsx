@@ -1,4 +1,5 @@
 // Chat.jsx
+// Chat.jsx
 import { useState, useEffect, useRef } from "react";
 import {
   FiSend,
@@ -15,7 +16,6 @@ import "react-toastify/dist/ReactToastify.css";
 import Picker from "emoji-picker-react";
 
 const ipadr = import.meta.env.VITE_API_BASE_URL;
-const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws";
 
 const formatTime = (isoString, withDate = false) => {
   if (!isoString) return "";
@@ -44,20 +44,19 @@ export default function Chat() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [groupName, setGroupName] = useState("");
   const [groups, setGroups] = useState([]);
-  const [editingGroup, setEditingGroup] = useState(null);
 
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
   const ws = useRef(null);
 
+  const loggedIn = LS.get("isloggedin");
+  const isManager = LS.get("position"); 
+  const isDepart = LS.get("department");
+  const userid = LS.get("userid");
+
   const buildChatId = (a, b) => [a, b].sort().join("_");
 
   // Fetch contacts
-  const loggedIn = LS.get("isloggedin");
-  const isManager = LS.get("position"); // "Manager" or other
-  const isDepart = LS.get("department"); // "HR" or other
-  const userid = LS.get("userid");
-
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -99,12 +98,14 @@ export default function Chat() {
   // WebSocket connection
   const openWebSocket = (chatType = "user", chatId = "") => {
     ws.current?.close();
-     const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws"; 
-  const host = ipadr.replace(/^https?:\/\//, '');
+
+    const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws"; 
+    const host = ipadr.replace(/^https?:\/\//, '');
     const url =
       chatType === "group"
         ? `${wsProtocol}://${host}/ws/group/${chatId}`
-      : `${wsProtocol}://${host}/ws/${userid}`;
+        : `${wsProtocol}://${host}/ws/${userid}`;
+    
     ws.current = new WebSocket(url);
 
     ws.current.onopen = () => setIsConnected(true);
@@ -115,62 +116,61 @@ export default function Chat() {
       try {
         const payload = JSON.parse(event.data);
 
+        // --- PRESENCE ---
         if (payload.type === "presence" && Array.isArray(payload.users)) {
           setOnlineUsers(payload.users);
           return;
         }
 
-        if (payload.type === "reaction") {
-          setReactionsMap((prev) => {
-            const prevMsg = prev[payload.messageId] || {};
-            const count = (prevMsg[payload.emoji] || 0) + (payload.delta || 0);
-            return { ...prev, [payload.messageId]: { ...prevMsg, [payload.emoji]: Math.max(0, count) } };
+        // --- THREAD MESSAGES ---
+        if (payload.type === "thread") {
+          const threadKey = `thread:${payload.rootId}`;
+          setMessages(prev => {
+            const arr = prev[threadKey] || [];
+            const exists = arr.some(m => m.tempId === payload.tempId || m.id === payload.id);
+            if (exists) return prev;
+            return { ...prev, [threadKey]: [...arr, payload] };
           });
-          return;
+          return; // thread messages are separate
         }
 
-        if (payload.type === "thread") {
-  setMessages((prev) => {
-    const threadKey = `thread:${payload.rootId}`;
-    const arr = prev[threadKey] || [];
-    const exists = arr.some(m => m.tempId === payload.tempId || m.id === payload.id);
-    if (exists) return prev; 
-    return { ...prev, [threadKey]: [...arr, payload] };
-  });
-  return;
-}
-
-
+        // --- MAIN CHAT MESSAGES ---
         const msgChatId =
           payload.chatId ||
-          (chatType === "user"
+          (payload.type === "user"
             ? buildChatId(payload.from_user || payload.from, payload.to_user || payload.to)
-            : chatId);
+            : payload.chatId);
 
-        setMessages((prev) => {
+        setMessages(prev => {
           const chatMessages = prev[msgChatId] || [];
-          const filtered = chatMessages.filter((m) => m.id !== payload.id && m.id !== payload.tempId);
+          const filtered = chatMessages.filter(m => m.id !== payload.id && m.id !== payload.tempId);
           return { ...prev, [msgChatId]: [...filtered, payload] };
         });
 
         if (msgChatId !== activeChat.chatId) {
-          setUnread((prev) => ({ ...prev, [msgChatId]: (prev[msgChatId] || 0) + 1 }));
+          setUnread(prev => ({ ...prev, [msgChatId]: (prev[msgChatId] || 0) + 1 }));
           toast.info(
             `New message from ${payload.from_user || payload.from}: ${payload.text ? payload.text.slice(0, 60) : "File"}`,
             { position: "top-right", autoClose: 4000 }
           );
         }
+
       } catch (err) {
         console.error("Invalid WS payload:", event.data, err);
       }
     };
   };
- useEffect(() => {
-  if (!selectedThread) return;
-  fetch(`${ipadr}/thread/${selectedThread.id}`)
-    .then(res => res.json())
-    .then(data => setMessages(prev => ({ ...prev, [`thread:${selectedThread.id}`]: data })));
-}, [selectedThread]);
+
+  // Fetch thread messages
+  useEffect(() => {
+    if (!selectedThread) return;
+
+    fetch(`${ipadr}/thread/${selectedThread.id}`)
+      .then(res => res.json())
+      .then(data => setMessages(prev => ({ ...prev, [`thread:${selectedThread.id}`]: data })));
+  }, [selectedThread]);
+
+  // Contact click
   const handleContactClick = async (contact) => {
     try {
       const res = await fetch(`${ipadr}/get_EmployeeId/${encodeURIComponent(contact.name)}`);
@@ -180,13 +180,13 @@ export default function Chat() {
 
       const chatId = buildChatId(userid, employeeId);
       setActiveChat({ id: employeeId, name: contact.name, chatId, type: "user" });
-      setUnread((prev) => ({ ...prev, [chatId]: 0 }));
+      setUnread(prev => ({ ...prev, [chatId]: 0 }));
       openWebSocket("user");
 
       const historyRes = await fetch(`${ipadr}/history/${chatId}`);
       if (historyRes.ok) {
         const history = await historyRes.json();
-        setMessages((prev) => ({ ...prev, [chatId]: history }));
+        setMessages(prev => ({ ...prev, [chatId]: history }));
       }
     } catch (err) {
       console.error("Failed to open chat:", err);
@@ -194,16 +194,17 @@ export default function Chat() {
     }
   };
 
+  // Group click
   const handleGroupClick = async (group) => {
     setActiveChat({ id: group._id, name: group.name, chatId: group._id, type: "group" });
-    setUnread((prev) => ({ ...prev, [group._id]: 0 }));
+    setUnread(prev => ({ ...prev, [group._id]: 0 }));
     openWebSocket("group", group._id);
 
     try {
       const res = await fetch(`${ipadr}/group_history/${group._id}`);
       if (res.ok) {
         const history = await res.json();
-        setMessages((prev) => ({ ...prev, [group._id]: history }));
+        setMessages(prev => ({ ...prev, [group._id]: history }));
       }
     } catch (err) {
       console.error(err);
@@ -215,7 +216,7 @@ export default function Chat() {
     try {
       const res = await fetch(`${ipadr}/delete_group/${group._id}`, { method: "DELETE" });
       if (res.ok) {
-        setGroups((prev) => prev.filter((g) => g._id !== group._id));
+        setGroups(prev => prev.filter(g => g._id !== group._id));
         toast.success("Group deleted successfully");
       } else toast.error("Failed to delete group");
     } catch (err) {
@@ -224,6 +225,7 @@ export default function Chat() {
     }
   };
 
+  // Send main message
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
     const attemptSend = async () => {
@@ -244,7 +246,7 @@ export default function Chat() {
         chatId: activeChat.chatId,
       };
 
-      setMessages((prev) => {
+      setMessages(prev => {
         const chatMessages = prev[activeChat.chatId] || [];
         return { ...prev, [activeChat.chatId]: [...chatMessages, messageData] };
       });
@@ -256,96 +258,73 @@ export default function Chat() {
     attemptSend();
   };
 
-  
+  // Send thread message (works for both private and group)
+  const sendThreadMessage = async () => {
+    if (!selectedThread || !threadInput.trim()) return;
 
- const sendThreadMessage = async () => {
-  if (!selectedThread || !threadInput.trim()) return;
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+      toast.error("Socket not connected");
+      return;
+    }
 
-  if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-    toast.error("Socket not connected");
-    return;
-  }
+    const tempId = `temp-${Date.now()}`;
+    const isGroup = activeChat.type === "group";
 
-  const tempId = `temp-${Date.now()}`;
-  const isGroup = activeChat.type === "group";
+    const payload = {
+      type: "thread",
+      id: tempId,
+      tempId,
+      from_user: userid,
+      to_user: isGroup
+        ? null
+        : (selectedThread.from_user === userid ? selectedThread.to_user : selectedThread.from_user),
+      text: threadInput.trim(),
+      rootId: selectedThread.id,
+      chatId: activeChat.chatId,
+      timestamp: new Date().toISOString(),
+    };
 
-  const payload = {
-    type: "thread",
-    id: tempId,
-    tempId,
-    from_user: userid,
-    to_user: isGroup
-      ? null
-      : (selectedThread.from_user === userid
-          ? selectedThread.to_user
-          : selectedThread.from_user),
-    text: threadInput.trim(),
-    rootId: selectedThread.id,
-    chatId: activeChat.chatId,  // works for both group and user chat
-    timestamp: new Date().toISOString(),
-  };
-
-  // ✅ Optimistic update (instant thread reply UI)
-  setMessages(prev => {
-    const key = `thread:${payload.rootId}`;
-    const arr = prev[key] || [];
-    return { ...prev, [key]: [...arr, payload] };
-  });
-
-  // ✅ Send through WebSocket (shared for user + group)
-  ws.current.send(JSON.stringify(payload));
-
-  try {
-    // ✅ Save to same /thread endpoint
-    const res = await fetch(`${ipadr}/thread`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    // Optimistic UI update
+    setMessages(prev => {
+      const key = `thread:${payload.rootId}`;
+      const arr = prev[key] || [];
+      return { ...prev, [key]: [...arr, payload] };
     });
 
-    const data = await res.json();
+    ws.current.send(JSON.stringify(payload));
 
-    if (data.status === "success" && data.thread) {
-      // Replace temp message with actual one from server
-      setMessages(prev => {
-        const key = `thread:${payload.rootId}`;
-        const arr = prev[key].map(m =>
-          m.tempId === tempId ? data.thread : m
-        );
-        return { ...prev, [key]: arr };
+    try {
+      const res = await fetch(`${ipadr}/thread`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+
+      const data = await res.json();
+
+      if (data.status === "success" && data.thread) {
+        setMessages(prev => {
+          const key = `thread:${payload.rootId}`;
+          const arr = prev[key].map(m => (m.tempId === tempId ? data.thread : m));
+          return { ...prev, [key]: arr };
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error saving thread message");
     }
-  } catch (err) {
-    console.error(err);
-    toast.error("Error saving thread message");
-  }
 
-  setThreadInput("");
-};
+    setThreadInput("");
+  };
 
-
-
-
-  const getInitials = (name = "") =>
-    name.split(" ").map((n) => n[0] || "").join("").toUpperCase();
-
+  const getInitials = (name = "") => name.split(" ").map(n => n[0] || "").join("").toUpperCase();
   const activeMessages = Array.isArray(messages[activeChat.chatId])
-    ? messages[activeChat.chatId].filter((m) =>
-        m.text ? m.text.toLowerCase().includes(searchTerm.toLowerCase()) : true
-      )
+    ? messages[activeChat.chatId].filter(m => m.text ? m.text.toLowerCase().includes(searchTerm.toLowerCase()) : true)
     : [];
 
-  const filteredContacts = contacts.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredGroups = groups.filter(g =>
-    g.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", position: "Manager" }, ...contacts];
-
-
-
+  const filteredContacts = contacts.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", position: "Manager" }, ...contacts];
 
   return (
     <div className="flex h-screen w-full font-sans bg-gray-100 overflow-hidden">
