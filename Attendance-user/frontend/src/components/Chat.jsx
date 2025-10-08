@@ -256,18 +256,7 @@ export default function Chat() {
     attemptSend();
   };
 
-  const toggleReaction = (messageId, emoji = "👍") => {
-    setReactionsMap((prev) => {
-      const cur = prev[messageId] || {};
-      const curCount = cur[emoji] || 0;
-      const nextCount = curCount > 0 ? curCount - 1 : 1;
-      return { ...prev, [messageId]: { ...cur, [emoji]: nextCount } };
-    });
-
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ type: "reaction", messageId, emoji, user: userid }));
-    }
-  };
+  
 
  const sendThreadMessage = async () => {
   if (!selectedThread || !threadInput.trim()) return;
