@@ -133,7 +133,7 @@ export default function HRDocsReview() {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col bg-gray-100 p-6">
+    <div className="mr-8 p-10 bg-white min-h-96 lg:min-h-[90vh] w-full  shadow-black rounded-xl justify-center items-center relative jsonback  ml-10 rounded-md ">
       
         <h1 className="text-5xl font-semibold font-inter pb-2 text-transparent bg-gradient-to-r from-zinc-600 to-zinc-950 bg-clip-text border-b-2">
                        Admin Documents Review
