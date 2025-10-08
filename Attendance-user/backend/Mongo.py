@@ -2155,23 +2155,15 @@ def get_user_info(userid):
 
 
 def get_admin_information(userid):
-    print(userid)
-    result = admin.find_one({"_id":ObjectId(userid)},{"_id":0,"password":0})
-    return result
-    try:
-        obj_id = ObjectId(userid)
-    except Exception as e:
-        return {"error": f"Invalid ID format: {str(e)}", "userid": userid}
-
-    result = Users.find_one({"_id": obj_id}, {"password": 0})
+    print("Fetching admin with userid:", userid)
+    result = admin.find_one(
+        {"_id": ObjectId(userid)},
+        {"password": 0}  # Exclude password only
+    )
     if result:
-        result["_id"] = str(result["_id"])  # JSON safe
-        return result
-    else:
-        print("User not found in collection")
-        return {"error": "User not found", "userid": userid}
-
-
+        result["_id"] = str(result["_id"])  # Convert ObjectId to string for JSON
+    return result
+    
 def get_last_digits():
     users = Users.find({}, {"userid": 1})  # Querying only 'userid' field
 

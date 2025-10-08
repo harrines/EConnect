@@ -7,9 +7,10 @@ import { ipadr } from "../../Utils/Resuse";
 
 const AdminProfile = () => {
     const navigate = useNavigate();
-    const user = LS.get("user") || {};
-const userid = user.userid;
-const email = user.email;
+    const userid = LS.get("userid"); // Get the user ID from local storage
+    const email = LS.get("email"); // Get the user email from local storage
+    console.log(userid)
+    console.log(email)
     const [adminInfo, setAdminInfo] = useState({
         name: "",
         email: "",
@@ -29,7 +30,7 @@ const email = user.email;
                 return;
             }
             try {
-                const response = await fetch(`${ipadr}/get_admin_/${userid}`);
+                const response = await fetch(`${ipadr}/get_admin/${userid}`);
                 const contentType = response.headers.get("content-type");
 
                 if (response.ok && contentType?.includes("application/json")) {
