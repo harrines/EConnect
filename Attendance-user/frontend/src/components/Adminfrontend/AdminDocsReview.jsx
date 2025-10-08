@@ -142,7 +142,7 @@ export default function HRDocsReview() {
 
       {/* Assign Section */}
       {selectedUsers.length > 0 && (
-        <div className="mb-6 flex gap-3 items-center bg-white shadow-md p-4 rounded-lg my-2 mt-10">
+        <div className="mb-6 flex gap-9 items-center bg-white shadow-md p-4 rounded-lg my-2 mt-10">
           <input
             type="text"
             placeholder="Enter Document Name"
@@ -161,7 +161,7 @@ export default function HRDocsReview() {
       )}
 
       {/* Search & Status Filter */}
-      <div className="mb-4 flex flex-col md:flex-row gap-3 items-center">
+      <div className="mb-4 flex flex-col md:flex-row gap-3 items-center my-2 mt-10">
         <input
           type="text"
           placeholder="Search users by name..."
