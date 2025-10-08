@@ -134,9 +134,11 @@ export default function HRDocsReview() {
 
   return (
     <div className="w-full min-h-screen flex flex-col bg-gray-100 p-6">
-      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <FileText size={24} className="text-blue-600" /> Admin Documents Review
-      </h1>
+      
+        <h1 className="text-5xl font-semibold font-inter pb-2 text-transparent bg-gradient-to-r from-zinc-600 to-zinc-950 bg-clip-text border-b-2">
+                       Admin Documents Review
+                    </h1> 
+      
 
       {/* Assign Section */}
       {selectedUsers.length > 0 && (
