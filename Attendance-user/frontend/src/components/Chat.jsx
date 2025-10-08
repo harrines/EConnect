@@ -513,12 +513,27 @@ const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", positi
                       <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
                     </div>
                     <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
-                    <button className="text-xs text-gray-500 hover:text-green-600 transition flex items-center gap-1" onClick={() => toggleReaction(msgId, "👍")}>
-  👍 {reactionData["👍"]?.length || 0}
+                    {/* Reaction buttons */}
+<button
+  className={clsx(
+    "text-xs flex items-center gap-1 transition",
+    reactionData["👍"]?.includes(userid) ? "text-green-600 font-semibold" : "text-gray-500 hover:text-green-600"
+  )}
+  onClick={() => toggleReaction(msgId, "👍")}
+>
+  👍 {isSender ? (reactionData["👍"]?.length || 0) : ""}
 </button>
-<button className="text-xs text-gray-500 hover:text-red-600 transition flex items-center gap-1" onClick={() => toggleReaction(msgId, "❤️")}>
-  ❤️ {reactionData["❤️"]?.length || 0}
+
+<button
+  className={clsx(
+    "text-xs flex items-center gap-1 transition",
+    reactionData["❤️"]?.includes(userid) ? "text-red-600 font-semibold" : "text-gray-500 hover:text-red-600"
+  )}
+  onClick={() => toggleReaction(msgId, "❤️")}
+>
+  ❤️ {isSender ? (reactionData["❤️"]?.length || 0) : ""}
 </button>
+
 
                   </div>
                 </div>
