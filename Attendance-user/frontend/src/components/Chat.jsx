@@ -327,10 +327,10 @@ export default function Chat() {
   const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", position: "Manager" }, ...contacts];
 
   return (
-    <div className="flex h-screen w-full font-sans bg-gray-100 overflow-hidden">
+    <div className="mr-8 p-10 bg-white min-h-96 lg:min-h-[90vh] w-full  shadow-black rounded-xl justify-center items-center relative jsonback  ml-10 rounded-md">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg flex flex-col border-r border-gray-200">
-        <div className="p-4 font-bold text-xl flex justify-between items-center border-b border-gray-200">
+      <div className="w-64 bg-white shadow-lg flex flex-col border-r border-gray-200 my-2 mt-10">
+        <div className="p-4 font-bold text-xl flex justify-between items-center border-b border-gray-200my-2 mt-10">
           <span>CHAT</span>
           {LS.get("position") === "Manager" && (
             <FiPlus
