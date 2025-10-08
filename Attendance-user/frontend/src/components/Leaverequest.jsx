@@ -84,7 +84,7 @@ const LeaveRequest = () => {
 
   const leaverequestapi = (newLeave) => {
     setIsApplying(true);
-    const userid = LS.get("userid");
+    const userid = LS.get("user.userid");
     let time = new Date().toLocaleTimeString();
 
     let endpoint = "/leave-request";
