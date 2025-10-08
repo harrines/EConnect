@@ -271,21 +271,14 @@ const TaskPage = () => {
           : `${ipadr}/get_hr_self_tasks/${userId}`;
       }
 
-     const response = await fetch(endpoint);
+      const response = await fetch(endpoint);
 
-let data;
-try {
-  data = await response.json();
-} catch {
-  const text = await response.text(); // fallback for HTML/error page
-  console.error("Non-JSON response:", text);
-  throw new Error("Server returned invalid data (not JSON). Check backend endpoint.");
-}
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to fetch tasks");
+      }
 
-if (!response.ok) {
-  throw new Error(data.detail || "Failed to fetch tasks");
-}
-
+      const data = await response.json();
 
       if (data.message) {
         setTasks([]);
@@ -522,7 +515,7 @@ if (!response.ok) {
         )}
 
         <div className="flex justify-between items-start mb-2">
-          <h4 className="font-semibold text-gray-800 text-sm leading-tight pr-2">{task.task}</h4>
+          <h4 className="font-semibold text-gray-800 text-sm leading-tight pr-2 break-words whitespace-normal max-w-full" style={{wordBreak: 'break-word', overflowWrap: 'break-word'}}>{task.task}</h4>
           <div className="flex flex-col gap-1 items-end">
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
               task.status === 'todo' ? 'bg-red-200 text-red-700' :
