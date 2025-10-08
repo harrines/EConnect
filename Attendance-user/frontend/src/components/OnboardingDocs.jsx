@@ -205,12 +205,12 @@ const filteredDocs = useMemo(() => {
 };
 
   return (
-    <div className="p-6 min-h-screen w-screen bg-gray-50 flex flex-col">
+    <div className="mr-8 p-10 bg-white min-h-96 lg:min-h-[90vh] w-full  shadow-black rounded-xl justify-center items-center relative jsonback  ml-10 rounded-md">
       <Toaster position="top-right" />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold text-gray-800">  My Documentation</h1>
+        <h1 className="text-5xl font-semibold font-inter pb-2 text-transparent bg-gradient-to-r from-zinc-600 to-zinc-950 bg-clip-text border-b-2">  My Documentation</h1>
         <button
           onClick={fetchAssignedDocs}
           disabled={loading || !userid}
@@ -222,7 +222,7 @@ const filteredDocs = useMemo(() => {
       </div>
 
       {/* Status Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 my-2 mt-10">
         <div className="bg-white p-5 rounded-xl shadow flex flex-col items-center">
           <FileClock className="text-yellow-500 mb-2" size={28} />
           <p className="text-yellow-600 font-bold text-xl">{statusCounts.pending}</p>
@@ -241,7 +241,7 @@ const filteredDocs = useMemo(() => {
       </div>
 
       {/* Search */}
-      <div className="sticky top-0 z-10 bg-gray-50 pb-4 flex flex-col sm:flex-row gap-3">
+      <div className="sticky top-0 z-10 bg-gray-50 pb-4 flex flex-col sm:flex-row gap-3 my-2 mt-10">
   {/* Search Input */}
   <input
     type="text"
