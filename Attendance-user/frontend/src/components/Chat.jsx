@@ -39,6 +39,8 @@ export default function Chat() {
   const [searchTerm, setSearchTerm] = useState("");
   const [reactionsMap, setReactionsMap] = useState({});
 const [showEmojiPicker, setShowEmojiPicker] = useState(null); // store messageId or null
+const [showEmojiPickerForMessage, setShowEmojiPickerForMessage] = useState(null); // messageId or null
+const [showInputEmojiPicker, setShowInputEmojiPicker] = useState(false); // boolean
 
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [groupUsers, setGroupUsers] = useState([]);
@@ -510,11 +512,23 @@ const [hoveredMessage, setHoveredMessage] = useState(null);
       </div>
 
       {/* Emoji Picker for this message */}
-      {hoveredMessage === msgId && showEmojiPicker === msgId && (
-        <div className="absolute z-50 -top-12 right-0">
-          <Picker onEmojiClick={(emojiData) => handleAddReaction(msgId, emojiData.emoji)} />
-        </div>
-      )}
+     {hoveredMessage === msgId && (
+  <button
+    className="absolute top-0 right-0 p-1"
+    onClick={() => setShowEmojiPickerForMessage(msgId)}
+  >
+    <FiSmile className="text-gray-500 hover:text-blue-500" />
+  </button>
+)}
+
+{showEmojiPickerForMessage === msgId && (
+  <div className="absolute z-50 -top-12 right-0">
+    <Picker
+      onEmojiClick={(emojiData) => handleAddReaction(msgId, emojiData.emoji)}
+    />
+  </div>
+)}
+
     </div>
   );
 })}
@@ -555,16 +569,21 @@ const [hoveredMessage, setHoveredMessage] = useState(null);
 
         {/* Input */}
         <div className="flex items-center gap-3 p-3 border-t border-gray-200 relative">
-          <button className="p-2 rounded-full hover:bg-gray-100 transition" onClick={() => setShowEmojiPicker(prev => !prev)}>
-            <FiSmile className="text-gray-600" />
-          </button>
-          {showEmojiPicker && (
-  <div className="absolute z-50" style={{ top: '50%', left: '50%' }}>
+         <button
+  className="p-2 rounded-full hover:bg-gray-100 transition"
+  onClick={() => setShowInputEmojiPicker(prev => !prev)}
+>
+  <FiSmile className="text-gray-600" />
+</button>
+
+{showInputEmojiPicker && (
+  <div className="absolute bottom-16 left-3 z-50">
     <Picker
-      onEmojiClick={(emojiData) => handleAddReaction(showEmojiPicker, emojiData.emoji)}
+      onEmojiClick={(emojiData) => setNewMessage(prev => prev + emojiData.emoji)}
     />
   </div>
 )}
+
 
           <textarea
             ref={textareaRef}
