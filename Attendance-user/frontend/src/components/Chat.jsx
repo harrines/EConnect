@@ -278,54 +278,51 @@ export default function Chat() {
   }
 
   const tempId = `temp-${Date.now()}`;
-  const targetUser = activeChat.type === "group"
-    ? null
-    : (selectedThread.from_user === userid ? selectedThread.to_user : selectedThread.from_user);
+  const isGroup = activeChat.type === "group";
 
   const payload = {
     type: "thread",
-    id: tempId, // temporary until server assigns real id
+    id: tempId,
     tempId,
     from_user: userid,
-    to_user: targetUser,
+    to_user: isGroup
+      ? null
+      : (selectedThread.from_user === userid
+          ? selectedThread.to_user
+          : selectedThread.from_user),
     text: threadInput.trim(),
     rootId: selectedThread.id,
-    chatId: activeChat.chatId,
+    chatId: activeChat.chatId,  // works for both group and user chat
     timestamp: new Date().toISOString(),
   };
 
-  // Optimistic update
- if (payload.type === "thread") {
+  // ✅ Optimistic update (instant thread reply UI)
   setMessages(prev => {
-    const threadKey = `thread:${payload.rootId}`;
-    const arr = prev[threadKey] || [];
-    // Replace optimistic message with real message from server
-    const updated = arr.map(m => m.tempId === payload.tempId ? payload : m);
-    const exists = updated.some(m => m.id === payload.id);
-    if (exists) return { ...prev, [threadKey]: updated };
-    return { ...prev, [threadKey]: [...updated, payload] };
+    const key = `thread:${payload.rootId}`;
+    const arr = prev[key] || [];
+    return { ...prev, [key]: [...arr, payload] };
   });
-  return;
-}
 
-
-  // Send via WebSocket
+  // ✅ Send through WebSocket (shared for user + group)
   ws.current.send(JSON.stringify(payload));
 
   try {
-    // Save to backend
+    // ✅ Save to same /thread endpoint
     const res = await fetch(`${ipadr}/thread`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+
     const data = await res.json();
 
     if (data.status === "success" && data.thread) {
-      // Replace tempId with real id
+      // Replace temp message with actual one from server
       setMessages(prev => {
         const key = `thread:${payload.rootId}`;
-        const arr = prev[key].map(m => m.tempId === tempId ? data.thread : m);
+        const arr = prev[key].map(m =>
+          m.tempId === tempId ? data.thread : m
+        );
         return { ...prev, [key]: arr };
       });
     }
@@ -336,6 +333,7 @@ export default function Chat() {
 
   setThreadInput("");
 };
+
 
 
 
