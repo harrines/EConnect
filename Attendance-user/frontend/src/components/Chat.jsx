@@ -123,20 +123,21 @@ export default function Chat() {
         }
 
         // Thread messages
-        if (payload.type === "thread") {
+       if (payload.type === "thread") {
   const threadKey = `thread:${payload.rootId}`;
   setMessages((prev) => {
     const arr = prev[threadKey] || [];
-    // Replace temp message if exists
+    // Replace if tempId or id exists, else add
     const idx = arr.findIndex((m) => m.tempId === payload.tempId || m.id === payload.id);
     if (idx > -1) {
-      arr[idx] = payload; // replace
+      arr[idx] = payload; // replace the temp message
       return { ...prev, [threadKey]: [...arr] };
     }
     return { ...prev, [threadKey]: [...arr, payload] };
   });
   return;
 }
+
 
 
         // Main chat messages
