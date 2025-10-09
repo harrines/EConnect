@@ -431,7 +431,7 @@ export default function Chat() {
             </div>
             {isManager?.toLowerCase() === "manager" && (
               <button
-                className="p-1.5 rounded hover:bg-black-200 text-black-500 opacity-0 group-hover:opacity-100 transition-all"
+                className="p-1.5 rounded hover:bg-gray-200 text-gray-900 opacity-0 group-hover:opacity-100 transition-all"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleRemoveGroup(group);
@@ -519,7 +519,7 @@ export default function Chat() {
           </div>
         </div>
         {!activeChat.id && (
-    <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-white to-blue-50 text-center p-6">
+    <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-white to-white-50 text-center p-6">
       <FiMessageSquare className="text-7xl text-blue-200 mb-6 animate-pulse" />
       <h2 className="text-2xl font-semibold text-gray-800 mb-2">
         Welcome to Chat
