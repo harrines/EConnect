@@ -442,53 +442,68 @@ export default function Chat() {
         </div>
 
         {/* Messages & Thread */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Messages */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-  {activeMessages.map((m) => {
-    const isSender = m.from_user === userid;
-    const msgId = m.id || m.tempId;
-    const textHtml = (m.text || "").replace(
-      /@(\w+)/g,
-      '<span class="text-blue-600 font-semibold">@$1</span>'
-    );
+<div className="flex flex-1 overflow-hidden">
+  {/* Messages */}
+  <div className="flex-1 p-4 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+    {activeMessages.map((m) => {
+      const isSender = m.from_user === userid;
+      const msgId = m.id || m.tempId;
+      const textHtml = (m.text || "").replace(
+        /@(\w+)/g,
+        '<span class="text-blue-600 font-semibold">@$1</span>'
+      );
 
-    return (
-      <div
-        key={msgId}
-        className={clsx(
-          "flex transition-all duration-200",
-          isSender ? "justify-end" : "justify-start"
-        )}
-      >
-        {/* Message Bubble */}
+      return (
         <div
+          key={msgId}
           className={clsx(
-            "max-w-md px-3 py-1.5 rounded-2xl break-words shadow-sm relative text-sm leading-relaxed",
-            isSender
-              ? "bg-indigo-100 text-gray-800 rounded-br-none border border-indigo-200 hover:shadow-md"
-              : "bg-white text-gray-700 rounded-bl-none border border-gray-200 hover:shadow-sm"
+            "flex transition-all duration-200",
+            isSender ? "justify-end" : "justify-start"
           )}
         >
-          {/* Message Text */}
-          <div dangerouslySetInnerHTML={{ __html: textHtml }} />
+          {/* Message Bubble */}
+          <div
+            className={clsx(
+              "max-w-md px-3 py-1.5 rounded-2xl break-words shadow-sm relative text-sm leading-relaxed",
+              isSender
+                ? "bg-indigo-100 text-gray-800 rounded-br-none border border-indigo-200 hover:shadow-md"
+                : "bg-white text-gray-700 rounded-bl-none border border-gray-200 hover:shadow-sm"
+            )}
+          >
+            {/* Message Text */}
+            <div dangerouslySetInnerHTML={{ __html: textHtml }} />
 
-          {/* Time + Reply Row */}
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-[11px] text-gray-400">{formatTime(m.timestamp)}</span>
-            <button
-              className="text-[11px] text-blue-500 hover:text-blue-600 transition"
-              onClick={() => setSelectedThread(m)}
-            >
-              Reply
-            </button>
+            {/* Time + Reply Row */}
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-[11px] text-gray-400">{formatTime(m.timestamp)}</span>
+              <button
+                className="text-[11px] text-blue-500 hover:text-blue-600 transition"
+                onClick={() => setSelectedThread(m)}
+              >
+                Reply
+              </button>
+            </div>
+
+            {/* Reaction Row */}
+            {m.reactions && m.reactions.length > 0 && (
+              <div className="flex items-center space-x-1 mt-1">
+                {m.reactions.map((r, idx) => (
+                  <span
+                    key={idx}
+                    className="text-sm bg-gray-200 px-1 rounded flex items-center"
+                  >
+                    {r.emoji} {r.count > 1 && r.count}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    );
-  })}
-  <div ref={chatEndRef}></div>
-</div>
+      );
+    })}
+    <div ref={chatEndRef}></div>
+  </div>
+
 
 
           {/* Thread Panel */}
