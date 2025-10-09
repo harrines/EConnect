@@ -294,60 +294,7 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
         ) 
         }
         
-        {loggedIn && !isAdmin  && (
-  <Link to="my-documents" className="sidebar-item">
-    <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
-        viewBox="0 0 24 24" stroke="currentColor" 
-        className="w-6 h-6 mr-3 text-white">
-        <path strokeLinecap="round" strokeLinejoin="round" 
-          strokeWidth="2"
-          d="M7 3h8l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm8 1.5V9h4.5"
-        />
-      </svg>
-      <span className="font-medium">My Documents</span>
-    </div>
-  </Link>
-)}
-
-{/* HR/Admin - Review Documents */}
-{loggedIn && (isAdmin) && (
-  <Link to="review-docs" className="sidebar-item">
-    <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
-        viewBox="0 0 24 24" stroke="currentColor" 
-        className="w-6 h-6 mr-3 text-white">
-        <path strokeLinecap="round" strokeLinejoin="round" 
-          strokeWidth="2" d="M5 13l4 4L19 7" />
-      </svg>
-      <span className="font-medium">Docs Review</span>
-    </div>
-  </Link>
-)}
-
-{loggedIn && !isAdmin && (
-  (isDepart === 'HR' || isManager === 'Manager' || userid ) && (
-    <Link to="chat" className="sidebar-item">
-      <div className='flex items-center p-4 hover:bg-blue-700 transition-colors'>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          className="w-6 h-6 mr-3 text-white"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M7 8h10M7 12h4m1 8a9 9 0 110-18 9 9 0 010 18z"
-          />
-        </svg>
-        <span className="font-medium">Chat</span>
-      </div>
-    </Link>
-  )
-)}
+       
 
         {
           loggedIn && isManager=="Manager" ?(
@@ -419,6 +366,62 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
                 <span className="font-medium">Employee Leave Management</span>
               </div>
             </Link>
+
+             {loggedIn && !isAdmin  && (
+  <Link to="my-documents" className="sidebar-item">
+    <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
+        viewBox="0 0 24 24" stroke="currentColor" 
+        className="w-6 h-6 mr-3 text-white">
+        <path strokeLinecap="round" strokeLinejoin="round" 
+          strokeWidth="2"
+          d="M7 3h8l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm8 1.5V9h4.5"
+        />
+      </svg>
+      <span className="font-medium">My Documents</span>
+    </div>
+  </Link>
+)}
+
+{/* HR/Admin - Review Documents */}
+{loggedIn && (isAdmin) && (
+  <Link to="review-docs" className="sidebar-item">
+    <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
+        viewBox="0 0 24 24" stroke="currentColor" 
+        className="w-6 h-6 mr-3 text-white">
+        <path strokeLinecap="round" strokeLinejoin="round" 
+          strokeWidth="2" d="M5 13l4 4L19 7" />
+      </svg>
+      <span className="font-medium">Docs Review</span>
+    </div>
+  </Link>
+)}
+
+{loggedIn && !isAdmin && (
+  (isDepart === 'HR' || isManager === 'Manager' || userid ) && (
+    <Link to="chat" className="sidebar-item">
+      <div className='flex items-center p-4 hover:bg-blue-700 transition-colors'>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          className="w-6 h-6 mr-3 text-white"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M7 8h10M7 12h4m1 8a9 9 0 110-18 9 9 0 010 18z"
+          />
+        </svg>
+        <span className="font-medium">Chat</span>
+      </div>
+    </Link>
+  )
+)}
+
             <Link to="newUser" className="sidebar-item">
               <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
                 <svg
@@ -442,6 +445,7 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
           )
         }
       </div>
+
 
       {/* Footer Section */}
       <div className="mt-auto border-t-2 border-white border-purple-900 p-4 flex justify-around">
