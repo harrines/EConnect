@@ -48,8 +48,8 @@ export default function Chat() {
 
   const isManager = LS.get("position");
   const isDepart = LS.get("department");
-  const userid = LS.get("userid") || "demo-user";
-  const username = LS.get("username") || "Demo User";
+  const userid = LS.get("userid"); 
+  const username = LS.get("username"); 
 
   const buildChatId = (a, b) => [a, b].sort().join("_");
 
@@ -366,133 +366,135 @@ export default function Chat() {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* Sidebar */}
-      <div className="w-80 bg-gray-100 flex flex-col shadow-lg">
-        <div className="p-5 flex justify-between items-center border-b border-white/10">
-          <div className="flex items-center gap-3 text-primary-foreground">
-            <FiMessageSquare className="text-2xl" />
-            <span className="font-bold text-xl tracking-tight">Messages</span>
-          </div>
-          {isManager?.toLowerCase() === "manager" && (
-            <button
-              className="p-2 rounded-lg hover:bg-blue/10 transition-all text-primary-foreground"
-              onClick={() => setShowGroupModal(true)}
-              title="Create Group"
-            >
-              <FiPlus className="text-xl" />
-            </button>
-          )}
-        </div>
-
-        {/* Search */}
-        <div className="p-4">
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2.5 border border-white/20 focus-within:bg-white/20 transition-all">
-            <FiSearch className="text-primary-foreground/70" />
-            <input
-              type="text"
-              placeholder="Search contacts..."
-              className="w-full bg-transparent outline-none text-primary-foreground placeholder-primary-foreground/50 text-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Groups & Contacts */}
-        <div className="flex-1 overflow-y-auto px-3 space-y-1">
-          {/* Groups */}
-          {filteredGroups.length > 0 && (
-            <>
-              <div className="px-3 py-2 text-xs text-primary-foreground/60 uppercase tracking-wider font-semibold">
-                Groups
-              </div>
-              {filteredGroups.map((group) => (
-                <div
-                  key={group._id}
-                  className={`px-3 py-3 rounded-lg cursor-pointer flex items-center justify-between transition-all group ${
-                    activeChat.chatId === group._id
-                      ? "bg-white/20 shadow-md"
-                      : "hover:bg-white/10"
-                  }`}
-                  onClick={() => handleGroupClick(group)}
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold bg-accent text-accent-foreground shadow-lg flex-shrink-0">
-                      {getInitials(group.name)}
-                    </div>
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-primary-foreground font-medium truncate">
-                        {group.name}
-                      </span>
-                      <span className="text-xs text-primary-foreground/60">
-                        {group.members?.filter((m) => m !== userid).length} members
-                      </span>
-                    </div>
-                  </div>
-
-                  {isManager?.toLowerCase() === "manager" && (
-                    <button
-                      className="p-1.5 rounded hover:bg-white/10 text-primary-foreground/70 hover:text-primary-foreground opacity-0 group-hover:opacity-100 transition-all"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveGroup(group);
-                      }}
-                    >
-                      <FiTrash2 size={16} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </>
-          )}
-<div className="px-3 py-2 text-xs text-primary-foreground/60 uppercase tracking-wider font-semibold mt-4">
-  Contacts
-</div>
-{filteredContacts.map((contact) => {
-  const chatId = buildChatId(userid, contact.id);
-  const isOnline = onlineUsers.includes(contact.id);
-  return (
-    <div
-      key={contact.id}
-      className={`px-3 py-3 rounded-lg cursor-pointer flex items-center justify-between transition-all 
-        ${
-          activeChat.chatId === chatId
-            ? "bg-blue-100 shadow-md"  // Light blue when active
-            : "hover:bg-blue-50"       // Light hover effect
-        }`}
-      onClick={() => handleContactClick(contact)}
-    >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="relative flex-shrink-0">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-lg 
-              ${isOnline ? "bg-green-400" : "bg-gray-300"}  // Softer colors for status`}
-          >
-            {getInitials(contact.name)}
-          </div>
-          {isOnline && (
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-          )}
-        </div>
-        <div className="flex flex-col min-w-0 flex-1">
-          <span className="text-primary-foreground font-medium truncate">
-            {contact.name}
-          </span>
-          <span className="text-xs text-primary-foreground/60 truncate">
-            {contact.position || ""}
-          </span>
-        </div>
-      </div>
-      {unread[chatId] > 0 && (
-        <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-semibold shadow-md">
-          {unread[chatId]}
-        </span>
-      )}
+      {/* Sidebar */}
+<div className="w-80 bg-gray-100 flex flex-col shadow-lg">
+  {/* Header */}
+  <div className="p-5 flex justify-between items-center border-b border-gray-300">
+    <div className="flex items-center gap-3 text-gray-800 font-bold text-xl">
+      <FiMessageSquare className="text-2xl" />
+      Messages
     </div>
-  );
-})}
+    {isManager?.toLowerCase() === "manager" && (
+      <button
+        className="p-2 rounded-full hover:bg-gray-200 transition-all"
+        onClick={() => setShowGroupModal(true)}
+        title="Create Group"
+      >
+        <FiPlus className="text-xl" />
+      </button>
+    )}
+  </div>
 
+  {/* Search */}
+  <div className="p-4">
+    <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border border-gray-300 focus-within:ring-2 focus-within:ring-blue-200">
+      <FiSearch className="text-gray-500" />
+      <input
+        type="text"
+        placeholder="Search..."
+        className="w-full bg-transparent outline-none text-gray-700 text-sm placeholder-gray-400"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+    </div>
+  </div>
+
+  {/* Groups */}
+  <div className="flex-1 overflow-y-auto px-3 space-y-2">
+    {filteredGroups.length > 0 && (
+      <>
+        <div className="px-3 py-2 text-xs text-gray-500 uppercase tracking-wider font-semibold">
+          Groups
         </div>
-      </div>
+        {filteredGroups.map((group) => (
+          <div
+            key={group._id}
+            className={`px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between transition-all ${
+              activeChat.chatId === group._id
+                ? "bg-gray-200 shadow"
+                : "hover:bg-gray-150"
+            }`}
+            onClick={() => handleGroupClick(group)}
+          >
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold bg-gray-400 text-white flex-shrink-0">
+                {getInitials(group.name)}
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="truncate font-medium text-gray-800">
+                  {group.name}
+                </span>
+                <span className="text-xs text-gray-500 truncate">
+                  {group.members?.filter((m) => m !== userid).length} members
+                </span>
+              </div>
+            </div>
+            {isManager?.toLowerCase() === "manager" && (
+              <button
+                className="p-1.5 rounded hover:bg-black-200 text-black-500 opacity-0 group-hover:opacity-100 transition-all"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveGroup(group);
+                }}
+              >
+                <FiTrash2 size={16} />
+              </button>
+            )}
+          </div>
+        ))}
+      </>
+    )}
+
+    {/* Contacts */}
+    <div className="px-3 py-2 text-xs text-gray-500 uppercase tracking-wider font-semibold mt-4">
+      Contacts
+    </div>
+    {filteredContacts.map((contact) => {
+      const chatId = buildChatId(userid, contact.id);
+      const isOnline = onlineUsers.includes(contact.id);
+      return (
+        <div
+          key={contact.id}
+          className={`px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between transition-all ${
+            activeChat.chatId === chatId
+              ? "bg-gray-200 shadow"
+              : "hover:bg-gray-150"
+          }`}
+          onClick={() => handleContactClick(contact)}
+        >
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="relative">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow ${
+                  isOnline ? "bg-green-400" : "bg-gray-400"
+                }`}
+              >
+                {getInitials(contact.name)}
+              </div>
+              {isOnline && (
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+              )}
+            </div>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="truncate font-medium text-gray-800">
+                {contact.name}
+              </span>
+              <span className="text-xs text-gray-500 truncate">
+                {contact.position || ""}
+              </span>
+            </div>
+          </div>
+          {unread[chatId] > 0 && (
+            <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-semibold">
+              {unread[chatId]}
+            </span>
+          )}
+        </div>
+      );
+    })}
+  </div>
+</div>
+
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col bg-background">
@@ -508,9 +510,7 @@ export default function Chat() {
                   <h1 className="text-lg font-semibold text-foreground">
                     {activeChat.name}
                   </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {onlineUsers.includes(activeChat.id) ? "Online" : "Offline"}
-                  </p>
+                  
                 </div>
               </>
             ) : (
