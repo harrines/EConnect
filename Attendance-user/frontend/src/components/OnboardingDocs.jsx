@@ -37,7 +37,7 @@ export default function EmployeeDashboard() {
   
 
 
-  const pageSize = 5;
+  const pageSize = 4;
 
   /** Fetch assigned documents */
   const fetchAssignedDocs = useCallback(async () => {
