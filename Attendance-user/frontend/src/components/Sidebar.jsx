@@ -294,34 +294,20 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
         ) 
         }
         
-       {loggedIn && !isAdmin && (
+        {loggedIn && !isAdmin  && (
   <Link to="my-documents" className="sidebar-item">
-    <div className="flex items-center p-4 hover:bg-blue-100 transition-colors rounded-lg">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        className="w-6 h-6 mr-3 text-blue-600"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
+        viewBox="0 0 24 24" stroke="currentColor" 
+        className="w-6 h-6 mr-3 text-white">
+        <path strokeLinecap="round" strokeLinejoin="round" 
           strokeWidth="2"
-          d="M7 3h8l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M15 3v4h4"
-        />
+          d="M12 6v6m0 0l3 3m-3-3l-3-3" />
       </svg>
-      <span className="font-medium text-gray-800">My Documents</span>
+      <span className="font-medium">My Documents</span>
     </div>
   </Link>
 )}
-
 
 {/* HR/Admin - Review Documents */}
 {loggedIn && (isAdmin) && (
@@ -331,7 +317,9 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
         viewBox="0 0 24 24" stroke="currentColor" 
         className="w-6 h-6 mr-3 text-white">
         <path strokeLinecap="round" strokeLinejoin="round" 
-          strokeWidth="2" d="M5 13l4 4L19 7" />
+          strokeWidth="2"
+          d="M7 3h8l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm8 1.5V9h4.5"
+        />
       </svg>
       <span className="font-medium">Docs Review</span>
     </div>
