@@ -3698,7 +3698,7 @@ active_users: dict[str, WebSocket] = {}
 
 @app.websocket("/ws/{userid}")
 async def websocket_endpoint(websocket: WebSocket, userid: str):
-    # connect socket
+    # Connect socket
     await direct_chat_manager.connect(userid, websocket)
     try:
         while True:
@@ -3709,19 +3709,27 @@ async def websocket_endpoint(websocket: WebSocket, userid: str):
 
             msg_type = msg.get("type", "chat")
 
-           if msg_type == "thread":
-    temp_id = msg.get("tempId")
-    msg["id"] = msg.get("id") or str(ObjectId())
-    threads_collection.insert_one(msg.copy())
-    msg["_tempId"] = temp_id
-    msg.pop("_id", None)
+            if msg_type == "thread":
+                temp_id = msg.get("tempId")
+                msg["id"] = msg.get("id") or str(ObjectId())
+                threads_collection.insert_one(msg.copy())
+                msg["_tempId"] = temp_id
+                msg.pop("_id", None)
 
-    if msg.get("chatId") and msg.get("chatId").startswith("group_"):
-        # Send to group channel
-        await group_chat_manager.send_message(msg["chatId"], msg)
-    else:
-        # Direct chat
-        await direct_chat_manager.send_message(msg["to_user"], msg)
+                if msg.get("chatId") and msg.get("chatId").startswith("group_"):
+                    # Send to group channel
+                    await group_chat_manager.send_message(msg["chatId"], msg)
+                else:
+                    # Direct chat
+                    await direct_chat_manager.send_message(msg["to_user"], msg)
+
+            else:  # normal chat
+                msg["chatId"] = msg.get("chatId") or "_".join(sorted([userid, msg["to_user"]]))
+                chats_collection.insert_one(msg.copy())
+                msg.pop("_id", None)
+
+                # send to both sender and recipient
+                await direct_chat_manager.send_message(msg["to_user"], msg)
 
     except WebSocketDisconnect:
         direct_chat_manager.disconnect(userid, websocket)
