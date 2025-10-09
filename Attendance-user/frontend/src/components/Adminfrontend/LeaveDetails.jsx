@@ -96,10 +96,8 @@ const LeaveDetails = () => {
       }
 
       const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch leave data');
-      }
-      const data = await response.json();
+      const data = response.data;
+  
       setLeaveData(data);
       
       // Apply date range filter if set
