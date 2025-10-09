@@ -448,47 +448,21 @@ export default function Chat() {
             {activeMessages.map((m) => {
               const isSender = m.from_user === userid;
               const msgId = m.id || m.tempId;
-            
+              
               const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
               return (
-                <div key={msgId} className={clsx("flex mb-4 animate-fade-in", isSender ? "justify-end" : "justify-start")}>
-                  <div className={clsx("max-w-md px-4 py-3 rounded-2xl shadow-soft transition-all hover:shadow-medium", isSender  ? "bg-gradient-primary text-primary-foreground rounded-br-md"
-            : "bg-card text-card-foreground rounded-bl-md border border-border")}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-semibold opacity-90">{isSender ? "You" : m.from_user}</span>
-                      <span className="text-xs opacity-70">{formatTime(m.timestamp)}</span>
+                <div key={msgId} className={clsx("flex transition-transform duration-300 transform", isSender ? "justify-end" : "justify-start")}>
+                  <div className={clsx("max-w-xl p-4 rounded-2xl break-words shadow-lg relative transition-all duration-300", isSender ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none hover:shadow-xl" : "bg-white text-gray-800 rounded-bl-none hover:shadow-md")}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-sm">{isSender ? "You" : m.from_user}</span>
+                      <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
                     </div>
-                    <div className="text-sm leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: textHtml }} />
-                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/20">
-  <button
-    onClick={() => setSelectedThread(m)}
-    className="flex items-center gap-1 h-7 px-2 text-xs text-gray-500 hover:bg-gray-100 rounded transition"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-3 h-3"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M8 10h8m-8 4h5m-9 4h14a2 2 0 002-2V6a2 2 0 00-2-2H4a2 2 0 00-2 2v12l2-2z"
-      />
-    </svg>
-    Reply
-  </button>
-
-  { (messages[`thread:${msgId}`] || []).length > 0 && (
-    <span className="text-xs text-gray-400 ml-auto">
-      {(messages[`thread:${msgId}`] || []).length}{" "}
-      {(messages[`thread:${msgId}`] || []).length === 1 ? "reply" : "replies"}
-    </span>
-  )}
-</div>
-
+                    <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: textHtml }} />
+                    <div className="flex items-center gap-3 mt-3">
+                      <button className="text-xs text-white-500 hover:text-blue-600 transition" onClick={() => setSelectedThread(m)}>Reply</button>
+                    
+                      <div className="text-xs text-white-400 ml-auto">{(messages[`thread:${msgId}`] || []).length ? `${(messages[`thread:${msgId}`] || []).length} replies` : ""}</div>
+                    </div>
                   </div>
                 </div>
               );
