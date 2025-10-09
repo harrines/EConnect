@@ -13,7 +13,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Picker from "emoji-picker-react";
 
-const ipadr = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const ipadr = import.meta.env.VITE_API_BASE_URL ;
 
 const formatTime = (isoString, withDate = false) => {
   if (!isoString) return "";
@@ -368,7 +368,7 @@ export default function Chat() {
           </div>
           {isManager?.toLowerCase() === "manager" && (
             <button
-              className="p-2 rounded-lg hover:bg-white/10 transition-all text-primary-foreground"
+              className="p-2 rounded-lg hover:bg-blue/10 transition-all text-primary-foreground"
               onClick={() => setShowGroupModal(true)}
               title="Create Group"
             >
@@ -438,54 +438,53 @@ export default function Chat() {
               ))}
             </>
           )}
-
-          {/* Contacts */}
-          <div className="px-3 py-2 text-xs text-primary-foreground/60 uppercase tracking-wider font-semibold mt-4">
-            Contacts
+<div className="px-3 py-2 text-xs text-primary-foreground/60 uppercase tracking-wider font-semibold mt-4">
+  Contacts
+</div>
+{filteredContacts.map((contact) => {
+  const chatId = buildChatId(userid, contact.id);
+  const isOnline = onlineUsers.includes(contact.id);
+  return (
+    <div
+      key={contact.id}
+      className={`px-3 py-3 rounded-lg cursor-pointer flex items-center justify-between transition-all 
+        ${
+          activeChat.chatId === chatId
+            ? "bg-blue-100 shadow-md"  // Light blue when active
+            : "hover:bg-blue-50"       // Light hover effect
+        }`}
+      onClick={() => handleContactClick(contact)}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="relative flex-shrink-0">
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-lg 
+              ${isOnline ? "bg-green-400" : "bg-gray-300"}  // Softer colors for status`}
+          >
+            {getInitials(contact.name)}
           </div>
-          {filteredContacts.map((contact) => {
-            const chatId = buildChatId(userid, contact.id);
-            const isOnline = onlineUsers.includes(contact.id);
-            return (
-              <div
-                key={contact.id}
-                className={`px-3 py-3 rounded-lg cursor-pointer flex items-center justify-between transition-all ${
-                  activeChat.chatId === chatId
-                    ? "bg-white/20 shadow-md"
-                    : "hover:bg-white/10"
-                }`}
-                onClick={() => handleContactClick(contact)}
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="relative flex-shrink-0">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-lg ${
-                        isOnline ? "bg-success" : "bg-muted"
-                      }`}
-                    >
-                      {getInitials(contact.name)}
-                    </div>
-                    {isOnline && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-primary"></div>
-                    )}
-                  </div>
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-primary-foreground font-medium truncate">
-                      {contact.name}
-                    </span>
-                    <span className="text-xs text-primary-foreground/60 truncate">
-                      {contact.position || ""}
-                    </span>
-                  </div>
-                </div>
-                {unread[chatId] > 0 && (
-                  <span className="bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full font-semibold shadow-md">
-                    {unread[chatId]}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+          {isOnline && (
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+          )}
+        </div>
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="text-primary-foreground font-medium truncate">
+            {contact.name}
+          </span>
+          <span className="text-xs text-primary-foreground/60 truncate">
+            {contact.position || ""}
+          </span>
+        </div>
+      </div>
+      {unread[chatId] > 0 && (
+        <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-semibold shadow-md">
+          {unread[chatId]}
+        </span>
+      )}
+    </div>
+  );
+})}
+
         </div>
       </div>
 
@@ -515,84 +514,86 @@ export default function Chat() {
         </div>
 
         {/* Messages & Thread */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Messages */}
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-gradient-to-b from-background to-muted/5">
-              {activeMessages.map((m) => {
-                const isSender = m.from_user === userid;
-                const msgId = m.id || m.tempId;
-                const threadCount = getThreadCount(msgId);
-                const textHtml = (m.text || "").replace(
-                  /@(\w+)/g,
-                  '<span class="text-accent font-semibold">@$1</span>'
-                );
+<div className="flex flex-1 overflow-hidden">
+  {/* Messages */}
+  <div className="flex-1 flex flex-col">
+    <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-gradient-to-b from-white to-gray-50">
+      {activeMessages.map((m) => {
+        const isSender = m.from_user === userid;
+        const msgId = m.id || m.tempId;
+        const threadCount = getThreadCount(msgId);
+        const textHtml = (m.text || "").replace(
+          /@(\w+)/g,
+          '<span class="text-accent font-semibold">@$1</span>'
+        );
 
-                return (
+        return (
+          <div
+            key={msgId}
+            className={`flex animate-in fade-in slide-in-from-bottom-2 duration-300 ${
+              isSender ? "justify-end" : "justify-start"
+            }`}
+          >
+            <div
+              className={`max-w-xl p-4 rounded-2xl break-words shadow-md relative transition-all duration-300 hover:shadow-lg ${
+                isSender
+                  ? "bg-gradient-to-br from-blue-100 to-blue-200 text-primary-foreground rounded-br-sm"
+                  : "bg-gray-100 text-gray-800 rounded-bl-sm border border-gray-200"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span
+                  className={`font-semibold text-sm ${
+                    isSender ? "text-primary-foreground/90" : "text-gray-700"
+                  }`}
+                >
+                  {isSender ? "You" : m.from_user}
+                </span>
+                <span
+                  className={`text-xs ${
+                    isSender ? "text-primary-foreground/70" : "text-gray-400"
+                  }`}
+                >
+                  {formatTime(m.timestamp)}
+                </span>
+              </div>
+
+              <div
+                className="text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: textHtml }}
+              />
+
+              <div className="flex items-center gap-3 mt-3 pt-2 border-t border-current/10">
+                <button
+                  onClick={() => setSelectedThread(m)}
+                  className={`text-xs font-medium hover:underline transition-all flex items-center gap-1 ${
+                    isSender
+                      ? "text-primary-foreground/80 hover:text-primary-foreground"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <FiMessageSquare size={12} />
+                  Reply
+                </button>
+
+                {threadCount > 0 && (
                   <div
-                    key={msgId}
-                    className={`flex animate-in fade-in slide-in-from-bottom-2 duration-300 ${
-                      isSender ? "justify-end" : "justify-start"
+                    className={`text-xs ml-auto ${
+                      isSender ? "text-primary-foreground/70" : "text-gray-400"
                     }`}
                   >
-                    <div
-                      className={`max-w-xl p-4 rounded-2xl break-words shadow-md relative transition-all duration-300 hover:shadow-lg ${
-                        isSender
-                          ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-sm"
-                          : "bg-card text-card-foreground rounded-bl-sm border border-border"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span
-                          className={`font-semibold text-sm ${
-                            isSender ? "text-primary-foreground/90" : "text-foreground"
-                          }`}
-                        >
-                          {isSender ? "You" : m.from_user}
-                        </span>
-                        <span
-                          className={`text-xs ${
-                            isSender ? "text-primary-foreground/70" : "text-muted-foreground"
-                          }`}
-                        >
-                          {formatTime(m.timestamp)}
-                        </span>
-                      </div>
-
-                      <div
-                        className="text-sm leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: textHtml }}
-                      />
-
-                      <div className="flex items-center gap-3 mt-3 pt-2 border-t border-current/10">
-                        <button
-                          onClick={() => setSelectedThread(m)}
-                          className={`text-xs font-medium hover:underline transition-all flex items-center gap-1 ${
-                            isSender
-                              ? "text-primary-foreground/80 hover:text-primary-foreground"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          <FiMessageSquare size={12} />
-                          Reply
-                        </button>
-
-                        {threadCount > 0 && (
-                          <div
-                            className={`text-xs ml-auto ${
-                              isSender ? "text-primary-foreground/70" : "text-muted-foreground"
-                            }`}
-                          >
-                            {threadCount} {threadCount === 1 ? "reply" : "replies"}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    {threadCount} {threadCount === 1 ? "reply" : "replies"}
                   </div>
-                );
-              })}
-              <div ref={chatEndRef}></div>
+                )}
+              </div>
             </div>
+          </div>
+        );
+      })}
+      <div ref={chatEndRef}></div>
+    </div>
+  
+
 
             {/* Input */}
             {activeChat.id && (
@@ -640,188 +641,194 @@ export default function Chat() {
               </div>
             )}
           </div>
+{/* Thread Panel */}
+{selectedThread && (
+  <div className="w-96 bg-gradient-to-b from-white to-gray-50 border-l border-gray-200 flex flex-col shadow-lg">
+    {/* Thread Header */}
+    <div className="p-4 border-b border-gray-200 flex items-center gap-3 bg-gradient-to-r from-blue-50 to-purple-50">
+      <button
+        className="p-2 rounded-lg hover:bg-gray-100 transition-all"
+        onClick={() => setSelectedThread(null)}
+      >
+        <FiChevronLeft size={20} />
+      </button>
+      <div className="flex-1">
+        <div className="font-semibold text-gray-800">Thread</div>
+        <div className="text-xs text-gray-500">
+          {selectedThread.from_user} • {formatTime(selectedThread.timestamp, true)}
+        </div>
+      </div>
+    </div>
 
-          {/* Thread Panel */}
-          {selectedThread && (
-            <div className="w-96 bg-card border-l border-border flex flex-col shadow-lg">
-              {/* Thread Header */}
-              <div className="p-4 border-b border-border flex items-center gap-3 bg-gradient-to-r from-primary/5 to-accent/5">
-                <button
-                  className="p-2 rounded-lg hover:bg-muted transition-all"
-                  onClick={() => setSelectedThread(null)}
-                >
-                  <FiChevronLeft size={20} />
-                </button>
-                <div className="flex-1">
-                  <div className="font-semibold text-foreground">Thread</div>
-                  <div className="text-xs text-muted-foreground">
-                    {selectedThread.from_user} • {formatTime(selectedThread.timestamp, true)}
-                  </div>
-                </div>
-              </div>
+    {/* Thread Messages */}
+    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* Original Message */}
+      <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 shadow-sm">
+        <div className="text-xs text-blue-400 mb-2">
+          {selectedThread.from_user} • {formatTime(selectedThread.timestamp, true)}
+        </div>
+        <div className="text-sm text-gray-800">{selectedThread.text}</div>
+        <div className="text-xs text-blue-400 mt-2 font-medium">Original message</div>
+      </div>
 
-              {/* Thread Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {/* Original Message */}
-                <div className="p-4 bg-muted/30 rounded-2xl border border-border shadow-sm">
-                  <div className="text-xs text-muted-foreground mb-2">
-                    {selectedThread.from_user} • {formatTime(selectedThread.timestamp, true)}
-                  </div>
-                  <div className="text-sm text-foreground">{selectedThread.text}</div>
-                  <div className="text-xs text-muted-foreground mt-2 font-medium">
-                    Original message
-                  </div>
-                </div>
+      {/* Thread Replies */}
+      {(messages[`thread:${selectedThread.id}`] || []).map((t) => (
+        <div
+          key={t.id || t.tempId}
+          className="p-3 border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="text-xs text-gray-400 mb-2">
+            {t.from_user} • {formatTime(t.timestamp, true)}
+          </div>
+          <div className="text-sm text-gray-800">{t.text}</div>
+        </div>
+      ))}
+    </div>
 
-                {/* Thread Replies */}
-                {(messages[`thread:${selectedThread.id}`] || []).map((t) => (
-                  <div
-                    key={t.id || t.tempId}
-                    className="p-3 border border-border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <div className="text-xs text-muted-foreground mb-2">
-                      {t.from_user} • {formatTime(t.timestamp, true)}
-                    </div>
-                    <div className="text-sm text-foreground">{t.text}</div>
-                  </div>
-                ))}
-              </div>
+    {/* Thread Input */}
+    <div className="border-t border-gray-200 bg-white p-4">
+      <div className="flex items-center gap-2 relative">
+        <button
+          className="p-2 rounded-full hover:bg-gray-100 transition-all text-gray-400 hover:text-gray-700"
+          onClick={() => setShowThreadEmojiPicker((prev) => !prev)}
+        >
+          <FiSmile size={18} />
+        </button>
+        {showThreadEmojiPicker && (
+          <div className="absolute bottom-16 left-0 z-50 shadow-xl rounded-lg overflow-hidden">
+            <Picker
+              onEmojiClick={(e) => setThreadInput((prev) => prev + e.emoji)}
+              searchPlaceholder="Search emojis..."
+            />
+          </div>
+        )}
+        <input
+          value={threadInput}
+          onChange={(e) => setThreadInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendThreadMessage();
+            }
+          }}
+          placeholder="Reply in thread..."
+          className="flex-1 px-3 py-2 rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm placeholder-gray-400"
+        />
+        <button
+          onClick={sendThreadMessage}
+          disabled={!threadInput.trim() || !isConnected}
+          className={`p-2.5 rounded-full transition-all ${
+            threadInput.trim() && isConnected
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          <FiSend size={16} />
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
-              {/* Thread Input */}
-              <div className="border-t border-border bg-card p-4">
-                <div className="flex items-center gap-2 relative">
-                  <button
-                    className="p-2 rounded-full hover:bg-muted transition-all text-muted-foreground hover:text-foreground"
-                    onClick={() => setShowThreadEmojiPicker((prev) => !prev)}
-                  >
-                    <FiSmile size={18} />
-                  </button>
-                  {showThreadEmojiPicker && (
-                    <div className="absolute bottom-16 left-0 z-50 shadow-xl rounded-lg overflow-hidden">
-                      <Picker
-                        onEmojiClick={(e) => setThreadInput((prev) => prev + e.emoji)}
-                        searchPlaceholder="Search emojis..."
-                      />
-                    </div>
-                  )}
-                  <input
-                    value={threadInput}
-                    onChange={(e) => setThreadInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        sendThreadMessage();
-                      }
-                    }}
-                    placeholder="Reply in thread..."
-                    className="flex-1 px-3 py-2 rounded-full border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm placeholder-muted-foreground"
-                  />
-                  <button
-                    onClick={sendThreadMessage}
-                    disabled={!threadInput.trim() || !isConnected}
-                    className={`p-2.5 rounded-full transition-all ${
-                      threadInput.trim() && isConnected
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-muted text-muted-foreground cursor-not-allowed"
-                    }`}
-                  >
-                    <FiSend size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Group Modal */}
       {showGroupModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-card p-6 rounded-2xl w-96 shadow-2xl border border-border">
-            <h2 className="text-xl font-bold mb-4 text-foreground">Create Group</h2>
-            <input
-              type="text"
-              placeholder="Group Name"
-              className="w-full border border-border bg-background rounded-lg px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder-muted-foreground"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-            />
-            <div className="max-h-64 overflow-y-auto border border-border rounded-lg p-3 mb-4 space-y-2 bg-muted/20">
-              {validGroupUsers.map((user) => (
-                <label key={user.id} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <input
-                    type="checkbox"
-                    value={user.id}
-                    checked={selectedUsers.includes(user.id)}
-                    onChange={(e) => {
-                      const uid = e.target.value;
-                      if (!uid) return;
-                      setSelectedUsers((prev) =>
-                        prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
-                      );
-                    }}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span className="text-foreground">
-                    {user.name}{" "}
-                    {user.id === userid && (
-                      <span className="text-muted-foreground text-xs">(You)</span>
-                    )}
-                  </span>
-                </label>
-              ))}
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
-                onClick={() => {
-                  setShowGroupModal(false);
-                  setGroupName("");
-                  setSelectedUsers([]);
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-md"
-                onClick={async () => {
-                  const validMembers = Array.from(
-                    new Set([...selectedUsers.filter((id) => id), userid])
-                  );
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
+    <div className="bg-gradient-to-b from-white to-gray-50 p-6 rounded-2xl w-96 shadow-2xl border border-gray-200">
+      <h2 className="text-xl font-bold mb-4 text-gray-800">Create Group</h2>
 
-                  if (!groupName.trim() || validMembers.length === 0) {
-                    toast.error("Enter group name and select valid users");
-                    return;
-                  }
-                  try {
-                    const res = await fetch(`${ipadr}/create_group`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ name: groupName, members: validMembers }),
-                    });
-                    const data = await res.json();
-                    if (data.status === "success") {
-                      setGroups((prev) => [
-                        ...prev,
-                        { _id: data.group_id, name: groupName, members: validMembers },
-                      ]);
-                      toast.success("Group created!");
-                      setShowGroupModal(false);
-                      setGroupName("");
-                      setSelectedUsers([]);
-                    } else toast.error("Failed to create group");
-                  } catch (err) {
-                    console.error(err);
-                    toast.error("Error creating group");
-                  }
-                }}
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <input
+        type="text"
+        placeholder="Group Name"
+        className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-800 placeholder-gray-400"
+        value={groupName}
+        onChange={(e) => setGroupName(e.target.value)}
+      />
+
+      <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3 mb-4 space-y-2 bg-blue-50/30">
+        {validGroupUsers.map((user) => (
+          <label
+            key={user.id}
+            className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            <input
+              type="checkbox"
+              value={user.id}
+              checked={selectedUsers.includes(user.id)}
+              onChange={(e) => {
+                const uid = e.target.value;
+                if (!uid) return;
+                setSelectedUsers((prev) =>
+                  prev.includes(uid)
+                    ? prev.filter((id) => id !== uid)
+                    : [...prev, uid]
+                );
+              }}
+              className="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-blue-200"
+            />
+            <span className="text-gray-800">
+              {user.name}{" "}
+              {user.id === userid && (
+                <span className="text-gray-500 text-xs">(You)</span>
+              )}
+            </span>
+          </label>
+        ))}
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <button
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+          onClick={() => {
+            setShowGroupModal(false);
+            setGroupName("");
+            setSelectedUsers([]);
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md"
+          onClick={async () => {
+            const validMembers = Array.from(
+              new Set([...selectedUsers.filter((id) => id), userid])
+            );
+
+            if (!groupName.trim() || validMembers.length === 0) {
+              toast.error("Enter group name and select valid users");
+              return;
+            }
+            try {
+              const res = await fetch(`${ipadr}/create_group`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: groupName, members: validMembers }),
+              });
+              const data = await res.json();
+              if (data.status === "success") {
+                setGroups((prev) => [
+                  ...prev,
+                  { _id: data.group_id, name: groupName, members: validMembers },
+                ]);
+                toast.success("Group created!");
+                setShowGroupModal(false);
+                setGroupName("");
+                setSelectedUsers([]);
+              } else toast.error("Failed to create group");
+            } catch (err) {
+              console.error(err);
+              toast.error("Error creating group");
+            }
+          }}
+        >
+          Create
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       <ToastContainer position="top-right" autoClose={4000} />
     </div>
