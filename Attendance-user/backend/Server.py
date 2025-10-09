@@ -3762,7 +3762,7 @@ async def history(chatId: str):
             "file": doc.get("file"),
             "timestamp": doc["timestamp"].isoformat() if isinstance(doc.get("timestamp"), datetime) else doc.get("timestamp"),
             "chatId": doc.get("chatId"),
-            "reply_count": reply_count,   # ✅ so frontend can show "💬 3 replies"
+            "reply_count": reply_count,   
         })
     return messages
 
@@ -3770,17 +3770,25 @@ async def history(chatId: str):
 @app.post("/thread")
 async def save_thread(payload: dict = Body(...)):
     payload["id"] = payload.get("id") or str(ObjectId())
-    payload["timestamp"] = datetime.utcnow().isoformat() +"Z"
+    payload["timestamp"] = datetime.utcnow().isoformat() + "Z"
+
+    # Insert a copy into MongoDB
     threads_collection.insert_one(payload.copy())
+
+    # Return the saved payload so frontend can replace temp message
     return {"status": "success", "thread": payload}
+
 
 @app.get("/thread/{rootId}")
 async def get_threads(rootId: str):
     threads = list(threads_collection.find({"rootId": rootId}).sort("timestamp", 1))
+    
+    # Format the data for frontend
     result = []
     for t in threads:
         result.append({
             "id": str(t.get("id") or t.get("_id")),
+            "tempId": t.get("_tempId"),       # optional: helps replace temp messages
             "from_user": t.get("from_user"),
             "to_user": t.get("to_user"),
             "text": t.get("text"),
