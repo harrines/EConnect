@@ -19,7 +19,7 @@ export const useNotificationWebSocket = () => {
     // Remove protocol and trailing slash for WebSocket URL construction
     const wsUrl = ipadr.replace(/^https?:\/\//, '').replace(/\/$/, '');
     // Use secure WebSocket for HTTPS, regular WebSocket for HTTP
-    const protocol = apiBaseUrl.startsWith('https') ? 'wss' : 'ws';
+    const protocol = ipadr.startsWith('https') ? 'wss' : 'ws';
     const fullWsUrl = `${protocol}://${wsUrl}/ws/notifications/${userid}`;
     console.log('WebSocket URL constructed:', fullWsUrl);
     return fullWsUrl;
