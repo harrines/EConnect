@@ -454,12 +454,10 @@ export default function Chat() {
                 <div key={msgId} className={clsx("flex transition-transform duration-300 transform", isSender ? "justify-end" : "justify-start")}>
                   <div
   className={clsx(
-    "max-w-xl p-4 rounded-2xl break-words relative transition-all duration-300 shadow-sm",
+    "max-w-xl px-3 py-2 rounded-2xl break-words relative transition-all duration-300 shadow-sm",
     isSender
-      ? // ✨ Your messages (right side)
-        "bg-indigo-100 text-gray-800 rounded-br-none hover:shadow-md border border-indigo-200"
-      : // ✨ Received messages (left side)
-        "bg-white text-gray-700 rounded-bl-none hover:shadow-md border border-gray-200"
+      ? "bg-indigo-50 text-gray-800 rounded-br-none border border-indigo-100 hover:shadow-md"
+      : "bg-white text-gray-700 rounded-bl-none border border-gray-200 hover:shadow-sm"
   )}
 >
 
