@@ -236,6 +236,7 @@ const router = createBrowserRouter([
 { path: "attendance", element: <Attendance />},
 { path: "individualStats", element: <AttendanceStats />},
 { path: ":userid", element: <TaskAssign /> },
+
     ],
   },
   {

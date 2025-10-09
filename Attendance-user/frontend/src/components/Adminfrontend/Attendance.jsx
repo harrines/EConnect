@@ -58,20 +58,16 @@ const Attendance = () => {
           throw new Error('Unknown user role');
       }
 
-      const response = await axios.get(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch attendance data');
-      }
-      const data = await response.json();
-      setAttendanceData(data);
+    const response = await axios.get(url);
+const data = response.data;  // Correct way with axios
+setAttendanceData(data);
+
 
       // If manager, also fetch team data
       if (userRole === 'manager') {
         const teamResponse = await axios.get(`${ipadr}/attendance/team/${userName}?year=${year}`);
-        if (teamResponse.ok) {
-          const teamData = await teamResponse.json();
-          setAttendanceData(prev => ({ ...prev, teamData }));
-        }
+         const teamData = teamResponse.data;  // axios returns data directly
+  setAttendanceData(prev => ({ ...prev, teamData }));
       }
       
     } catch (err) {

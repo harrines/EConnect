@@ -26,7 +26,7 @@ const LeaveHistory = () => {
       key: "selection",
     },
   ]);
-  const ipadr = import.meta.env.VITE_API_BASE_URL 
+  const ipadr = import.meta.env.VITE_API_BASE_URL ;
 
   useEffect(() => {
     fetchData();
