@@ -431,7 +431,7 @@ export default function Chat() {
             </div>
             {isManager?.toLowerCase() === "manager" && (
               <button
-  className="p-1.5 rounded hover:bg-red-100 text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-all"
+  className="p-2 rounded-full hover:bg-gray-200 transition-all"
   onClick={(e) => {
     e.stopPropagation();
     handleRemoveGroup(group);
