@@ -1,232 +1,632 @@
-import React, { useState, useEffect, useRef } from "react";
+// Chat.jsx
+// Chat.jsx
+import { useState, useEffect, useRef } from "react";
 import {
   FiSend,
   FiPlus,
   FiSearch,
   FiSmile,
   FiChevronLeft,
+  FiDelete,
 } from "react-icons/fi";
-import { MessageSquare } from "lucide-react";
-import { toast } from "react-toastify";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { GroupModal } from "./GroupModal";
-import { MessageBubble } from "./MessageBubble";
 import { LS } from "../Utils/Resuse";
+import clsx from "clsx";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Picker from "emoji-picker-react";
 
-const Chat = () => {
-  const [messages, setMessages] = useState([]);
-  const [selectedChat, setSelectedChat] = useState(null);
-  const [inputMessage, setInputMessage] = useState("");
+const ipadr = import.meta.env.VITE_API_BASE_URL;
+
+const formatTime = (isoString, withDate = false) => {
+  if (!isoString) return "";
+  let date = new Date(isoString);
+  if (isNaN(date.getTime())) return isoString;
+  return withDate
+    ? date.toLocaleString([], { dateStyle: "short", timeStyle: "short" })
+    : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+export default function Chat() {
+  const [messages, setMessages] = useState({});
+  const [newMessage, setNewMessage] = useState("");
+  const [activeChat, setActiveChat] = useState({ id: "", name: "", chatId: "", type: "user" });
+  const [contacts, setContacts] = useState([]);
+  const [unread, setUnread] = useState({});
+  const [isConnected, setIsConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [selectedThread, setSelectedThread] = useState(null);
+  const [threadInput, setThreadInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [openGroupModal, setOpenGroupModal] = useState(false);
-  const [groupName, setGroupName] = useState("");
-  const [users, setUsers] = useState([]);
+  const [reactionsMap, setReactionsMap] = useState({});
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [groupUsers, setGroupUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [replyThread, setReplyThread] = useState(null);
-  const [filteredChats, setFilteredChats] = useState([]);
-  const messagesEndRef = useRef(null);
-  const currentUser = LS.get("user");
+  const [groupName, setGroupName] = useState("");
+  const [groups, setGroups] = useState([]);
 
-  // Fetch users (for group creation)
+  const chatEndRef = useRef(null);
+  const textareaRef = useRef(null);
+  const ws = useRef(null);
+
+  const loggedIn = LS.get("isloggedin");
+  const isManager = LS.get("position"); 
+  const isDepart = LS.get("department");
+  const userid = LS.get("userid");
+
+  const buildChatId = (a, b) => [a, b].sort().join("_");
+
+  // Fetch contacts
   useEffect(() => {
-    async function fetchUsers() {
-      const res = await fetch("/api/users");
-      const data = await res.json();
-      setUsers(data);
-    }
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch(`${ipadr}/get_all_users`);
+        const data = await res.json();
+        const filtered = data.filter((user) => {
+          if (user.id === userid) return false;
+          if (isManager?.toLowerCase() === "manager") return true;
+          if (isDepart?.toLowerCase() === "hr") return user.position?.toLowerCase() === "manager";
+          return user.department?.toLowerCase() !== "hr";
+        });
+        setContacts(filtered);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      }
+    };
     fetchUsers();
-  }, []);
+  }, [userid, isManager, isDepart]);
 
-  // Scroll to bottom when messages update
+  // Fetch groups
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const fetchGroups = async () => {
+      try {
+        const res = await fetch(`${ipadr}/get_user_groups/${userid}`);
+        const data = await res.json();
+        setGroups(data);
+      } catch (err) {
+        console.error("Failed to fetch groups:", err);
+      }
+    };
+    fetchGroups();
+  }, [userid]);
 
-  // Handle message send
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return;
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, activeChat, selectedThread]);
 
-    const newMessage = {
-      id: Date.now().toString(),
-      from_user: currentUser.name,
-      text: inputMessage,
-      timestamp: new Date().toISOString(),
+  // WebSocket connection
+  const openWebSocket = (chatType = "user", chatId = "") => {
+    ws.current?.close();
+
+    const wsProtocol = ipadr.startsWith("https") ? "wss" : "ws"; 
+    const host = ipadr.replace(/^https?:\/\//, '');
+    const url =
+      chatType === "group"
+        ? `${wsProtocol}://${host}/ws/group/${chatId}`
+        : `${wsProtocol}://${host}/ws/${userid}`;
+    
+    ws.current = new WebSocket(url);
+
+    ws.current.onopen = () => setIsConnected(true);
+    ws.current.onclose = () => setIsConnected(false);
+    ws.current.onerror = (err) => { console.error("WS error", err); setIsConnected(false); };
+
+    ws.current.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+
+        // --- PRESENCE ---
+        if (payload.type === "presence" && Array.isArray(payload.users)) {
+          setOnlineUsers(payload.users);
+          return;
+        }
+
+        // --- THREAD MESSAGES ---
+        if (payload.type === "thread") {
+          const threadKey = `thread:${payload.rootId}`;
+          setMessages(prev => {
+            const arr = prev[threadKey] || [];
+            const exists = arr.some(m => m.tempId === payload.tempId || m.id === payload.id);
+            if (exists) return prev;
+            return { ...prev, [threadKey]: [...arr, payload] };
+          });
+          return; // thread messages are separate
+        }
+
+        // --- MAIN CHAT MESSAGES ---
+        const msgChatId =
+          payload.chatId ||
+          (payload.type === "user"
+            ? buildChatId(payload.from_user || payload.from, payload.to_user || payload.to)
+            : payload.chatId);
+
+        setMessages(prev => {
+          const chatMessages = prev[msgChatId] || [];
+          const filtered = chatMessages.filter(m => m.id !== payload.id && m.id !== payload.tempId);
+          return { ...prev, [msgChatId]: [...filtered, payload] };
+        });
+
+        if (msgChatId !== activeChat.chatId) {
+          setUnread(prev => ({ ...prev, [msgChatId]: (prev[msgChatId] || 0) + 1 }));
+          toast.info(
+            `New message from ${payload.from_user || payload.from}: ${payload.text ? payload.text.slice(0, 60) : "File"}`,
+            { position: "top-right", autoClose: 4000 }
+          );
+        }
+
+      } catch (err) {
+        console.error("Invalid WS payload:", event.data, err);
+      }
+    };
+  };
+
+  // Fetch thread messages
+  useEffect(() => {
+    if (!selectedThread) return;
+
+    fetch(`${ipadr}/thread/${selectedThread.id}`)
+      .then(res => res.json())
+      .then(data => setMessages(prev => ({ ...prev, [`thread:${selectedThread.id}`]: data })));
+  }, [selectedThread]);
+
+  // Contact click
+  const handleContactClick = async (contact) => {
+    try {
+      const res = await fetch(`${ipadr}/get_EmployeeId/${encodeURIComponent(contact.name)}`);
+      const data = await res.json();
+      const employeeId = data.Employee_ID || data.employee_id || data.EmployeeId;
+      if (!employeeId) return toast.error(`Failed to get employee ID for ${contact.name}`);
+
+      const chatId = buildChatId(userid, employeeId);
+      setActiveChat({ id: employeeId, name: contact.name, chatId, type: "user" });
+      setUnread(prev => ({ ...prev, [chatId]: 0 }));
+      openWebSocket("user");
+
+      const historyRes = await fetch(`${ipadr}/history/${chatId}`);
+      if (historyRes.ok) {
+        const history = await historyRes.json();
+        setMessages(prev => ({ ...prev, [chatId]: history }));
+      }
+    } catch (err) {
+      console.error("Failed to open chat:", err);
+      toast.error("Failed to open chat with this contact.");
+    }
+  };
+
+  // Group click
+  const handleGroupClick = async (group) => {
+    setActiveChat({ id: group._id, name: group.name, chatId: group._id, type: "group" });
+    setUnread(prev => ({ ...prev, [group._id]: 0 }));
+    openWebSocket("group", group._id);
+
+    try {
+      const res = await fetch(`${ipadr}/group_history/${group._id}`);
+      if (res.ok) {
+        const history = await res.json();
+        setMessages(prev => ({ ...prev, [group._id]: history }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRemoveGroup = async (group) => {
+    if (!confirm(`Are you sure you want to delete group "${group.name}"?`)) return;
+    try {
+      const res = await fetch(`${ipadr}/delete_group/${group._id}`, { method: "DELETE" });
+      if (res.ok) {
+        setGroups(prev => prev.filter(g => g._id !== group._id));
+        toast.success("Group deleted successfully");
+      } else toast.error("Failed to delete group");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error deleting group");
+    }
+  };
+
+  // Send main message
+  const sendMessage = async () => {
+    if (!newMessage.trim()) return;
+    const attemptSend = async () => {
+      if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+        setTimeout(attemptSend, 100);
+        return;
+      }
+
+      const tempId = `temp-${Date.now()}-${Math.random()}`;
+      const messageData = {
+        id: tempId,
+        tempId,
+        type: "message",
+        from_user: userid,
+        to_user: activeChat.type === "user" ? activeChat.id : undefined,
+        text: newMessage,
+        timestamp: new Date().toISOString(),
+        chatId: activeChat.chatId,
+      };
+
+      setMessages(prev => {
+        const chatMessages = prev[activeChat.chatId] || [];
+        return { ...prev, [activeChat.chatId]: [...chatMessages, messageData] };
+      });
+
+      ws.current.send(JSON.stringify(messageData));
+      setNewMessage("");
     };
 
-    setMessages([...messages, newMessage]);
-    setInputMessage("");
-    toast.success("Message sent!");
+    attemptSend();
   };
 
-  // Toggle user selection in group modal
-  const handleUserToggle = (userId) => {
-    setSelectedUsers((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    );
-  };
+  // Send thread message (works for both private and group)
+  const sendThreadMessage = async () => {
+    if (!selectedThread || !threadInput.trim()) return;
 
-  // Create new group
-  const handleCreateGroup = () => {
-    if (!groupName.trim() || selectedUsers.length === 0) {
-      toast.error("Enter group name and select members");
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+      toast.error("Socket not connected");
       return;
     }
 
-    const newGroup = {
-      id: Date.now().toString(),
-      name: groupName,
-      members: selectedUsers,
+    const tempId = `temp-${Date.now()}`;
+    const isGroup = activeChat.type === "group";
+
+    const payload = {
+      type: "thread",
+      id: tempId,
+      tempId,
+      from_user: userid,
+      to_user: isGroup
+        ? null
+        : (selectedThread.from_user === userid ? selectedThread.to_user : selectedThread.from_user),
+      text: threadInput.trim(),
+      rootId: selectedThread.id,
+      chatId: activeChat.chatId,
+      timestamp: new Date().toISOString(),
     };
 
-    // Simulate group creation
-    toast.success(`Group "${groupName}" created!`);
-    setGroupName("");
-    setSelectedUsers([]);
-    setOpenGroupModal(false);
+    // Optimistic UI update
+    setMessages(prev => {
+      const key = `thread:${payload.rootId}`;
+      const arr = prev[key] || [];
+      return { ...prev, [key]: [...arr, payload] };
+    });
+
+    ws.current.send(JSON.stringify(payload));
+
+    try {
+      const res = await fetch(`${ipadr}/thread`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (data.status === "success" && data.thread) {
+        setMessages(prev => {
+          const key = `thread:${payload.rootId}`;
+          const arr = prev[key].map(m => (m.tempId === tempId ? data.thread : m));
+          return { ...prev, [key]: arr };
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error saving thread message");
+    }
+
+    setThreadInput("");
   };
 
-  // Reply to a message
-  const handleReply = (message) => {
-    setReplyThread(message);
-  };
+  const getInitials = (name = "") => name.split(" ").map(n => n[0] || "").join("").toUpperCase();
+  const activeMessages = Array.isArray(messages[activeChat.chatId])
+    ? messages[activeChat.chatId].filter(m => m.text ? m.text.toLowerCase().includes(searchTerm.toLowerCase()) : true)
+    : [];
+
+  const filteredContacts = contacts.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const validGroupUsers = [{ id: userid, name: LS.get("username") || "You", position: "Manager" }, ...contacts];
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen w-full font-sans bg-gray-100 overflow-hidden">
       {/* Sidebar */}
-      <div className="w-1/4 border-r border-border p-4 flex flex-col">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Chats</h2>
-          <Button size="sm" onClick={() => setOpenGroupModal(true)}>
-            <FiPlus className="mr-1" /> New Group
-          </Button>
+      <div className="w-72 bg-gradient-to-b from-gray-50 to-white shadow-xl flex flex-col border-r border-gray-200">
+        <div className="p-4 font-bold text-xl flex justify-between items-center border-b border-gray-200">
+          <span>CHAT</span>
+          {LS.get("position") === "Manager" && (
+            <FiPlus
+              className="cursor-pointer text-gray-500 hover:text-blue-500 transition"
+              onClick={() => setShowGroupModal(true)}
+              title="Create Group"
+            />
+            
+          )}
         </div>
 
-        <div className="relative mb-3">
-          <FiSearch className="absolute left-2 top-2.5 text-muted-foreground" />
-          <Input
-            placeholder="Search chats..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
+        {/* Search */}
+        <div className="sticky top-0 z-10 bg-white p-3 shadow-sm">
+          <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-2 hover:bg-gray-200 focus-within:ring-2 focus-within:ring-blue-400">
+            <FiSearch className="text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search contacts/messages"
+              className="w-full bg-transparent outline-none text-gray-700 placeholder-gray-400"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
 
-        <ScrollArea className="flex-1">
-          <div className="space-y-2">
-            {filteredChats.length > 0 ? (
-              filteredChats.map((chat) => (
-                <div
-                  key={chat.id}
-                  onClick={() => setSelectedChat(chat)}
-                  className={`p-3 rounded-lg cursor-pointer transition ${
-                    selectedChat?.id === chat.id
-                      ? "bg-muted"
-                      : "hover:bg-muted/50"
-                  }`}
-                >
-                  <div className="font-medium">{chat.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    Last message preview...
+        {/* Groups & Contacts */}
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2 space-y-2">
+          {/* Groups */}
+          <div className="p-2 text-xs text-gray-500 uppercase tracking-wide">GROUPS</div>
+          {filteredGroups.map(group => (
+            <div
+              key={group._id}
+              className={clsx(
+                "px-4 py-3 rounded-xl cursor-pointer flex items-center justify-between transition transform hover:scale-105 hover:bg-blue-50 shadow-sm",
+                activeChat.chatId === group._id ? "bg-blue-100 font-semibold shadow-md" : ""
+              )}
+              onClick={() => handleGroupClick(group)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold bg-gray-400 text-white shadow-lg">
+                  {group.name.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex flex-col">
+                  <span>{group.name}</span>
+                  <span className="text-xs text-gray-400">{group.members?.filter(m => m !== userid).length} members</span>
+                </div>
+              </div>
+
+              {LS.get("position")?.toLowerCase() === "Manager" && (
+                <button className="text-black-600 hover:underline" onClick={(e) => { e.stopPropagation(); handleRemoveGroup(group); }}>
+                  <FiDelete />
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* Contacts */}
+          <div className="p-2 text-xs text-gray-500 uppercase tracking-wide mt-4">CONTACTS</div>
+          {filteredContacts.map((contact) => {
+            const chatId = buildChatId(userid, contact.id);
+            const isOnline = onlineUsers.includes(contact.id);
+            return (
+              <div
+                key={contact.id}
+                className={clsx(
+                  "px-4 py-3 rounded-xl cursor-pointer flex items-center justify-between transition transform hover:scale-105 hover:bg-blue-50 shadow-sm",
+                  activeChat.chatId === chatId ? "bg-blue-100 font-semibold shadow-md" : ""
+                )}
+                onClick={() => handleContactClick(contact)}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={clsx(
+                      "w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-lg transform transition-all duration-300",
+                      isOnline ? "bg-green-500 animate-pulse" : "bg-gray-400"
+                    )}
+                  >
+                    {getInitials(contact.name)}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-900">{contact.name}</span>
+                    </div>
+                    <div className="text-xs text-gray-400">{contact.position || ""}</div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-sm text-muted-foreground text-center mt-10">
-                No chats found
+                {unread[chatId] > 0 && (
+                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full shadow animate-bounce">{unread[chatId]}</span>
+                )}
               </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col bg-gray-100">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm rounded-t-2xl">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
+              {activeChat.id ? getInitials(activeChat.name) : "?"}
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900 tracking-tight">{activeChat.id ? activeChat.name : "Select a contact"}</h1>
+              <p className="text-sm text-gray-500">{activeChat.id ? activeChat.id : userid}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Messages & Thread */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Messages */}
+          <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {activeMessages.map((m) => {
+              const isSender = m.from_user === userid;
+              const msgId = m.id || m.tempId;
+            
+              const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
+              return (
+                <div key={msgId} className={clsx("flex mb-4 animate-fade-in", isSender ? "justify-end" : "justify-start")}>
+                  <div className={clsx("max-w-md px-4 py-3 rounded-2xl shadow-soft transition-all hover:shadow-medium", isSender  ? "bg-gradient-primary text-primary-foreground rounded-br-md"
+            : "bg-card text-card-foreground rounded-bl-md border border-border")}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold opacity-90">{isSender ? "You" : m.from_user}</span>
+                      <span className="text-xs opacity-70">{formatTime(m.timestamp)}</span>
+                    </div>
+                    <div className="text-sm leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: textHtml }} />
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/20">
+  <button
+    onClick={() => setSelectedThread(m)}
+    className="flex items-center gap-1 h-7 px-2 text-xs text-gray-500 hover:bg-gray-100 rounded transition"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-3 h-3"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 10h8m-8 4h5m-9 4h14a2 2 0 002-2V6a2 2 0 00-2-2H4a2 2 0 00-2 2v12l2-2z"
+      />
+    </svg>
+    Reply
+  </button>
+
+  { (messages[`thread:${msgId}`] || []).length > 0 && (
+    <span className="text-xs text-gray-400 ml-auto">
+      {(messages[`thread:${msgId}`] || []).length}{" "}
+      {(messages[`thread:${msgId}`] || []).length === 1 ? "reply" : "replies"}
+    </span>
+  )}
+</div>
+
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={chatEndRef}></div>
+          </div>
+
+          {/* Thread Panel */}
+          <div className="w-96 bg-white border-l border-gray-200 flex flex-col shadow-lg animate-slideLeft">
+            {!selectedThread ? (
+              <div className="p-4 text-gray-500">No thread selected — click "Reply" on a message to open thread</div>
+            ) : (
+              <>
+                <div className="p-3 border-b font-semibold flex items-center gap-3">
+                  <button className="p-1 rounded hover:bg-gray-100" onClick={() => setSelectedThread(null)}><FiChevronLeft /></button>
+                  <div>
+                    <div className="text-sm font-medium">Thread</div>
+                    <div className="text-xs text-gray-400">{selectedThread.from_user} • {formatTime(selectedThread.timestamp, true)}</div>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  <div className="p-3 bg-gray-50 rounded">{selectedThread.text}</div>
+                  {(messages[`thread:${selectedThread.id}`] || []).map((t) => (
+                    <div key={t.id || t.tempId} className="p-3 border rounded">
+                      <div className="text-xs text-gray-400 mb-1">{t.from_user} • {formatTime(t.timestamp, true)}</div>
+                      <div>{t.text}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-3 border-t flex items-center gap-3">
+                  <input value={threadInput} onChange={(e) => setThreadInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendThreadMessage(); }} placeholder="Reply in thread..." className="flex-1 border rounded px-3 py-2" />
+                  <button onClick={sendThreadMessage} className="p-2 rounded bg-blue-600 text-white hover:bg-blue-700">Reply</button>
+                </div>
+              </>
             )}
           </div>
-        </ScrollArea>
-      </div>
-
-      {/* Chat area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedChat(null)}
-              className="sm:hidden"
-            >
-              <FiChevronLeft />
-            </Button>
-            <h2 className="font-semibold text-lg">
-              {selectedChat ? selectedChat.name : "Select a Chat"}
-            </h2>
-          </div>
         </div>
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-4">
-          {messages.length === 0 ? (
-            <div className="flex justify-center items-center h-full text-muted-foreground">
-              Start the conversation...
+        {/* Input */}
+        <div className="flex items-center gap-3 p-3 border-t border-gray-200 relative">
+          <button className="p-2 rounded-full hover:bg-gray-100 transition" onClick={() => setShowEmojiPicker(prev => !prev)}>
+            <FiSmile className="text-gray-600" />
+          </button>
+          {showEmojiPicker && (
+            <div className="absolute bottom-16 left-3 z-50 shadow-lg rounded-lg overflow-hidden">
+              <Picker onEmojiClick={(e) => setNewMessage(prev => prev + e.emoji)} searchPlaceholder="Search emojis..." />
             </div>
-          ) : (
-            messages.map((msg) => (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                isSender={msg.from_user === currentUser.name}
-                onReply={() => handleReply(msg)}
-                replyCount={Math.floor(Math.random() * 3)} // demo value
-              />
-            ))
           )}
-          <div ref={messagesEndRef} />
-        </ScrollArea>
-
-        {/* Reply thread view */}
-        {replyThread && (
-          <div className="border-t border-border bg-muted/40 p-3 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              Replying to <b>{replyThread.from_user}</b>: {replyThread.text}
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setReplyThread(null)}
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
-
-        {/* Message input */}
-        <div className="p-4 border-t border-border flex items-center gap-2">
-          <FiSmile className="text-muted-foreground" />
-          <Input
+          <textarea
+            ref={textareaRef}
+            className="flex-1 p-2 rounded-full border border-gray-300 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+            rows={1}
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
           />
-          <Button onClick={handleSendMessage}>
-            <FiSend />
-          </Button>
+          <button
+            onClick={sendMessage}
+            disabled={(!newMessage.trim()) || !isConnected}
+            className={`p-3 rounded-full transition-all duration-300 ${newMessage.trim() && isConnected ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:scale-105"
+      : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
+          >
+            <FiSend className ="text-lg" />
+          </button>
         </div>
-      </div>
+        {/* Group Modal */}
+      {showGroupModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl w-96 shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Create Group</h2>
+            <input
+              type="text"
+              placeholder="Group Name"
+              className="w-full border p-2 rounded mb-3"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+            />
+            <div className="max-h-64 overflow-y-auto border p-2 rounded mb-3">
+              {validGroupUsers.map(user => (
+                <label key={user.id} className="flex items-center gap-2 mb-1">
+                  <input
+                    type="checkbox"
+                    value={user.id}
+                    checked={selectedUsers.includes(user.id)}
+                    onChange={(e) => {
+                      const uid = e.target.value;
+                      if (!uid) return;
+                      setSelectedUsers(prev =>
+                        prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
+                      );
+                    }}
+                  />
+                  {user.name} {user.id === userid && <span className="text-gray-500 text-xs">(You)</span>}
 
-      {/* Group Creation Modal */}
-      <GroupModal
-        open={openGroupModal}
-        onOpenChange={setOpenGroupModal}
-        groupName={groupName}
-        onGroupNameChange={setGroupName}
-        users={users}
-        selectedUsers={selectedUsers}
-        onUserToggle={handleUserToggle}
-        onCreateGroup={handleCreateGroup}
-        currentUserId={currentUser?.id || ""}
-      />
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button className="px-4 py-2 bg-gray-300 rounded" onClick={() => setShowGroupModal(false)}>Cancel</button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+                onClick={async () => {
+                 const validMembers = Array.from(new Set([...selectedUsers.filter(id => id), userid]));
+
+
+                  if (!groupName.trim() || validMembers.length === 0) {
+                    toast.error("Enter group name and select valid users");
+                    return;
+                  }
+                  try {
+                    const res = await fetch(`${ipadr}/create_group`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: groupName, members: validMembers })
+                    });
+                    const data = await res.json();
+                    if (data.status === "success") {
+                      setGroups(prev => [...prev, { _id: data.group_id, name: groupName, members: validMembers }]);
+                      toast.success("Group created!");
+                      setShowGroupModal(false);
+                      setGroupName("");
+                      setSelectedUsers([]);
+                    } else toast.error("Failed to create group");
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
+      <ToastContainer />
     </div>
   );
-};
+}
 
-export default Chat;
