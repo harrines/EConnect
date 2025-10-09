@@ -452,7 +452,17 @@ export default function Chat() {
               const textHtml = (m.text || "").replace(/@(\w+)/g, '<span class="text-blue-600 font-semibold">@$1</span>');
               return (
                 <div key={msgId} className={clsx("flex transition-transform duration-300 transform", isSender ? "justify-end" : "justify-start")}>
-                  <div className={clsx("max-w-xl p-4 rounded-2xl break-words shadow-lg relative transition-all duration-300", isSender ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none hover:shadow-xl" : "bg-white text-gray-800 rounded-bl-none hover:shadow-md")}>
+                  <div
+  className={clsx(
+    "max-w-xl p-4 rounded-2xl break-words relative transition-all duration-300 shadow-sm",
+    isSender
+      ? // ✨ Your messages (right side)
+        "bg-indigo-100 text-gray-800 rounded-br-none hover:shadow-md border border-indigo-200"
+      : // ✨ Received messages (left side)
+        "bg-white text-gray-700 rounded-bl-none hover:shadow-md border border-gray-200"
+  )}
+>
+
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-sm">{isSender ? "You" : m.from_user}</span>
                       <span className="text-xs text-white-400">{formatTime(m.timestamp)}</span>
