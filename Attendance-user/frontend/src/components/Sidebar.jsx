@@ -302,7 +302,8 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
         className="w-6 h-6 mr-3 text-white">
         <path strokeLinecap="round" strokeLinejoin="round" 
           strokeWidth="2"
-          d="M12 6v6m0 0l3 3m-3-3l-3-3" />
+          d="M7 3h8l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm8 1.5V9h4.5"
+        />
       </svg>
       <span className="font-medium">My Documents</span>
     </div>
@@ -317,9 +318,7 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
         viewBox="0 0 24 24" stroke="currentColor" 
         className="w-6 h-6 mr-3 text-white">
         <path strokeLinecap="round" strokeLinejoin="round" 
-          strokeWidth="2"
-          d="M7 3h8l4 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm8 1.5V9h4.5"
-        />
+          strokeWidth="2" d="M5 13l4 4L19 7" />
       </svg>
       <span className="font-medium">Docs Review</span>
     </div>
