@@ -514,7 +514,7 @@ export default function Chat() {
                 </div>
               </>
             ) : (
-              <div className="text-muted-foreground">Select a contact to start chatting</div>
+              <div className="text-muted-foreground"></div>
             )}
           </div>
         </div>
@@ -539,6 +539,14 @@ export default function Chat() {
         const isSender = m.from_user === userid;
         const msgId = m.id || m.tempId;
         const threadCount = getThreadCount(msgId);
+         // Get the display name
+  let displayName = "Unknown";
+  if (isSender) {
+    displayName = "You";
+  } else {
+    const contact = contacts.find((c) => c.id === m.from_user);
+    displayName = contact ? contact.name : m.from_user; // fallback to ID
+  }
         const textHtml = (m.text || "").replace(
           /@(\w+)/g,
           '<span class="text-accent font-semibold">@$1</span>'
@@ -559,13 +567,7 @@ export default function Chat() {
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span
-                  className={`font-semibold text-sm ${
-                    isSender ? "text-primary-foreground/90" : "text-gray-700"
-                  }`}
-                >
-                  {isSender ? "You" : m.from_user}
-                </span>
+                 <span className="font-medium text-sm">{displayName}</span>
                 <span
                   className={`text-xs ${
                     isSender ? "text-primary-foreground/70" : "text-gray-400"
