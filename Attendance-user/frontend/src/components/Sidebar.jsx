@@ -76,7 +76,7 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
   const userid=LS.get('userid');
 
   return (
-    <div className="flex flex-col min-h-screen w-64 bg-blue-600 text-white shadow-lg border-r">
+    <div className="flex flex-col min-h-screen w-64 bg-blue-200 text-white shadow-lg border-r">
       {/* Logo Section */}
       <div className="p-4 border-b-2 border-white border-purple-900 flex items-center justify-between">
         <img src={Headlogo} alt="Logo" className="h-16" />
