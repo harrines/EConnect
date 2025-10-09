@@ -8,7 +8,7 @@ import {
   FiTrash2,
   FiMessageSquare,
 } from "react-icons/fi";
-import { LS } from "../utils/storage";
+import { LS } from "../Utils/Resuse";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Picker from "emoji-picker-react";
