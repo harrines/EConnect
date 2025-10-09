@@ -181,7 +181,15 @@ export default function HRDocsReview() {
         </select>
       </div>
 
-     <div
+      {/* Users Grid */}
+      {loadingUsers ? (
+        <p className="text-center text-gray-600">Loading users...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredUsers.map((user) => {
+            const userDocs = filterDocsByStatus(assignedDocs[user.userId] || []);
+            return (
+              <div
   key={user.userId}
   className="bg-white rounded-xl shadow-md p-4 flex flex-col justify-between hover:shadow-lg transition max-h-48 overflow-y-auto"
 >
@@ -216,6 +224,10 @@ export default function HRDocsReview() {
   </div>
 </div>
 
+            );
+          })}
+        </div>
+      )}
 
       {/* Review Modal */}
       {reviewUser && (
