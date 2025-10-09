@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { LS, ipadr } from "../Utils/Resuse";
+import { LS } from "../Utils/Resuse";
 import axios from "axios";
 import { format, isWithinInterval, parseISO,isEqual, startOfDay } from 'date-fns';
 import { ArrowUp, ArrowDown, ArrowUpDown, RotateCw } from "lucide-react";
@@ -35,7 +35,7 @@ const LeaveHistory = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const userid = LS.get("id");
+      const userid = LS.get("userid");
       let endpoint = "";
 
       switch (selectedOption) {
