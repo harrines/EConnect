@@ -358,25 +358,24 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-b from-white to-gray-50">
-  {/* Sidebar */}
-  <div className="w-80 bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 flex flex-col shadow-xl">
-    <div className="p-5 flex justify-between items-center border-b border-gray-200">
-      <div className="flex items-center gap-3 text-gray-800">
-        <FiMessageSquare className="text-2xl text-blue-500" />
-        <span className="font-bold text-xl tracking-tight">Messages</span>
-      </div>
-      {isManager?.toLowerCase() === "manager" && (
-        <button
-          className="p-2 rounded-lg hover:bg-blue-100 transition-all text-gray-800"
-          onClick={() => setShowGroupModal(true)}
-          title="Create Group"
-        >
-          <FiPlus className="text-xl" />
-        </button>
-      )}
-    </div>
-
+    <div className="flex h-screen w-full overflow-hidden bg-background">
+      {/* Sidebar */}
+      <div className="w-80 bg-gradient-to-b from-primary via-primary/95 to-primary/90 flex flex-col shadow-xl">
+        <div className="p-5 flex justify-between items-center border-b border-white/10">
+          <div className="flex items-center gap-3 text-primary-foreground">
+            <FiMessageSquare className="text-2xl" />
+            <span className="font-bold text-xl tracking-tight">Messages</span>
+          </div>
+          {isManager?.toLowerCase() === "manager" && (
+            <button
+              className="p-2 rounded-lg hover:bg-blue/10 transition-all text-primary-foreground"
+              onClick={() => setShowGroupModal(true)}
+              title="Create Group"
+            >
+              <FiPlus className="text-xl" />
+            </button>
+          )}
+        </div>
 
         {/* Search */}
         <div className="p-4">
@@ -490,33 +489,40 @@ export default function Chat() {
       </div>
 
       {/* Main Chat Area */}
-      {/* Main Chat Area */}
-<div className="flex-1 flex flex-col bg-gradient-to-b from-white to-gray-50">
-  {/* Header */}
-  <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
-    <div className="flex items-center gap-4">
-      {activeChat.id ? (
-        <>
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center text-white font-bold text-lg shadow-md">
-            {getInitials(activeChat.name)}
+      <div className="flex-1 flex flex-col bg-background">
+        {/* Header */}
+        <div className="bg-card border-b border-border px-6 py-4 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-4">
+            {activeChat.id ? (
+              <>
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold text-lg shadow-md">
+                  {getInitials(activeChat.name)}
+                </div>
+                <div>
+                  <h1 className="text-lg font-semibold text-foreground">
+                    {activeChat.name}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {onlineUsers.includes(activeChat.id) ? "Online" : "Offline"}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="text-muted-foreground">Select a contact to start chatting</div>
+            )}
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-800">
-              {activeChat.name}
-            </h1>
-            <p className="text-sm text-gray-500">
-              {onlineUsers.includes(activeChat.id) ? "Online" : "Offline"}
-            </p>
-          </div>
-        </>
-      ) : (
-        <div className="text-gray-400">
-          Select a contact to start chatting
         </div>
-      )}
+        {!activeChat.id && (
+    <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-white to-blue-50 text-center p-6">
+      <FiMessageSquare className="text-7xl text-blue-200 mb-6 animate-pulse" />
+      <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+        Welcome to Chat
+      </h2>
+      <p className="text-gray-500">
+        Select a contact or group from the left sidebar to start messaging.
+      </p>
     </div>
-  </div>
-
+  )}
 
         {/* Messages & Thread */}
 <div className="flex flex-1 overflow-hidden">
