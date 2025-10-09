@@ -113,56 +113,54 @@ export default function Chat() {
     };
 
     ws.current.onmessage = (event) => {
-      try {
+    try {
         const payload = JSON.parse(event.data);
 
-        // Presence updates
+        // Presence update
         if (payload.type === "presence" && Array.isArray(payload.users)) {
-          setOnlineUsers(payload.users);
-          return;
+            setOnlineUsers(payload.users);
+            return;
         }
 
-        // Thread messages
-       if (payload.type === "thread") {
-  const threadKey = `thread:${payload.rootId}`;
-  setMessages((prev) => {
-    const arr = prev[threadKey] || [];
-    // Replace if tempId or id exists, else add
-    const idx = arr.findIndex((m) => m.tempId === payload.tempId || m.id === payload.id);
-    if (idx > -1) {
-      arr[idx] = payload; // replace the temp message
-      return { ...prev, [threadKey]: [...arr] };
-    }
-    return { ...prev, [threadKey]: [...arr, payload] };
-  });
-  return;
-}
+        // THREAD MESSAGES
+        if (payload.type === "thread") {
+            const threadKey = `thread:${payload.rootId}`;
+            setMessages((prev) => {
+                const arr = prev[threadKey] || [];
+                const idx = arr.findIndex((m) => m.tempId === payload.tempId || m.id === payload.id);
+                if (idx > -1) arr[idx] = payload;
+                else arr.push(payload);
+                return { ...prev, [threadKey]: [...arr] };
+            });
+            return; // ✅ Important! exit early so it does NOT go to main chat
+        }
 
-
-
-        // Main chat messages
+        // MAIN CHAT MESSAGES
         const msgChatId =
-          payload.chatId ||
-          (payload.type === "user"
-            ? buildChatId(payload.from_user || payload.from, payload.to_user || payload.to)
-            : payload.chatId);
+            payload.chatId ||
+            (payload.type === "user"
+                ? buildChatId(payload.from_user || payload.from, payload.to_user || payload.to)
+                : payload.chatId);
 
         setMessages((prev) => {
-          const chatMessages = prev[msgChatId] || [];
-          const filtered = chatMessages.filter((m) => m.id !== payload.id && m.id !== payload.tempId);
-          return { ...prev, [msgChatId]: [...filtered, payload] };
+            const chatMessages = prev[msgChatId] || [];
+            const filtered = chatMessages.filter((m) => m.id !== payload.id && m.id !== payload.tempId);
+            return { ...prev, [msgChatId]: [...filtered, payload] };
         });
 
         if (msgChatId !== activeChat.chatId) {
-          setUnread((prev) => ({ ...prev, [msgChatId]: (prev[msgChatId] || 0) + 1 }));
-          toast.info(
-            `New message from ${payload.from_user || payload.from}: ${payload.text ? payload.text.slice(0, 60) : "File"}`,
-            { position: "top-right", autoClose: 4000 }
-          );
+            setUnread((prev) => ({ ...prev, [msgChatId]: (prev[msgChatId] || 0) + 1 }));
+            toast.info(
+                `New message from ${payload.from_user || payload.from}: ${
+                    payload.text ? payload.text.slice(0, 60) : "File"
+                }`,
+                { position: "top-right", autoClose: 4000 }
+            );
         }
-      } catch (err) {
+    } catch (err) {
         console.error("Invalid WS payload:", event.data, err);
-      }
+    }
+
     };
   };
 
