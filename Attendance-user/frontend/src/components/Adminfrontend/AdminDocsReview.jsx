@@ -181,52 +181,41 @@ export default function HRDocsReview() {
         </select>
       </div>
 
-      {/* Users Grid */}
-      {loadingUsers ? (
-        <p className="text-center text-gray-600">Loading users...</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredUsers.map((user) => {
-            const userDocs = filterDocsByStatus(assignedDocs[user.userId] || []);
-            return (
-              <div
-                key={user.userId}
-                className="bg-white rounded-xl shadow-md p-4 flex flex-col justify-between hover:shadow-lg transition"
-              >
-                {/* Header */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
-                    {user.name?.[0]?.toUpperCase() || <User size={20} />}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-lg">{user.name}</div>
-                    <div className="text-sm text-gray-500">{userDocs.length} Documents</div>
-                  </div>
-                </div>
+     <div
+  key={user.userId}
+  className="bg-white rounded-xl shadow-md p-4 flex flex-col justify-between hover:shadow-lg transition max-h-48 overflow-y-auto"
+>
+  {/* Header */}
+  <div className="flex items-center gap-3">
+    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
+      {user.name?.[0]?.toUpperCase() || <User size={20} />}
+    </div>
+    <div>
+      <div className="font-semibold text-lg">{user.name}</div>
+      <div className="text-sm text-gray-500">{userDocs.length} Documents</div>
+    </div>
+  </div>
 
-                {/* Footer */}
-                <div className="mt-4 flex justify-between items-center">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="form-checkbox text-blue-600 rounded"
-                      checked={selectedUsers.includes(user.userId)}
-                      onChange={() => toggleUserSelection(user.userId)}
-                    />
-                    Select
-                  </label>
-                  <button
-                    onClick={() => setReviewUser(user)}
-                    className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
-                  >
-                    Review
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+  {/* Footer */}
+  <div className="mt-4 flex justify-between items-center">
+    <label className="flex items-center gap-2 text-sm">
+      <input
+        type="checkbox"
+        className="form-checkbox text-blue-600 rounded"
+        checked={selectedUsers.includes(user.userId)}
+        onChange={() => toggleUserSelection(user.userId)}
+      />
+      Select
+    </label>
+    <button
+      onClick={() => setReviewUser(user)}
+      className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+    >
+      Review
+    </button>
+  </div>
+</div>
+
 
       {/* Review Modal */}
       {reviewUser && (
