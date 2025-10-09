@@ -361,21 +361,23 @@ export default function Chat() {
     <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* Sidebar */}
       <div className="w-80 bg-gradient-to-b from-primary via-primary/95 to-primary/90 flex flex-col shadow-xl">
-        <div className="p-5 flex justify-between items-center border-b border-white/10">
-          <div className="flex items-center gap-3 text-primary-foreground">
-            <FiMessageSquare className="text-2xl" />
-            <span className="font-bold text-xl tracking-tight">Messages</span>
-          </div>
-          {isManager?.toLowerCase() === "manager" && (
-            <button
-              className="p-2 rounded-lg hover:bg-blue/10 transition-all text-primary-foreground"
-              onClick={() => setShowGroupModal(true)}
-              title="Create Group"
-            >
-              <FiPlus className="text-xl" />
-            </button>
-          )}
-        </div>
+  <div className="p-5 flex justify-between items-center border-b border-white/20">
+    <div className="flex items-center gap-3 text-primary-foreground">
+      <FiMessageSquare className="text-2xl" />
+      <span className="font-bold text-xl tracking-tight">Messages</span>
+    </div>
+    {isManager?.toLowerCase() === "manager" && (
+      <button
+        className="p-2 rounded-lg hover:bg-blue/10 transition-all text-primary-foreground"
+        onClick={() => setShowGroupModal(true)}
+        title="Create Group"
+      >
+        <FiPlus className="text-xl" />
+      </button>
+    )}
+  </div>
+
+
 
         {/* Search */}
         <div className="p-4">
