@@ -228,7 +228,7 @@ def serialize_mongo_doc(doc):
     return serialized
 
 app = FastAPI()
-origins = ["https://e-connect-host-frontend.vercel.app/","https://econnect-frontend-wheat.vercel.app", "http://localhost:5173", "http://localhost:5174"]
+origins = ["https://e-connect-host-frontend.vercel.app","https://econnect-frontend-wheat.vercel.app", "http://localhost:5173", "http://localhost:5174"]
 # [
 #     "*"    # Allow all origins for development
 # ]
