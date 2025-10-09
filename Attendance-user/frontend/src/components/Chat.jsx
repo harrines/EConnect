@@ -575,7 +575,7 @@ export default function Chat() {
                     isSender ? "text-primary-foreground/70" : "text-gray-400"
                   }`}
                 >
-                  {formatTime(m.timestamp)}
+                    {formatTime(m.timestamp)}
                 </span>
               </div>
 

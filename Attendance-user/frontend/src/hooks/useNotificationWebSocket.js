@@ -15,9 +15,9 @@ export const useNotificationWebSocket = () => {
   // WebSocket URL - adjust based on your backend configuration
   const getWebSocketUrl = useCallback(() => {
     // Get base URL from environment or use default
-    const apiBaseUrl = import.meta.env.VITE_HOST_IP || "http://127.0.0.1:8000";
+   const ipadr = import.meta.env.VITE_API_BASE_URL ;
     // Remove protocol and trailing slash for WebSocket URL construction
-    const wsUrl = apiBaseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const wsUrl = ipadr.replace(/^https?:\/\//, '').replace(/\/$/, '');
     // Use secure WebSocket for HTTPS, regular WebSocket for HTTP
     const protocol = apiBaseUrl.startsWith('https') ? 'wss' : 'ws';
     const fullWsUrl = `${protocol}://${wsUrl}/ws/notifications/${userid}`;
