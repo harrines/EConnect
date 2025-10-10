@@ -13,7 +13,7 @@ import axios from "axios";
 
 // FORCE HTTPS - Production fix for Mixed Content Error
 const envUrl = import.meta.env.VITE_HOST_IP;
-const defaultUrl = "https://econnectbackend-production.up.railway.app";
+const defaultUrl = "https://e-connect-host-production.up.railway.app";
 
 // Ensure HTTPS protocol regardless of environment variable value
 export const ipadr = envUrl ? envUrl.replace(/^http:/, "https:") : defaultUrl;

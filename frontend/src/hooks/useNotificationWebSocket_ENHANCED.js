@@ -16,7 +16,7 @@ export const useNotificationWebSocket = () => {
   // WebSocket URL - adjust based on your backend configuration
   const getWebSocketUrl = useCallback(() => {
     // Get base URL from environment or use default
-  const apiBaseUrl = import.meta.env.VITE_HOST_IP || "https://econnectbackend-production.up.railway.app";
+  const apiBaseUrl = import.meta.env.VITE_HOST_IP || "https://e-connect-host-production.up.railway.app";
     // Remove protocol and trailing slash for WebSocket URL construction
     const wsUrl = apiBaseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
     // Use secure WebSocket for HTTPS, regular WebSocket for HTTP
