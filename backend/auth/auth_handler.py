@@ -3,8 +3,12 @@ import time
 from typing import Dict
 import jwt
 from decouple import config
-JWT_SECRET = config("secret")
-JWT_ALGORITHM = config("algorithm")
+import os
+
+# Use environment variables with fallback defaults
+JWT_SECRET = config("secret", default=os.environ.get("JWT_SECRET", "013aafb560ba561a351e913d3bca0829a290b552"))
+JWT_ALGORITHM = config("algorithm", default=os.environ.get("JWT_ALGORITHM", "HS256"))
+
 def token_response(token: str):
     return {
         "access_token": token
