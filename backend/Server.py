@@ -3816,7 +3816,7 @@ async def test_admin_wfh_notifications():
 
 if __name__ == "__main__":
     # Get port from environment variable (Railway sets this)
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8080))
     
     # Check if SSL certificates exist (for local development)
     key_file_path = os.path.join(os.path.dirname(__file__), '../certificates/key.pem')
