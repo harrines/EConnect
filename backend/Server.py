@@ -247,18 +247,43 @@ app.add_middleware(
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     try:
+        # Handle preflight requests
+        if request.method == "OPTIONS":
+            response = JSONResponse(content={}, status_code=200)
+            response.headers["Access-Control-Allow-Origin"] = request.headers.get("origin", "*")
+            response.headers["Access-Control-Allow-Methods"] = "*"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            return response
+            
         response = await call_next(request)
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
+        
+        # Ensure CORS headers are always present
+        origin = request.headers.get("origin")
+        if origin in origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            
         return response
     except Exception as e:
         # Ensure CORS headers are present even on errors
         print(f"Error in middleware: {str(e)}")
-        return JSONResponse(
+        traceback.print_exc()
+        
+        origin = request.headers.get("origin", "")
+        response = JSONResponse(
             content={"error": "Internal server error", "details": str(e)},
             status_code=500
         )
+        
+        if origin in origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            
+        return response
 
 class ConnectionManager:
     def __init__(self):
@@ -661,10 +686,18 @@ def Signup(item: Item2):
 
 # Google Signin
 @app.post("/Gsignin")
-def Signup(item: Item5):
-    jwt=Mongo.Gsignin(item.client_name,item.email)
-    print(jwt)
-    return jwt
+async def Signup(item: Item5):
+    try:
+        jwt = Mongo.Gsignin(item.client_name, item.email)
+        print(jwt)
+        return JSONResponse(content=jwt, status_code=200)
+    except HTTPException as http_exc:
+        # Re-raise HTTPException to be handled by FastAPI
+        raise http_exc
+    except Exception as e:
+        print(f"Error in /Gsignin: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # Userid
 @app.post('/id',dependencies=[Depends(JWTBearer())])
