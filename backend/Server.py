@@ -228,10 +228,20 @@ def serialize_mongo_doc(doc):
     return serialized
 
 app = FastAPI()
-origins = ["https://e-connect-host-frontend.vercel.app","https://econnect-frontend-wheat.vercel.app", "http://localhost:5173", "http://localhost:5174"]
-# [
-#     "*"    # Allow all origins for development
-# ]
+
+# Get CORS origins from environment or use defaults
+allowed_origins_env = os.environ.get("ALLOWED_ORIGINS", "")
+if allowed_origins_env:
+    origins = [origin.strip() for origin in allowed_origins_env.split(",")]
+else:
+    origins = [
+        "https://e-connect-host-frontend.vercel.app",
+        "https://econnect-frontend-wheat.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:5174"
+    ]
+
+print(f"CORS Allowed Origins: {origins}")
 
 # Add CORS middleware FIRST (order matters!)
 app.add_middleware(
