@@ -239,7 +239,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*", "authorization"],  # <-- add "authorization" here
+    allow_headers=["*"],
     expose_headers=["*"],
 )
 
@@ -250,10 +250,13 @@ async def add_security_headers(request: Request, call_next):
         # Handle preflight requests
         if request.method == "OPTIONS":
             response = JSONResponse(content={}, status_code=200)
-            response.headers["Access-Control-Allow-Origin"] = request.headers.get("origin", "*")
-            response.headers["Access-Control-Allow-Methods"] = "*"
-            response.headers["Access-Control-Allow-Headers"] = "*"
+            origin = request.headers.get("origin", "")
+            if origin in origins:
+                response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
             response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Max-Age"] = "3600"
             return response
             
         response = await call_next(request)

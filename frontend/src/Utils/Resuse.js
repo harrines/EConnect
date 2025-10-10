@@ -37,7 +37,6 @@ export const LS = {
 export const Baseaxios = axios.create({
   baseURL: `${ipadr}/`,
   headers: { 
-    Authorization: `Bearer ${LS.get("access_token")}`,
     'Content-Type': 'application/json'
   },
   withCredentials: true, // Enable credentials for CORS
@@ -47,9 +46,19 @@ export const Baseaxios = axios.create({
 Baseaxios.interceptors.request.use(
   (config) => {
     const token = LS.get("access_token");
-    if (token) {
+    
+    // Only add Authorization header if token exists and is not null/undefined
+    // Skip auth for login/signup endpoints
+    const authExcludedPaths = ['/Gsignin', '/admin_Gsignin', '/signup', '/signin'];
+    const isAuthExcluded = authExcludedPaths.some(path => config.url?.includes(path));
+    
+    if (token && token !== 'null' && token !== 'undefined' && !isAuthExcluded) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      // Remove Authorization header if it was set
+      delete config.headers.Authorization;
     }
+    
     return config;
   },
   (error) => {
