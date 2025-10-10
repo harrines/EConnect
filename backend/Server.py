@@ -239,7 +239,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["authorization", "content-type", "accept", "origin", "x-requested-with"],
+    allow_headers=["*", "authorization"],  # <-- add "authorization" here
     expose_headers=["*"],
 )
 
