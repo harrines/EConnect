@@ -18,4 +18,4 @@ COPY . .
 EXPOSE 8000
 
 # Command to run the application
-CMD uvicorn Server:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD ["sh", "-c", "uvicorn Server:app --host 0.0.0.0 --port ${PORT:-8000}"]
