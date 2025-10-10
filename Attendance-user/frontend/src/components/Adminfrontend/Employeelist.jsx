@@ -15,7 +15,7 @@ const EmployeeList = () => {
     const [show, setShow] = useState(false);
     const Admin = LS.get('isadmin');
     
-
+   
     useEffect(() => {
         const fetchData = async () => {
             try {

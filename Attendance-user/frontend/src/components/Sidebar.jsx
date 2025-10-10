@@ -35,6 +35,8 @@ const Modal = ({ show, onClose, onConfirm, message }) => {
   );
 };
 
+
+
 const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => {
   const navigate = useNavigate(); // Declare navigate only once
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -75,6 +77,11 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
   const isDepart=LS.get("department");
   const userid=LS.get('userid');
 
+   const isActive = (path) => location.pathname.includes(path);
+
+  
+
+
   return (
     <div className="flex flex-col min-h-screen w-64 bg-[#80A1BA] text-white shadow-lg border-r">
       {/* Logo Section */}
@@ -88,7 +95,12 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
         {loggedIn && isAdmin ? (
           <>
             <Link to="time" className="sidebar-item">
-              <div className="flex items-center p-4 hover:bg-blue-700 transition-colors">
+             
+              <div
+    className={`flex items-center p-4 transition-colors rounded-l-lg ${
+      isActive("/admin/time") ? "bg-[#234C6A] font-semibold text-white" : "hover:bg-blue-700 text-white"
+    }`}
+  >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -99,7 +111,9 @@ const Sidebar = ({ userPicture, userName, isLoggedIn, onLogout = () => {} }) => 
                   <circle cx="12" cy="12" r="10" strokeWidth="2" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l3 3" />
                 </svg>
-                <span className="font-medium">Time Management</span>
+                <span className="font-sans font-semibold tracking-wide text-white">
+  Time Management
+</span>
               </div>
             </Link>
 

@@ -42,6 +42,11 @@ export default function Chat() {
   const [groupName, setGroupName] = useState("");
   const [groups, setGroups] = useState([]);
 
+const [editingGroup, setEditingGroup] = useState(null); 
+const [showGroupMembers, setShowGroupMembers] = useState(false);
+const [currentGroupMembers, setCurrentGroupMembers] = useState([]);
+const [currentGroupName, setCurrentGroupName] = useState("");
+const [activeMenu, setActiveMenu] = useState(null);
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
   const ws = useRef(null);
@@ -116,11 +121,7 @@ export default function Chat() {
       try {
         const payload = JSON.parse(event.data);
 
-        // Presence updates
-        if (payload.type === "presence" && Array.isArray(payload.users)) {
-          setOnlineUsers(payload.users);
-          return;
-        }
+       
 
         // Thread messages
        if (payload.type === "thread") {
@@ -284,14 +285,15 @@ export default function Chat() {
     }
 
     const tempId = `temp-${Date.now()}`;
-    const isGroup = activeChat.type === "group";
+  
 
     const payload = {
       type: "thread",
       id: tempId,
       tempId,
       from_user: userid,
-      to_user: isGroup
+      to_user: 
+      activeChat.type === "group"
         ? undefined
         : selectedThread.from_user === userid
         ? selectedThread.to_user
@@ -310,26 +312,7 @@ export default function Chat() {
 
     ws.current.send(JSON.stringify(payload));
 
-    try {
-      const res = await fetch(`${ipadr}/thread`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (data.status === "success" && data.thread) {
-        setMessages((prev) => {
-          const key = `thread:${payload.rootId}`;
-          const arr = prev[key].map((m) => (m.tempId === tempId ? data.thread : m));
-          return { ...prev, [key]: arr };
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Error saving thread message");
-    }
+   
 
     setThreadInput("");
   };
@@ -362,6 +345,13 @@ export default function Chat() {
   const getThreadCount = (msgId) => {
     return (messages[`thread:${msgId}`] || []).length;
   };
+
+  const handleViewMembers = (group) => {
+  setCurrentGroupMembers(group.members);
+  setCurrentGroupName(group.name);
+  setShowGroupMembers(true);
+};
+
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
@@ -400,52 +390,90 @@ export default function Chat() {
   </div>
 
   {/* Groups */}
-  <div className="flex-1 overflow-y-auto px-3 space-y-2">
-    {filteredGroups.length > 0 && (
-      <>
-        <div className="px-3 py-2 text-xs text-gray-500 uppercase tracking-wider font-semibold">
-          Groups
-        </div>
-        {filteredGroups.map((group) => (
-          <div
-            key={group._id}
-            className={`px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between transition-all ${
-              activeChat.chatId === group._id
-                ? "bg-gray-200 shadow"
-                : "hover:bg-gray-150"
-            }`}
-            onClick={() => handleGroupClick(group)}
-          >
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold bg-gray-400 text-white flex-shrink-0">
-                {getInitials(group.name)}
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="truncate font-medium text-gray-800">
-                  {group.name}
-                </span>
-                <span className="text-xs text-gray-500 truncate">
-                  {group.members?.filter((m) => m !== userid).length} members
-                </span>
-              </div>
-            </div>
-            {isManager?.toLowerCase() === "manager" && (
-              <button
-  className="p-2 rounded-full hover:bg-gray-200 transition-all"
-  onClick={(e) => {
-    e.stopPropagation();
-    handleRemoveGroup(group);
-  }}
-  title="Delete Group"
->
-  <FiTrash2 size={16} />
-</button>
+<div className="flex-1 overflow-y-auto px-3 space-y-2">
+  {filteredGroups.map((group) => {
+    const isActiveMenu = activeMenu === group._id;
 
-            )}
+    return (
+      <div
+        key={group._id}
+        className={`px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between transition-all ${
+          activeChat.chatId === group._id ? "bg-gray-200 shadow" : "hover:bg-gray-150"
+        }`}
+        onClick={() => handleGroupClick(group)}
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold bg-gray-400 text-white flex-shrink-0">
+            {getInitials(group.name)}
           </div>
-        ))}
-      </>
-    )}
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="truncate font-medium text-gray-800">{group.name}</span>
+            <span className="text-xs text-gray-500 truncate">
+              {group.members?.filter((m) => m !== userid).length} members
+            </span>
+          </div>
+        </div>
+
+        {/* More Options Dot Button */}
+        <div className="relative">
+          <button
+            className="p-2 rounded-full hover:bg-gray-200 transition-all"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveMenu(isActiveMenu ? null : group._id); // toggle menu
+            }}
+            title="More Options"
+          >
+            ⋮
+          </button>
+
+          {/* Dropdown Menu */}
+          {isActiveMenu && (
+            <div className="absolute right-0 top-10 bg-white border shadow-md rounded-md flex flex-col w-36 z-10">
+              {isManager?.toLowerCase() === "manager" && (
+                <>
+                  <button
+                    className="px-4 py-2 text-left hover:bg-gray-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingGroup(group);
+                      setGroupName(group.name);
+                      setSelectedUsers(group.members || []);
+                      setShowGroupModal(true);
+                      setActiveMenu(null); // close menu
+                    }}
+                  >
+                    ✏️ 
+                  </button>
+                  <button
+                    className="px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveGroup(group);
+                      setActiveMenu(null); // close menu
+                    }}
+                  >
+                    <FiTrash2 size={16} /> 
+                  </button>
+                </>
+              )}
+              <button
+                className="px-4 py-2 text-left hover:bg-gray-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewMembers(group);
+                  setActiveMenu(null); 
+                }}
+              >
+                👥
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  })}
+
 
     {/* Contacts */}
     <div className="px-3 py-2 text-xs text-gray-500 uppercase tracking-wider font-semibold mt-4">
@@ -662,6 +690,8 @@ export default function Chat() {
               </div>
             )}
           </div>
+
+
 {/* Thread Panel */}
 {selectedThread && (
   <div className="w-96 bg-gradient-to-b from-white to-gray-50 border-l border-gray-200 flex flex-col shadow-lg">
@@ -754,10 +784,13 @@ export default function Chat() {
         </div>
       </div>
 
-      {showGroupModal && (
+      {/* Group Modal */}
+{showGroupModal && (
   <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
     <div className="bg-gradient-to-b from-white to-gray-50 p-6 rounded-2xl w-96 shadow-2xl border border-gray-200">
-      <h2 className="text-xl font-bold mb-4 text-gray-800">Create Group</h2>
+      <h2 className="text-xl font-bold mb-4 text-gray-800">
+        {editingGroup ? "Edit Group" : "Create Group"}
+      </h2>
 
       <input
         type="text"
@@ -779,20 +812,14 @@ export default function Chat() {
               checked={selectedUsers.includes(user.id)}
               onChange={(e) => {
                 const uid = e.target.value;
-                if (!uid) return;
                 setSelectedUsers((prev) =>
-                  prev.includes(uid)
-                    ? prev.filter((id) => id !== uid)
-                    : [...prev, uid]
+                  prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
                 );
               }}
               className="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-blue-200"
             />
             <span className="text-gray-800">
-              {user.name}{" "}
-              {user.id === userid && (
-                <span className="text-gray-500 text-xs">(You)</span>
-              )}
+              {user.name} {user.id === userid && <span className="text-gray-500 text-xs">(You)</span>}
             </span>
           </label>
         ))}
@@ -805,6 +832,7 @@ export default function Chat() {
             setShowGroupModal(false);
             setGroupName("");
             setSelectedUsers([]);
+            setEditingGroup(null);
           }}
         >
           Cancel
@@ -812,43 +840,90 @@ export default function Chat() {
         <button
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md"
           onClick={async () => {
-            const validMembers = Array.from(
-              new Set([...selectedUsers.filter((id) => id), userid])
-            );
-
+            const validMembers = Array.from(new Set([...selectedUsers.filter((id) => id), userid]));
             if (!groupName.trim() || validMembers.length === 0) {
               toast.error("Enter group name and select valid users");
               return;
             }
+
             try {
-              const res = await fetch(`${ipadr}/create_group`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: groupName, members: validMembers }),
-              });
-              const data = await res.json();
-              if (data.status === "success") {
-                setGroups((prev) => [
-                  ...prev,
-                  { _id: data.group_id, name: groupName, members: validMembers },
-                ]);
-                toast.success("Group created!");
-                setShowGroupModal(false);
-                setGroupName("");
-                setSelectedUsers([]);
-              } else toast.error("Failed to create group");
+              if (editingGroup) {
+                // Update group
+                const res = await fetch(`${ipadr}/update_group/${editingGroup._id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name: groupName, members: validMembers }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                  setGroups((prev) =>
+                    prev.map((g) => (g._id === editingGroup._id ? { ...g, name: groupName, members: validMembers } : g))
+                  );
+                  toast.success("Group updated!");
+                } else toast.error(data?.detail || "Failed to update group");
+              } else {
+                // Create new group
+                const res = await fetch(`${ipadr}/create_group`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name: groupName, members: validMembers }),
+                });
+                const data = await res.json();
+                if (res.ok || data.status === "success") {
+                  setGroups((prev) => [...prev, { _id: data.group_id, name: groupName, members: validMembers }]);
+                  toast.success("Group created!");
+                } else toast.error("Failed to create group");
+              }
+
+              setShowGroupModal(false);
+              setGroupName("");
+              setSelectedUsers([]);
+              setEditingGroup(null);
             } catch (err) {
               console.error(err);
-              toast.error("Error creating group");
+              toast.error("Error saving group");
             }
           }}
         >
-          Create
+          {editingGroup ? "Save" : "Create"}
         </button>
       </div>
     </div>
   </div>
 )}
+
+{showGroupMembers && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-2xl w-80 shadow-2xl border border-gray-200">
+      <h2 className="text-xl font-bold mb-4 text-gray-800">
+        Members of "{currentGroupName}"
+      </h2>
+
+      <ul className="space-y-2 max-h-64 overflow-y-auto">
+        {currentGroupMembers.map((memberId) => {
+          const user = validGroupUsers.find((u) => u.id === memberId);
+          return (
+            <li key={memberId} className="text-gray-800">
+              {user ? user.name : memberId}
+              {memberId === userid && <span className="text-gray-500 text-xs"> (You)</span>}
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="flex justify-end mt-4">
+        <button
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+          onClick={() => setShowGroupMembers(false)}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
 
 
       <ToastContainer position="top-right" autoClose={4000} />

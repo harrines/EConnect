@@ -166,27 +166,51 @@ const filteredDocs = useMemo(() => {
         </a>
         
         <button
-          onClick={async () => {
-            try {
-              await axios.delete(
-                `${ipadr}/documents/delete/${doc.fileId}`
-              );
-              setAssignedDocs((prev) =>
-                prev.map((d) =>
-                  d.docName === doc.docName
-                    ? { ...d, fileUrl: null, fileId: null, status: "pending" }
-                    : d
-                )
-              );
-              toast.success("File deleted successfully");
-            } catch {
-              toast.error("Failed to delete file");
-            }
-          }}
-          className="flex items-center gap-1 text-red-600 hover:underline"
-        >
-          <Trash2 size={16} /> Delete
-        </button>
+  onClick={() => {
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <span>Are you sure you want to delete <strong>{doc.docName}</strong>?</span>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id); // close confirmation toast
+                try {
+                  await axios.delete(`${ipadr}/documents/delete/${doc.fileId}`);
+                  setAssignedDocs((prev) =>
+                    prev.map((d) =>
+                      d.docName === doc.docName
+                        ? { ...d, fileUrl: null, fileId: null, status: "pending" }
+                        : d
+                    )
+                  );
+                  toast.success("File deleted successfully!");
+                } catch (err) {
+                  console.error(err);
+                  toast.error("Failed to delete file");
+                }
+              }}
+              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 text-xs"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: Infinity, position: "top-center" }
+    );
+  }}
+  className="flex items-center gap-1 text-red-600 hover:underline"
+>
+  <Trash2 size={16} /> Delete
+</button>
+
       </div>
     );
   }

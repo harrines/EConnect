@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { ipadr } from "../../Utils/Resuse";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function HRDocsReview() {
   const [users, setUsers] = useState([]);
@@ -112,21 +114,53 @@ export default function HRDocsReview() {
     }
   };
 
-  const handleDelete = async (userId, docName) => {
-    try {
-      if (!window.confirm(`Are you sure to delete "${docName}"?`)) return;
-      await axios.delete(`${ipadr}/assigned_doc_delete`, {
-        data: { userId, docName },
-      });
-      setAssignedDocs((prev) => ({
-        ...prev,
-        [userId]: (prev[userId] || []).filter((d) => d.docName !== docName),
-      }));
-    } catch (err) {
-      console.error(err);
-      alert(" Failed to delete document");
+ const handleDelete = (userId, docName) => {
+  toast(
+    ({ closeToast }) => (
+      <div className="flex flex-col gap-2">
+        <span>Are you sure you want to delete <strong>{docName}</strong>?</span>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={async () => {
+              closeToast(); // close the confirmation toast
+              try {
+                await axios.delete(`${ipadr}/assigned_doc_delete`, {
+                  data: { userId, docName },
+                });
+                setAssignedDocs((prev) => ({
+                  ...prev,
+                  [userId]: (prev[userId] || []).filter((d) => d.docName !== docName),
+                }));
+                toast.success("Document deleted successfully!");
+              } catch (err) {
+                console.error(err);
+                toast.error("Failed to delete document");
+              }
+            }}
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+          >
+            Yes
+          </button>
+          <button
+            onClick={closeToast}
+            className="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 text-xs"
+          >
+            No
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      autoClose: false,
+      closeOnClick: false,
+      draggable: false,
     }
-  };
+  );
+};
+
+
+  <ToastContainer position="top-center" />
+
 
   const filteredUsers = users.filter((user) =>
     user.name?.toLowerCase().includes(searchTerm.toLowerCase())

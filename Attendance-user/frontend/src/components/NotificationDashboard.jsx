@@ -674,7 +674,7 @@ const NotificationDashboard = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 via-gray-100 to-[#6d9eeb]/10 overflow-hidden">
+    <div className="h-screen flex flex-col  overflow-hidden">
       <div className="flex-shrink-0 p-6">
         {/* WebSocket Test Component */}
         <WebSocketTest />

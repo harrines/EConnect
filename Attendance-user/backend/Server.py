@@ -4170,15 +4170,34 @@ async def delete_group(group_id: str):
     
     return {"status": "success", "message": f"Group {group_id} deleted successfully"}
 
-@app.put("/update_group/{group_id}")
+@router.put("/update_group/{group_id}")
 async def update_group(group_id: str, group: GroupUpdate):
+    # Ensure group_id is valid ObjectId
+    if not ObjectId.is_valid(group_id):
+        raise HTTPException(status_code=400, detail="Invalid group ID format")
+
     result = groups_collection.update_one(
-        {"_id": group_id},
-        {"$set": {"name": group.name, "members": group.members, "updated_at": datetime.utcnow()}}
+        {"_id": ObjectId(group_id)},
+        {
+            "$set": {
+                "name": group.name,
+                "members": group.members,
+                "updated_at": datetime.utcnow()
+            }
+        }
     )
+
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Group not found")
-    return {"status": "success", "group_id": group_id, "name": group.name}
+
+    return {
+        "status": "success",
+        "group_id": group_id,
+        "updated_fields": {
+            "name": group.name,
+            "members": group.members
+        }
+    }
 
 if __name__ == "__main__":
     uvicorn.run("Server:app", host="0.0.0.0", port=PORT)

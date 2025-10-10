@@ -369,8 +369,8 @@ class GroupCreate(BaseModel):
     members: List[str]
 
 class GroupUpdate(BaseModel):
-    name: Optional[str]
-    members: Optional[List[str]]
+    name: str
+    members: list[str]
 
 class UpdateGroupPayload(BaseModel):
     name: str
