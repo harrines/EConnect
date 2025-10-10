@@ -40,8 +40,6 @@ from pymongo import MongoClient
 
 
 
-
-
   # For storing yearly working days
 MONGODB_URL = os.environ.get("MONGODB_URI")
 if not MONGODB_URL:

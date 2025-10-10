@@ -26,6 +26,10 @@ from fastapi import UploadFile, File
 from fastapi.responses import FileResponse
 import uuid, os
 from datetime import datetime
+from fastapi import APIRouter
+
+router = APIRouter()
+
 from bson import ObjectId
 PORT = int(os.getenv("PORT", 8000))
 
