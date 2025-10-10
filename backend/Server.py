@@ -3782,18 +3782,31 @@ async def test_admin_wfh_notifications():
         return {"success": False, "error": str(e)}
 
 if __name__ == "__main__":
-    # Get absolute paths to the SSL certificate and key files
+    # Get port from environment variable (Railway sets this)
+    port = int(os.environ.get("PORT", 8000))
+    
+    # Check if SSL certificates exist (for local development)
     key_file_path = os.path.join(os.path.dirname(__file__), '../certificates/key.pem')
     cert_file_path = os.path.join(os.path.dirname(__file__), '../certificates/cert.pem')
-
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(
-        "Server:app",  # Replace with your actual file/module name
-        host="0.0.0.0",  # Listen on all network interfaces (public access)
-        port=port,  # Use Railway's provided port or default to 8000
-        ssl_keyfile=key_file_path,  # Path to your private key
-        ssl_certfile=cert_file_path  # Path to your certificate
-    )
+    
+    # Use SSL only if certificates exist (local development)
+    # Railway handles SSL at the edge, so we don't need it in production
+    if os.path.exists(key_file_path) and os.path.exists(cert_file_path):
+        print(f"Starting with SSL on port {port}")
+        uvicorn.run(
+            "Server:app",
+            host="0.0.0.0",
+            port=port,
+            ssl_keyfile=key_file_path,
+            ssl_certfile=cert_file_path
+        )
+    else:
+        print(f"Starting without SSL on port {port}")
+        uvicorn.run(
+            "Server:app",
+            host="0.0.0.0",
+            port=port
+        )
 
 
 #---------------------------------------------------------------------------------------------------------
