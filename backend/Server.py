@@ -702,8 +702,14 @@ def Signup(item: Item2):
 async def Signup(item: Item5):
     try:
         jwt = Mongo.Gsignin(item.client_name, item.email)
-        print(jwt)
-        return JSONResponse(content=jwt, status_code=200)
+        print("Google Signin Response:", jwt)
+        
+        # Ensure the response is JSON serializable
+        # Convert to JSON string using bson json_util, then parse back
+        json_str = json_util.dumps(jwt)
+        json_data = json.loads(json_str)
+        
+        return JSONResponse(content=json_data, status_code=200)
     except HTTPException as http_exc:
         # Re-raise HTTPException to be handled by FastAPI
         raise http_exc
@@ -1587,10 +1593,22 @@ def admin_Signup(item: Item2):
 # Admin Signin
 @app.post("/admin_Gsignin")
 def admin_signup(item: Item5):
-    print(item.dict())
-    jwt=Mongo.admin_Gsignin(item.client_name,item.email)
-    print(jwt)
-    return jwt
+    try:
+        print(item.dict())
+        jwt = Mongo.admin_Gsignin(item.client_name, item.email)
+        print("Admin Google Signin Response:", jwt)
+        
+        # Ensure the response is JSON serializable
+        json_str = json_util.dumps(jwt)
+        json_data = json.loads(json_str)
+        
+        return JSONResponse(content=json_data, status_code=200)
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        print(f"Error in /admin_Gsignin: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 
